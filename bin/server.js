@@ -1,16 +1,16 @@
 
 
 //Lets require/import the HTTP module
-var http = require('http');
+var http  = require('http');
 var child = require('child_process');
-var url = require('url');
+var url   = require('url');
 
 //x  var   fs = require('fs');
 
 //Lets define a port we want to listen to
 const PORT=9444;
 
-function get_file(response, query){
+function getFile(response, query){
 
     //console.log(query.name + ' ' + query.directory + ' ' +  query.region);
     var file = query.directory + '/' + query.name;
@@ -44,6 +44,14 @@ function get_file(response, query){
     });
 }
 
+function mergeSample(response, query){
+
+    if (!query.name && !query.accession) {
+        throw 'Either sample name or accession should be given';
+    }
+    response.end('Merging files by sample accession - wait for implementation');    
+}
+
 //We need a function which handles requests and send response
 function handleRequest(request, response){
     console.log('handling request');
@@ -56,9 +64,10 @@ function handleRequest(request, response){
 
     	switch(path) {
             case '/file':
-                console.log('case file');
-                get_file(response, q)
+                getFile(response, q);
                 break;
+            case '/sample':
+                mergeSample(response, q);
             default:
                 response.statusCode = 404;
                 console.log('Not found: ' + request.url);
