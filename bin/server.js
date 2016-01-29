@@ -1,12 +1,8 @@
-
-
-//Lets require/import the HTTP module
 var http  = require('http');
 var child = require('child_process');
 var url   = require('url');
 var MongoClient = require('mongodb').MongoClient;
 
-//Lets define a port we want to listen to
 const PORT=9444;
 const MONGO='mongodb://sf-nfs-01-01:27017/imetacache';
 
@@ -14,7 +10,6 @@ var db;
 
 function getFile(response, query){
 
-    //console.log(query.name + ' ' + query.directory + ' ' +  query.region);
     var file = query.directory + '/' + query.name;
     if (query.irods) {
         file = 'irods:' + file;
@@ -46,31 +41,38 @@ function getFile(response, query){
     });
 }
 
-function mergeSample(response, query, db){
+function mergeSample(response, query){
 
-    if (!query.name && !query.accession) {
-        throw 'Either sample name or accession should be given';
+    var a = query.accession;
+     if (!a) {
+        throw 'Sample accession number should be given';
     }
-    response.end('Merging files by sample accession - wait for implementation');    
+    
+    var query   = { $and: [
+        {avus:{$elemMatch:{attribute: 'sample_accession_number',value: a}}},
+        {avus:{$elemMatch:{attribute: 'target'                 ,value: "1"}}},
+        {avus:{$elemMatch:{attribute: 'manual_qc'              ,value: "1"}}},
+        {avus:{$elemMatch:{attribute: 'alignment'              ,value: "1"}}} ]};
+    var columns = {_id:0, collection:1, data_object: 1};
+    db.collection('fileinfo').find(query, columns, function(err, results) {
+        if(err) throw err;
+        var files = [];
+	results.each(function(err1, r) {
+            if(err1) throw err1;
+            if(r) {
+                files.push(r.collection + '/' + r.data_object);
+            }
+        });
+        response.end('Files to merge: ' + files);
+    });
 }
 
 function handleRequest(request, response){
 
-    db.collection("fileinfo").find({$and:[{"avus.attribute" : "library"},{"avus.value" : "11144796"}]}, function(err, docs) {
-        if(err) throw err;
-        console.log('some reply');
-	docs.each(function(err, doc) {
-            if(err) throw err;
-            if(doc) {
-                console.log(doc);
-            } else {console.log('nothing');}
-        });
-    });
     try {
         var url_obj = url.parse(request.url, true);
         var path = url_obj.pathname;
         path = path ? path : '';
-        console.log(path);
         var q = url_obj.query;
 
     	switch(path) {
@@ -78,18 +80,20 @@ function handleRequest(request, response){
                 getFile(response, q);
                 break;
             case '/sample':
-                mergeSample(response, q, db);
+                mergeSample(response, q);
                 break;
             default:
                 response.statusCode = 404;
-                console.log('Not found: ' + request.url);
-                response.end('Not found: ' + request.url);
+                var m = 'Not found: ' + request.url;
+                console.log(m);
+                response.end(m);
     	}
 
     } catch (err) {
-        console.log(err);
+        var m = 'Error: ' + err;
+        console.log(m);
         response.statusCode = 500;
-        response.end('Error: ' + err);
+        response.end(m);
     }
 }
 
@@ -113,13 +117,32 @@ var mongo_options = {
 
 MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
-  if(err) throw err;
-  db = database;
-  console.log('Connected to mongo');
+    if(err) throw err;
+    db = database;
+    console.log('Connected to mongodb');
 
-  //Lets start our server
-  server.listen(PORT, function(){
-    //Callback triggered when server is successfully listening. Hurray!
-    console.log("Server listening on: http://localhost:%s", PORT);
-  });
+    //Callback for a graceful exit
+    server.on('close', function(){
+         console.log('Database connection closing');
+         database.close();
+         console.log('Server closing');
+    });
+
+    //Lets start our server
+    server.listen(PORT, function(){
+        //Callback triggered when server is successfully listening. Hurray!
+        console.log("Server listening on: http://localhost:%s", PORT);
+    });
+});
+
+process.on('SIGTERM', function () {
+    server.close(function () {
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', function () {
+    server.close(function () {
+        process.exit(0);
+    });
 });
