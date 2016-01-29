@@ -13,5 +13,9 @@ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
-region option can be specified multiple times
+'region' option can be specified multiple times
+
+Output is in SAM format by default. Use 'format' option with value either 'sam' or 'bam' to change the output format.
+
+
 
