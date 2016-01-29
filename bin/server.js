@@ -12,47 +12,41 @@ const PORT=9444;
 
 function get_file(response, query){
 
-    console.log(query.name + ' ' + query.directory + ' ' +  query.region);
+    //console.log(query.name + ' ' + query.directory + ' ' +  query.region);
     var file = query.directory + '/' + query.name;
-    const bam_header = child.spawn('samtools', ['view', '-H', file] );
-    //const bam        = child.spawn('samtools', ['view', file, query.region] );
-    const bam        = child.spawn('samtools', ['view', file] );
-    bam_header.stdout.pipe(response, { end: false });
-    bam_header.stdout.on('end', function () {
-       console.log('header finished');
-	//return false;
-    })
+    if (query.irods) {
+        file = 'irods:' + file;
+    }
+    var attrs = ['view', '-h'];
+    if (query.format && (query.format === 'bam' || query.format === 'cram')) {
+        response.setHeader("Content-Type", 'application/octet-stream');
+        attrs.push(query.format === 'bam' ? '-b' : '-C');
+    }
+    attrs.push(file);
+    if (query.region) {
+        attrs = attrs.concat(query.region);
+    }
     
-    bam_header.on('close', function (code) {
-      console.log('child process exited with code ' + code);
-      //return false;
-    });
-    
-  
-    //response.setHeader("Content-Type", 'application/octet-stream');
-    var error = '';
+    console.log(attrs);
+    const bam = child.spawn('samtools1', attrs);
     bam.stdout.pipe(response);
     
-    //bam.stdout.on('data', function (data) {
-      
-      //console.log('stdout: ' + data);
-      //console.log('piping');
-      //bam.stdout.pipe(response);
-    //});
     bam.stdout.on('end', function () {
        console.log('body finished');
     });
-     bam.stderr.on('data', function (data) {
+    bam.stderr.on('data', function (data) {
        console.log(data);
     });
 
     bam.on('close', function (code) {
+      // Would be good to have the error itself
       console.log('child process exited with code ' + code);
     });
 }
 
 //We need a function which handles requests and send response
 function handleRequest(request, response){
+    console.log('handling request');
     try {
         var url_obj = url.parse(request.url, true);
         var path = url_obj.pathname;
@@ -60,18 +54,17 @@ function handleRequest(request, response){
         console.log(path);
         var q = url_obj.query;
 
-	switch(path) {
+    	switch(path) {
             case '/file':
                 console.log('case file');
                 get_file(response, q)
                 break;
             default:
                 response.statusCode = 404;
+                console.log('Not found: ' + request.url);
                 response.end('Not found: ' + request.url);
-	}
+    	}
 
-    //response.end('It Works!! Path Hit: ' + request.url);
-    //request.pipe(bam);
     } catch (err) {
         console.log(err);
         response.statusCode = 500;
