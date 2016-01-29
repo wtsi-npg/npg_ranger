@@ -4,11 +4,13 @@
 var http  = require('http');
 var child = require('child_process');
 var url   = require('url');
-
-//x  var   fs = require('fs');
+var MongoClient = require('mongodb').MongoClient;
 
 //Lets define a port we want to listen to
 const PORT=9444;
+const MONGO='mongodb://sf-nfs-01-01:27017/imetacache';
+
+var db;
 
 function getFile(response, query){
 
@@ -44,7 +46,7 @@ function getFile(response, query){
     });
 }
 
-function mergeSample(response, query){
+function mergeSample(response, query, db){
 
     if (!query.name && !query.accession) {
         throw 'Either sample name or accession should be given';
@@ -52,9 +54,18 @@ function mergeSample(response, query){
     response.end('Merging files by sample accession - wait for implementation');    
 }
 
-//We need a function which handles requests and send response
 function handleRequest(request, response){
-    console.log('handling request');
+
+    db.collection("fileinfo").find({$and:[{"avus.attribute" : "library"},{"avus.value" : "11144796"}]}, function(err, docs) {
+        if(err) throw err;
+        console.log('some reply');
+	docs.each(function(err, doc) {
+            if(err) throw err;
+            if(doc) {
+                console.log(doc);
+            } else {console.log('nothing');}
+        });
+    });
     try {
         var url_obj = url.parse(request.url, true);
         var path = url_obj.pathname;
@@ -67,7 +78,8 @@ function handleRequest(request, response){
                 getFile(response, q);
                 break;
             case '/sample':
-                mergeSample(response, q);
+                mergeSample(response, q, db);
+                break;
             default:
                 response.statusCode = 404;
                 console.log('Not found: ' + request.url);
@@ -84,8 +96,30 @@ function handleRequest(request, response){
 //Create a server
 var server = http.createServer(handleRequest);
 
-//Lets start our server
-server.listen(PORT, function(){
+var mongo_options = {
+  db:{
+    numberOfRetries : 5
+  },
+  server: {
+    auto_reconnect: true,
+    poolSize : 40,
+    socketOptions: {
+        connectTimeoutMS: 5000
+    }
+  },
+  replSet: {},
+  mongos: {}
+};
+
+MongoClient.connect(MONGO, mongo_options, function(err, database) {
+
+  if(err) throw err;
+  db = database;
+  console.log('Connected to mongo');
+
+  //Lets start our server
+  server.listen(PORT, function(){
     //Callback triggered when server is successfully listening. Hurray!
     console.log("Server listening on: http://localhost:%s", PORT);
+  });
 });
