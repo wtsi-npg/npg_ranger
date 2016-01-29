@@ -1,2 +1,17 @@
 Proof of concept for retrieving sequence files (sam, bam, cram) via a streaming service
 
+Dowload additional js dependencies
+npm install mongodb
+
+Connect to iRODs
+
+run server:
+node bin/server.js
+
+simple client:
+curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&accession=1234' - no work is done yet
+curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
+curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
+
+region option can be stecified multiple times
+
