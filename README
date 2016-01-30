@@ -9,7 +9,7 @@ run server:
 node bin/server.js
 
 simple client:
-curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&accession=1234' - no work is done yet
+curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=1234' - will merge files for a sample with the given accession number, currently just returns a list of iRODs files to be merged
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 

@@ -29,22 +29,22 @@ function getFile(response, query){
     bam.stdout.pipe(response);
     
     bam.stdout.on('end', function () {
-       console.log('body finished');
+        console.log('body finished');
     });
     bam.stderr.on('data', function (data) {
-       console.log(data);
+        console.log(data);
     });
 
     bam.on('close', function (code) {
-      // Would be good to have the error itself
-      console.log('child process exited with code ' + code);
+        // Would be good to have the error itself
+        console.log('child process exited with code ' + code);
     });
 }
 
 function mergeSample(response, query){
 
     var a = query.accession;
-     if (!a) {
+    if (!a) {
         throw 'Sample accession number should be given';
     }
     
@@ -54,16 +54,16 @@ function mergeSample(response, query){
         {avus:{$elemMatch:{attribute: 'manual_qc'              ,value: "1"}}},
         {avus:{$elemMatch:{attribute: 'alignment'              ,value: "1"}}} ]};
     var columns = {_id:0, collection:1, data_object: 1};
-    db.collection('fileinfo').find(query, columns, function(err, results) {
+    var cursor = db.collection('fileinfo').find(query, columns);
+    var files = [];
+    cursor.each(function(err, doc) {
         if(err) throw err;
-        var files = [];
-	results.each(function(err1, r) {
-            if(err1) throw err1;
-            if(r) {
-                files.push(r.collection + '/' + r.data_object);
-            }
-        });
-        response.end('Files to merge: ' + files);
+        if (doc != null) {
+            files.push(doc.collection + '/' + doc.data_object);
+        } else {
+            //file merge should go here
+            response.end("Files to merge: " + files + "\n");
+        }
     });
 }
 
