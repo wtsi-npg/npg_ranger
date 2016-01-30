@@ -41,28 +41,40 @@ function getFile(response, query){
     });
 }
 
-function mergeSample(response, query){
+function mergeFiles(response, query){
 
     var a = query.accession;
     if (!a) {
         throw 'Sample accession number should be given';
     }
     
-    var query   = { $and: [
+    var dbquery   = { $and: [
         {avus:{$elemMatch:{attribute: 'sample_accession_number',value: a}}},
         {avus:{$elemMatch:{attribute: 'target'                 ,value: "1"}}},
         {avus:{$elemMatch:{attribute: 'manual_qc'              ,value: "1"}}},
         {avus:{$elemMatch:{attribute: 'alignment'              ,value: "1"}}} ]};
     var columns = {_id:0, collection:1, data_object: 1};
-    var cursor = db.collection('fileinfo').find(query, columns);
+    var cursor = db.collection('fileinfo').find(dbquery, columns);
     var files = [];
     cursor.each(function(err, doc) {
         if(err) throw err;
         if (doc != null) {
-            files.push(doc.collection + '/' + doc.data_object);
+            console.log(doc.collection + ':' + doc.data_object);
+            files.push(doc);
         } else {
-            //file merge should go here
-            response.end("Files to merge: " + files + "\n");
+            var numFiles = files.length;
+            if (numFiles == 0) {
+                server.log('No files for ' + a);
+                response.end();
+            } else if (numFiles == 1) {
+                var d = files[0];
+                query.directory = d.collection;
+                query.name      = d.data_object;
+                query.irods     = 1;
+                getFile(response, query);
+            } else {
+                response.end("multiple files to merge - to be implemented \n");
+            }
         }
     });
 }
@@ -80,7 +92,7 @@ function handleRequest(request, response){
                 getFile(response, q);
                 break;
             case '/sample':
-                mergeSample(response, q);
+                mergeFiles(response, q);
                 break;
             default:
                 response.statusCode = 404;
