@@ -43,6 +43,41 @@ function getFile(response, query){
 
 function mergeFiles(response, query){
 
+    response.setHeader("Content-Type", 'application/octet-stream');
+    var attrs = ['merge'];
+    if (query.region) {
+        var regions = query.region;
+        if (typeof regions != 'object') {
+            regions = [regions];
+        }
+        regions.map(function(r){
+            attrs.push('-R');
+            attrs.push(r);
+        });
+    }
+    attrs.push('-');
+    var files = query.files;
+    attrs = attrs.concat(files.map(function(f){return 'irods:' + f.collection + '/' + f.data_object;}));
+   
+    console.log(attrs);
+    const merged = child.spawn('samtools1', attrs);
+    merged.stdout.pipe(response);
+
+    merged.stdout.on('end', function () {
+        console.log('body finished');
+    });
+    merged.stderr.on('data', function (data) {
+        console.log(data);
+    });
+
+    merged.on('close', function (code) {
+        // Would be good to have the error itself
+        console.log('child process exited with code ' + code);
+    });
+}
+
+function getSampleData(response, query){
+
     var a = query.accession;
     if (!a) {
         throw 'Sample accession number should be given';
@@ -73,7 +108,8 @@ function mergeFiles(response, query){
                 query.irods     = 1;
                 getFile(response, query);
             } else {
-                response.end("multiple files to merge - to be implemented \n");
+                query.files     = files;
+                mergeFiles(response, query);
             }
         }
     });
@@ -92,7 +128,7 @@ function handleRequest(request, response){
                 getFile(response, q);
                 break;
             case '/sample':
-                mergeFiles(response, q);
+                getSampleData(response, q);
                 break;
             default:
                 response.statusCode = 404;
