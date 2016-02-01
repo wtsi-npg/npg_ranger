@@ -1,49 +1,50 @@
-var http  = require('http');
-var child = require('child_process');
-var url   = require('url');
+#!/usr/bin/env node
+
+var http        = require('http');
+var child       = require('child_process');
+var url         = require('url');
 var MongoClient = require('mongodb').MongoClient;
 
-const PORT=9444;
-const MONGO='mongodb://sf-nfs-01-01:27017/imetacache';
+const PORT                = 9444;
+const MONGO               = 'mongodb://sf2-farm-srv1:27017/imetacache';
+const SAMTOOLS_COMMAND    = 'samtools';
+const IRODS_PATH_PREFIX   = 'irods:';
 
 var db;
 
-function getFile(response, query){
-
-    var file = query.directory + '/' + query.name;
-    if (query.irods) {
-        file = 'irods:' + file;
-    }
-    var attrs = ['view', '-h'];
+function setContentType(response, query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
         response.setHeader("Content-Type", 'application/octet-stream');
-        attrs.push(query.format === 'bam' ? '-b' : '-C');
+    }
+}
+
+function stViewAttrs(query) {
+
+    var attrs = ['view', '-h'];
+
+    if (query.format && (query.format === 'bam' || query.format === 'cram')) {
+       attrs.push(query.format === 'bam' ? '-b' : '-C');
+    }
+    
+    var file = '-';
+    if (query.directory && query.name) {
+        file = query.directory + '/' + query.name;
+        if (query.irods) {
+            file = IRODS_PATH_PREFIX + file;
+        }
     }
     attrs.push(file);
+
     if (query.region) {
         attrs = attrs.concat(query.region);
     }
     
     console.log(attrs);
-    const bam = child.spawn('samtools1', attrs);
-    bam.stdout.pipe(response);
-    
-    bam.stdout.on('end', function () {
-        console.log('body finished');
-    });
-    bam.stderr.on('data', function (data) {
-        console.log(data);
-    });
-
-    bam.on('close', function (code) {
-        // Would be good to have the error itself
-        console.log('child process exited with code ' + code);
-    });
+    return attrs;
 }
 
-function mergeFiles(response, query){
+function stMergeAttrs(query) {
 
-    response.setHeader("Content-Type", 'application/octet-stream');
     var attrs = ['merge'];
     if (query.region) {
         var regions = query.region;
@@ -56,24 +57,81 @@ function mergeFiles(response, query){
         });
     }
     attrs.push('-');
+
     var files = query.files;
-    attrs = attrs.concat(files.map(function(f){return 'irods:' + f.collection + '/' + f.data_object;}));
-   
+    var re_bam  = /\.bam$/;
+    var re_cram = /\.cram$/;
+    var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object)});
+    var some_cram = files.some(function(f){ return re_cram.test(f.data_object)});
+    if (some_bam && some_cram) {
+        throw 'Either some files are bam and some are cram or all files are in unexpected format';
+    }
+
+    attrs = attrs.concat(files.map(function(f){
+        return IRODS_PATH_PREFIX + f.collection + '/' + f.data_object;
+    }));
+
     console.log(attrs);
-    const merged = child.spawn('samtools1', attrs);
-    merged.stdout.pipe(response);
+    return attrs;
+}
 
-    merged.stdout.on('end', function () {
-        console.log('body finished');
+function getFile(response, query){
+
+    setContentType(response, query);
+
+    const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+    view.stdout.pipe(response);
+    
+    view.stdout.on('end', function () {
+        console.log('Samtools view finished');
     });
-    merged.stderr.on('data', function (data) {
-        console.log(data);
+    view.on('exit', function (code) {
+        var err = view.stderr.read();
+        if (err) {
+            console.log('Samtools view stderr: ' + err);
+        }
+    });
+    view.on('close', function (code) {
+        console.log('Samtools view exited with code ' + code);
+    });
+}
+
+function mergeFiles(response, query){
+
+    setContentType(response, query);
+
+    const merge = child.spawn(SAMTOOLS_COMMAND, stMergeAttrs(query));
+    delete query['region'];
+    delete query['directory'];
+    //const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+    //merge.stdout.pipe(view);
+    //view.stdout.pipe(response);
+    merge.stdout.pipe(response);
+
+    merge.stdout.on('end', function () {
+        console.log('Samtools merge finished');
+    });
+    merge.on('exit', function (code) {
+        if (code) {
+            console.log('Child process stderr: ' + (merge.stderr.read() || ''));
+        }
+    });
+    merge.on('close', function (code) {
+        console.log('Child process exited with code ' + code);
     });
 
-    merged.on('close', function (code) {
-        // Would be good to have the error itself
-        console.log('child process exited with code ' + code);
+    /* view.stdout.on('end', function () {
+        console.log('Samtools view finished');
     });
+    view.on('exit', function (code) {
+        var err = view.stderr.read();
+        if (err) {
+            console.log('Child process stderr: ' + err);
+        }
+    });
+    view.on('close', function (code) {
+        console.log('Child process exited with code ' + code);
+    }); */
 }
 
 function getSampleData(response, query){
@@ -89,17 +147,17 @@ function getSampleData(response, query){
         {avus:{$elemMatch:{attribute: 'manual_qc'              ,value: "1"}}},
         {avus:{$elemMatch:{attribute: 'alignment'              ,value: "1"}}} ]};
     var columns = {_id:0, collection:1, data_object: 1};
-    var cursor = db.collection('fileinfo').find(dbquery, columns);
     var files = [];
+    
+    var cursor = db.collection('fileinfo').find(dbquery, columns);
     cursor.each(function(err, doc) {
         if(err) throw err;
         if (doc != null) {
-            console.log(doc.collection + ':' + doc.data_object);
             files.push(doc);
         } else {
             var numFiles = files.length;
             if (numFiles == 0) {
-                server.log('No files for ' + a);
+                console.log('No files for sample accession ' + a);
                 response.end();
             } else if (numFiles == 1) {
                 var d = files[0];
@@ -108,7 +166,7 @@ function getSampleData(response, query){
                 query.irods     = 1;
                 getFile(response, query);
             } else {
-                query.files     = files;
+                query.files = files;
                 mergeFiles(response, query);
             }
         }
@@ -122,6 +180,10 @@ function handleRequest(request, response){
         var path = url_obj.pathname;
         path = path ? path : '';
         var q = url_obj.query;
+
+        if (!q.format) {
+            q.format = 'bam';
+        }
 
     	switch(path) {
             case '/file':
@@ -144,6 +206,8 @@ function handleRequest(request, response){
         response.end(m);
     }
 }
+
+var customPort = process.argv[2] || PORT;
 
 //Create a server
 var server = http.createServer(handleRequest);
@@ -177,9 +241,9 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     });
 
     //Lets start our server
-    server.listen(PORT, function(){
+    server.listen(customPort, function(){
         //Callback triggered when server is successfully listening. Hurray!
-        console.log("Server listening on: http://localhost:%s", PORT);
+        console.log("Server listening on: http://localhost:%s", customPort);
     });
 });
 
