@@ -88,35 +88,42 @@ function setProcessCallbacks (pr, child, response) {
         if (child) {
             child.kill();
 	}
-        errorResponse(response, m);
+        errorResponse(response, 500, m);
     });
 
     pr.on('exit', function (code) {
         if (code) {
-            m = title + ' exited with code ' + code;
+            m = title + ' exited (on exit) with code ' + code;
             console.log(m);
             if (child) {
                 child.kill();
 	    } else {
-                errorResponse(response, m);
+                errorResponse(response, 500, m);
 	    }
 	}
     });
 
     pr.on('close', function (code, signal) {
         if (code) {
-            var m = title + ' exited with code ' + code;
-            errorResponse(response, m); //In practice only for the last child
+            var m = title + ' exited (on close) with code ' + code;
+            if (!child) {
+                errorResponse(response, 500, m);
+	    }
         } else if (signal != null) {
             console.log(title + ' terminated by a parent ' + signal);
 	}
     });
 }
 
-function errorResponse (response, m) {
+function errorResponse (response, code, m) {
+
+    m = m || '';
+    if (code == 500) {
+        m = m ? ('Internal server error: ' + m) : 'Internal server error';
+    }
     console.log(m);
-    response.statusCode = 500;
-    response.statusMessage = 'Internal server error: ' + m;
+    response.statusCode    = code;
+    response.statusMessage = m;
     response.end();
 }
 
@@ -207,17 +214,12 @@ function handleRequest(request, response){
                 getSampleData(response, q);
                 break;
             default:
-                response.statusCode = 404;
-                var m = 'Not found: ' + request.url;
-                console.log(m);
-                response.end(m);
+                errorResponse(response, 404, 'Not found: ' + request.url);
     	}
 
     } catch (err) {
-        console.log('Error: ' + err);
-        response.statusCode = 500;
-        response.statusMessage = 'Internal server error: ' + err;
-        response.end();
+        console.log('Error handling request for ' + request.url + ': ' + err);
+        errorResponse(response, 500);
     }
 }
 
