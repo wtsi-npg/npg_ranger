@@ -75,28 +75,61 @@ function stMergeAttrs(query) {
     return attrs;
 }
 
+function setProcessCallbacks (pr, child, response) {
+
+    var title = pr.title;   
+
+    pr.stderr.on('data', function (data) {
+        console.log('Error in ' + title + ': ' + data);
+    });
+
+    pr.on('error', function (err) {
+        m = 'Error creating process ' + title + ' ' + err;
+        if (child) {
+            child.kill();
+	}
+        errorResponse(response, m);
+    });
+
+    pr.on('exit', function (code) {
+        if (code) {
+            m = title + ' exited with code ' + code;
+            console.log(m);
+            if (child) {
+                child.kill();
+	    } else {
+                errorResponse(response, m);
+	    }
+	}
+    });
+
+    pr.on('close', function (code, signal) {
+        if (code) {
+            var m = title + ' exited with code ' + code;
+            errorResponse(response, m); //In practice only for the last child
+        } else if (signal != null) {
+            console.log(title + ' terminated by a parent ' + signal);
+	}
+    });
+}
+
+function errorResponse (response, m) {
+    console.log(m);
+    response.statusCode = 500;
+    response.statusMessage = 'Internal server error: ' + m;
+    response.end();
+}
+
 function getFile(response, query){
 
     if (!(query.directory && query.name)) {
         throw 'Both directory and name should be given';
     }
-
     setContentType(response, query);
-
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+    view.title = 'samtools view';
     view.stdout.pipe(response);
-    
-    view.stdout.on('end', function () {
-        console.log('Samtools view finished');
-    });
-    view.on('exit', function (code) {
-        if (code) {
-            console.log('Samtools view stderr: ' + (view.stderr.read() || ''));
-        }
-    });
-    view.on('close', function (code) {
-        console.log('Samtools view exited with code ' + code);
-    });
+    setProcessCallbacks(view, null, response);
 }
 
 function mergeFiles(response, query){
@@ -104,51 +137,15 @@ function mergeFiles(response, query){
     setContentType(response, query);
 
     const merge = child.spawn(SAMTOOLS_COMMAND, stMergeAttrs(query));
+    merge.title = 'samtools merge';
     delete query['region'];
     delete query['directory'];
     const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+    view.title = 'samtools view (post-merge)';
     merge.stdout.pipe(view.stdin);
     view.stdout.pipe(response);
-
-    merge.stderr.on('data', function (data) {
-        console.log('merge data stderr: ' + data);
-    });
-
-    merge.on('exit', function (code) {
-        console.log('Samtools merge existed with code ' + code);
-        if (code) {
-            view.kill();
-            response.statusCode = 500;
-            response.statusMessage = 'Internal server error: merge error';
-            response.end();
-        }
-    });
-    merge.on('close', function (code) {
-        console.log('In Samtools merge exited with code ' + code);
-        console.log('Samtools merge from view stderr: ' + view.stderr.read());
-    });
-    merge.on('error', function (err) {
-        console.log('Samtools merge pipe error ' + err);
-    });
-
-    view.stdout.on('end', function () {
-        console.log('Samtools view finished');
-    });
-    view.stderr.on('data', function (data) {
-        console.log('view data stderr: ' + data);
-    });
-    view.on('exit', function (code) {
-        if (code) {
-            console.log('Samtools view stderr: ' + (view.stderr.read() || ''));
-        }
-    });
-    view.on('error', function (err) {
-        console.log('Samtools view pipe error ' + err);
-    });
-
-    view.on('close', function (code, signal) {
-        console.log('Samtools view exited with code ' + code + ' signal ' + signal);
-    });
+    setProcessCallbacks(merge, view, response);
+    setProcessCallbacks(view, null, response);
 }
 
 function getSampleData(response, query){
