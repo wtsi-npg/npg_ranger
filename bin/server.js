@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 
+var os          = require('os');
+var fs          = require('fs');
+var path        = require('path');
 var http        = require('http');
 var child       = require('child_process');
 var url         = require('url');
 var MongoClient = require('mongodb').MongoClient;
 
-const PORT                = 9444;
-const MONGO               = 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND    = 'samtools';
-const IRODS_PATH_PREFIX   = 'irods:';
+const PORT                 = 9444;
+const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
+const SAMTOOLS_COMMAND     = 'samtools';
+const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
+const IRODS_PATH_PREFIX    = 'irods:';
+const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
+const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 var db;
 
@@ -57,7 +63,7 @@ function stMergeAttrs(query) {
         });
     }
     attrs.push('-');
-
+ 
     var files = query.files;
     var re_bam  = /\.bam$/;
     var re_cram = /\.cram$/;
@@ -75,12 +81,19 @@ function stMergeAttrs(query) {
     return attrs;
 }
 
+function bbbMarkDupsAttrs() {
+    var attrs = ['level=0','verbose=0','resetdupflag=1'];
+    attrs.push('tmpfile=' + tempFilePath());
+    attrs.push('M=' + tempFilePath());
+    return attrs;
+}
+
 function setProcessCallbacks (pr, child, response) {
 
     var title = pr.title;   
 
     pr.stderr.on('data', function (data) {
-        console.log('Error in ' + title + ': ' + data);
+        console.log('STDERR for ' + title + ': ' + data);
     });
 
     pr.on('error', function (err) {
@@ -111,6 +124,9 @@ function setProcessCallbacks (pr, child, response) {
 	    }
         } else if (signal != null) {
             console.log(title + ' terminated by a parent ' + signal);
+            if (child) {
+                child.kill();
+	    }
 	}
     });
 }
@@ -145,14 +161,22 @@ function mergeFiles(response, query){
 
     const merge = child.spawn(SAMTOOLS_COMMAND, stMergeAttrs(query));
     merge.title = 'samtools merge';
+
+    const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
+    markdup.title = BBB_MARKDUPS_COMMAND;
+
     delete query['region'];
     delete query['directory'];
     const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
     view.title = 'samtools view (post-merge)';
-    merge.stdout.pipe(view.stdin);
+
+    merge.stdout.pipe(markdup.stdin);
+    markdup.stdout.pipe(view.stdin);
     view.stdout.pipe(response);
-    setProcessCallbacks(merge, view, response);
-    setProcessCallbacks(view, null, response);
+
+    setProcessCallbacks(merge,   markdup, response);
+    setProcessCallbacks(markdup, view,    response);
+    setProcessCallbacks(view,    null,    response);
 }
 
 function getSampleData(response, query){
@@ -223,6 +247,23 @@ function handleRequest(request, response){
     }
 }
 
+function tempFilePath() {
+    return path.join(TEMP_DATA_DIR, Math.random().toString().substr(2));
+}
+
+function createTempDataDir() {
+    if (!fs.existsSync(TEMP_DATA_DIR)) {
+        var dir = path.join(os.tmpdir(), process.env.USER);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        fs.mkdirSync(TEMP_DATA_DIR);
+        console.log('Created temp data directory ' + TEMP_DATA_DIR);
+    } else {
+        console.log('Found temp data directory ' + TEMP_DATA_DIR);
+    }
+}
+
 var customPort = process.argv[2] || PORT;
 
 //Create a server
@@ -255,6 +296,8 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
          database.close();
          console.log('Server closing');
     });
+
+    createTempDataDir();
 
     //Lets start our server
     server.listen(customPort, function(){

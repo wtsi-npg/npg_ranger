@@ -26,3 +26,13 @@ The default output format is bam. Use 'format' option with value either 'sam' or
 
 
 
+TODO LIST
+=========
+
+Client disconnects - any action on the server side to set up?
+markdups errors mid-stream. the code is 200 OK. Anything to output to the stream to say that it is truncated?
+
+chunked encoding is used - how we ensure that we do not have -he terminating 0-length chunk at the end of the response - might help teh client to realise that the data were truncated
+
+
+
