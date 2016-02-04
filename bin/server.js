@@ -83,8 +83,7 @@ function stMergeAttrs(query) {
 
 function bbbMarkDupsAttrs() {
     var attrs = ['level=0','verbose=0','resetdupflag=1'];
-    //attrs.push('tmpfile=' + tempFilePath());
-    attrs.push('tmpfile=' + '/tmp/dodo/dodo');
+    attrs.push('tmpfile=' + tempFilePath());
     attrs.push('M=' + tempFilePath());
     return attrs;
 }
