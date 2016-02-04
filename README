@@ -30,9 +30,11 @@ TODO LIST
 =========
 
 Client disconnects - any action on the server side to set up?
-markdups errors mid-stream. the code is 200 OK. Anything to output to the stream to say that it is truncated?
 
-chunked encoding is used - how we ensure that we do not have -he terminating 0-length chunk at the end of the response - might help teh client to realise that the data were truncated
+Trailer header is used to communicate that an error occured durin gthe data transmission, ie after the headers have been sent. CURL does not understand trailers. It is possible to build a nodejs HTTP client that understands trailers.
+
+It is possible to dynamically compute md5 and send it in a trailer.
+
 
 
 

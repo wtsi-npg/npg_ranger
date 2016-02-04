@@ -83,7 +83,8 @@ function stMergeAttrs(query) {
 
 function bbbMarkDupsAttrs() {
     var attrs = ['level=0','verbose=0','resetdupflag=1'];
-    attrs.push('tmpfile=' + tempFilePath());
+    //attrs.push('tmpfile=' + tempFilePath());
+    attrs.push('tmpfile=' + '/tmp/dodo/dodo');
     attrs.push('M=' + tempFilePath());
     return attrs;
 }
@@ -138,8 +139,12 @@ function errorResponse (response, code, m) {
         m = m ? ('Internal server error: ' + m) : 'Internal server error';
     }
     console.log(m);
-    response.statusCode    = code;
-    response.statusMessage = m;
+    if (!response.headersSent()) {
+        response.statusCode    = code;
+        response.statusMessage = m;
+    } else {
+        response.addTrailers({'data_truncated': 'true'});
+    }
     response.end();
 }
 
@@ -229,6 +234,8 @@ function handleRequest(request, response){
         if (!q.format) {
             q.format = 'bam';
         }
+
+        response.setHeader('Trailer', 'data_truncated'); 
 
     	switch(path) {
             case '/file':
