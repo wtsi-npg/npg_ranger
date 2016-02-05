@@ -138,7 +138,7 @@ function errorResponse (response, code, m) {
         m = m ? ('Internal server error: ' + m) : 'Internal server error';
     }
     console.log(m);
-    if (!response.headersSent()) {
+    if (!response.headersSent) {
         response.statusCode    = code;
         response.statusMessage = m;
     } else {
@@ -190,13 +190,12 @@ function getSampleData(response, query){
         throw 'Sample accession number should be given';
     }
     
-    var dbquery   = { $and: [
-        {avus:{$elemMatch:{attribute: 'sample_accession_number',value: a}}},
-        {avus:{$elemMatch:{attribute: 'target'                 ,value: "1"}}},
-        {avus:{$elemMatch:{attribute: 'manual_qc'              ,value: "1"}}},
-        {avus:{$elemMatch:{attribute: 'alignment'              ,value: "1"}}} ]};
+    var dbquery = { $and: [{'avh.sample_accession_number': a},
+                           {'avh.target':    "1"},
+                           {'avh.manual_qc': "1"},
+                           {'avh.alignment': "1"} ]};
     var columns = {_id:0, collection:1, data_object: 1};
-    var files = [];
+    var files   = [];
     
     var cursor = db.collection('fileinfo').find(dbquery, columns);
     cursor.each(function(err, doc) {
