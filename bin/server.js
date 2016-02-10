@@ -97,23 +97,24 @@ function setProcessCallbacks (pr, child, response) {
     });
 
     pr.on('error', function (err) {
-        m = 'Error creating process ' + title + ' ' + err;
+        var m =  'Error creating process ' + title + ' ' + err;
         if (child) {
             child.kill();
-	}
+        }
         errorResponse(response, 500, m);
     });
 
     pr.on('exit', function (code) {
+        var m; 
         if (code) {
             m = title + ' exited (on exit) with code ' + code;
             console.log(m);
             if (child) {
                 child.kill();
-	    } else {
+            } else {
                 errorResponse(response, 500, m);
-	    }
-	}
+            }
+        }
     });
 
     pr.on('close', function (code, signal) {
@@ -204,10 +205,10 @@ function getSampleData(response, query){
             files.push(doc);
         } else {
             var numFiles = files.length;
-            if (numFiles == 0) {
+            if (numFiles === 0) {
                 console.log('No files for sample accession ' + a);
                 response.end();
-            } else if (numFiles == 1) {
+            } else if (numFiles === 1) {
                 var d = files[0];
                 query.directory = d.collection;
                 query.name      = d.data_object;
@@ -275,12 +276,12 @@ var customPort = process.argv[2] || PORT;
 var server = http.createServer(handleRequest);
 
 var mongo_options = {
-  db:{
-    numberOfRetries : 5
+  db: {
+    numberOfRetries: 5
   },
   server: {
     auto_reconnect: true,
-    poolSize : 40,
+    poolSize: 40,
     socketOptions: {
         connectTimeoutMS: 5000
     }
