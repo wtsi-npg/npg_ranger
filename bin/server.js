@@ -7,8 +7,8 @@ var http        = require('http');
 var child       = require('child_process');
 var url         = require('url');
 var MongoClient = require('mongodb').MongoClient;
+var crypto = require('crypto');
 
-const PORT                 = 9444;
 const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
 const SAMTOOLS_COMMAND     = 'samtools';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
@@ -17,6 +17,20 @@ const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 var db;
+
+function socket_path() {
+    var howMany = 10;
+    var chars = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
+    var len   = chars.length;
+    var value = value = new Array(howMany);
+    var rnd   = crypto.randomBytes(howMany);
+
+    for (var i = 0; i < howMany; i++) {
+        value[i] = chars[rnd[i] % len]
+    };
+
+    return '/tmp/' + value.join('') + '/sock';
+}
 
 function setContentType(response, query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
@@ -221,6 +235,19 @@ function getSampleData(response, query){
     });
 }
 
+function runTest(request, response, q) {
+
+    console.log('====RAW HEADERS ' + request.rawHeaders);
+    // The headers object contains 'normalized' headers,
+    // note change of case.
+    var user = request.headers['x-remote-user'] || 'Unknown';
+    console.log('====REMOTE USER IS ' + user);
+
+    response.setHeader("Content-Type", 'text/html');
+    response.write('<html><body><h1>Hello, ' +  user + '</h1></body></html>');
+    response.end();
+}
+
 function handleRequest(request, response){
 
     try {
@@ -236,6 +263,9 @@ function handleRequest(request, response){
         response.setHeader('Trailer', 'data_truncated'); 
 
     	switch(path) {
+            case '/test':
+            runTest(request, response, q);
+                break;
             case '/file':
                 getFile(response, q);
                 break;
@@ -269,8 +299,6 @@ function createTempDataDir() {
     }
 }
 
-var customPort = process.argv[2] || PORT;
-
 //Create a server
 var server = http.createServer(handleRequest);
 
@@ -303,11 +331,12 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     });
 
     createTempDataDir();
-
+    
+    var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
     //Lets start our server
-    server.listen(customPort, function(){
+    server.listen(sock, function(){
         //Callback triggered when server is successfully listening. Hurray!
-        console.log("Server listening on: http://localhost:%s", customPort);
+        console.log("Server listening on %s, %s", os.hostname(), sock);
     });
 });
 
