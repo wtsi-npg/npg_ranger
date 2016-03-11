@@ -7,14 +7,22 @@ var http        = require('http');
 var child       = require('child_process');
 var url         = require('url');
 var MongoClient = require('mongodb').MongoClient;
+var GetOpt      = require('node-getopt');
 
-const PORT                 = 9444;
-const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
+var opt = new GetOpt([
+    ['p','port=PORT'        ,'PORT or socket server listens on'],
+    ['m','mongourl=URI'     ,'URI to contact mongodb'],
+    ['t','tempdir=PATH'     ,'PATH of temporary directory'],
+    ['h','help'             ,'display this help']
+]).bindHelp().parseSystem();
+
+const PORT                 = opt.options.port || opt.argv[0] || 9444;
+const MONGO                = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
 const SAMTOOLS_COMMAND     = 'samtools';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
 const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
-const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
+const TEMP_DATA_DIR        = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 var db;
 
@@ -269,8 +277,6 @@ function createTempDataDir() {
     }
 }
 
-var customPort = process.argv[2] || PORT;
-
 //Create a server
 var server = http.createServer(handleRequest);
 
@@ -293,7 +299,7 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
     if(err) throw err;
     db = database;
-    console.log('Connected to mongodb');
+    console.log('Connected to mongodb at ' + MONGO);
 
     //Callback for a graceful exit
     server.on('close', function(){
@@ -305,9 +311,9 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     createTempDataDir();
 
     //Lets start our server
-    server.listen(customPort, function(){
+    server.listen(PORT, function(){
         //Callback triggered when server is successfully listening. Hurray!
-        console.log("Server listening on: http://localhost:%s", customPort);
+        console.log("Server listening on: http://localhost:%s", PORT);
     });
 });
 
