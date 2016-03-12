@@ -13,14 +13,15 @@ var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket server listens on'],
     ['m','mongourl=URI'     ,'URI to contact mongodb'],
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
+    ['H','hostname=HOST'    ,'override hostname with HOST'],
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
 const PORT                 = opt.options.port || opt.argv[0] || 9444;
+const HOST                 = opt.options.hostname || os.hostname() || 'localhost';
 const MONGO                = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
 const SAMTOOLS_COMMAND     = 'samtools';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
-const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
@@ -39,16 +40,9 @@ function stViewAttrs(query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
        attrs.push(query.format === 'bam' ? '-b' : '-C');
     }
-    
-    var file = '-';
-    if (query.directory && query.name) {
-        file = query.directory + '/' + query.name;
-        if (query.irods) {
-            file = IRODS_PATH_PREFIX + file;
-        }
-    }
-    attrs.push(file);
 
+    attrs.push(query.files.shift() || "-");
+    
     if (query.region) {
         attrs = attrs.concat(query.region);
     }
@@ -81,9 +75,8 @@ function stMergeAttrs(query) {
         throw 'Either some files are bam and some are cram or all files are in unexpected format';
     }
 
-    attrs = attrs.concat(files.map(function(f){
-        return IRODS_PATH_PREFIX + f.collection + '/' + f.data_object;
-    }));
+    attrs = attrs.concat(files );
+    query.files.length=0;
 
     console.log(attrs);
     return attrs;
@@ -157,9 +150,6 @@ function errorResponse (response, code, m) {
 
 function getFile(response, query){
 
-    if (!(query.directory && query.name)) {
-        throw 'Both directory and name should be given';
-    }
     setContentType(response, query);
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
     view.title = 'samtools view';
@@ -202,7 +192,8 @@ function getSampleData(response, query){
                            {'avh.target':    "1"},
                            {'avh.manual_qc': "1"},
                            {'avh.alignment': "1"} ]};
-    var columns = {_id:0, collection:1, data_object: 1};
+    var localkey = 'filepath_by_host.' + HOST;
+    var columns = {_id:0, 'filepath_by_host.*':1, localkey:1, 'access_control_group_id': 1};
     var files   = [];
     
     var cursor = db.collection('fileinfo').find(dbquery, columns);
@@ -211,18 +202,14 @@ function getSampleData(response, query){
         if (doc != null) {
             files.push(doc);
         } else {
+            query.files = files.map(function(f){ return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
             var numFiles = files.length;
             if (numFiles == 0) {
                 console.log('No files for sample accession ' + a);
                 response.end();
             } else if (numFiles == 1) {
-                var d = files[0];
-                query.directory = d.collection;
-                query.name      = d.data_object;
-                query.irods     = 1;
                 getFile(response, query);
             } else {
-                query.files = files;
                 mergeFiles(response, query);
             }
         }
@@ -313,7 +300,7 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     //Lets start our server
     server.listen(PORT, function(){
         //Callback triggered when server is successfully listening. Hurray!
-        console.log("Server listening on: http://localhost:%s", PORT);
+        console.log("Server listening on: http://%s:%s", HOST, PORT);
     });
 });
 
