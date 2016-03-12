@@ -53,7 +53,7 @@ function stViewAttrs(query) {
 
 function stMergeAttrs(query) {
 
-    var attrs = ['merge'];
+    var attrs = ['merge', "-u"];
     if (query.region) {
         var regions = query.region;
         if (typeof regions != 'object') {
