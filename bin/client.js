@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 var http        = require('http');
 
+// HTTP client to connect to an HTTP server runnign on a
+// local unix socket.
+
 var user = process.env.USER;
 http.get({
        socketPath: '/tmp/' + user + '/npg_ranger.sock',
