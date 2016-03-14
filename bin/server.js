@@ -7,7 +7,6 @@ var http        = require('http');
 var child       = require('child_process');
 var url         = require('url');
 var MongoClient = require('mongodb').MongoClient;
-var crypto = require('crypto');
 
 const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
 const SAMTOOLS_COMMAND     = 'samtools';
@@ -17,20 +16,6 @@ const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 var db;
-
-function socket_path() {
-    var howMany = 10;
-    var chars = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
-    var len   = chars.length;
-    var value = value = new Array(howMany);
-    var rnd   = crypto.randomBytes(howMany);
-
-    for (var i = 0; i < howMany; i++) {
-        value[i] = chars[rnd[i] % len]
-    };
-
-    return '/tmp/' + value.join('') + '/sock';
-}
 
 function setContentType(response, query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
