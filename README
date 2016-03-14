@@ -1,15 +1,28 @@
 Proof of concept for retrieving sequence files (sam, bam, cram) via a streaming service
+=======================================================================================
 
-Dowload additional js dependencies
+----Dowload additional js dependencies
 npm install mongodb
 
-Connect to iRODs if needed'
+----Connect to iRODs if needed'
 
-Run server on the default port 9444
+----Run server on the default socket /tmp/${USER}/npg_ranger.sock
 bin/server.js
 
-Run server on a custom port 9447
+----Run server on a custom port 9447
 bin/server.js 9447
+
+----Run server on a custom socket
+bin/server.js 9447 /tmp/my.sock
+
+-----Run a client to query the server that is listening
+on a default socket ( /test URL)
+bin/client.js
+
+Output:
+====RAW HEADERS X-Remote-User,mg8,Host,localhost,Connection,close
+====REMOTE USER IS mg8
+RECEIVED: <html><body><h1>Hello, mg8</h1></body></html>
 
 Queries:
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
@@ -24,8 +37,6 @@ The 'region' option can be specified multiple times.
 
 The default output format is bam. Use 'format' option with value either 'sam' or 'bam' or 'cram' to change the output format.
 
-
-
 TODO LIST
 =========
 
@@ -34,6 +45,37 @@ Client disconnects - any action on the server side to set up?
 Trailer header is used to communicate that an error occured durin gthe data transmission, ie after the headers have been sent. CURL does not understand trailers. It is possible to build a nodejs HTTP client that understands trailers.
 
 It is possible to dynamically compute md5 and send it in a trailer.
+
+
+APACHE REVERSE PROXY
+====================
+
+LDAP authorisation config
+-------------------------
+ <Location / >
+	AuthType Basic
+	AuthBasicProvider ldap 
+	AuthName "LDAP Login For NPG Streaming"
+	AuthLDAPURL "sanger ldap string"
+	Require valid-user
+	AuthLDAPRemoteUserAttribute uid
+	RewriteEngine On
+        RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}]
+	RequestHeader set X-Remote-User %{PROXY_USER}e
+  </Location>
+
+Reverse proxy config
+--------------------
+  ProxyPreserveHost On
+  # to a local server listening on a unix socket, requires Apache v 2.4.7 at least
+  ProxyPass /        unix:/path_to/my.socket|http://localhost/
+  ProxyPassReverse / unix:/path_to/my.socket|http://localhost/
+  # To a local URL
+  #ProxyPass /        http://localhost:9030/
+  #ProxyPassReverse / http://localhost:9030/
+
+
+
 
 
 

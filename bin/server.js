@@ -98,23 +98,24 @@ function setProcessCallbacks (pr, child, response) {
     });
 
     pr.on('error', function (err) {
-        m = 'Error creating process ' + title + ' ' + err;
+        var m =  'Error creating process ' + title + ' ' + err;
         if (child) {
             child.kill();
-	}
+        }
         errorResponse(response, 500, m);
     });
 
     pr.on('exit', function (code) {
+        var m; 
         if (code) {
             m = title + ' exited (on exit) with code ' + code;
             console.log(m);
             if (child) {
                 child.kill();
-	    } else {
+            } else {
                 errorResponse(response, 500, m);
-	    }
-	}
+            }
+        }
     });
 
     pr.on('close', function (code, signal) {
@@ -204,7 +205,7 @@ function getSampleData(response, query){
         } else {
             query.files = files.map(function(f){ return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
             var numFiles = files.length;
-            if (numFiles == 0) {
+            if (numFiles === 0) {
                 console.log('No files for sample accession ' + a);
                 response.end();
             } else if (numFiles == 1) {
@@ -214,6 +215,19 @@ function getSampleData(response, query){
             }
         }
     });
+}
+
+function runTest(request, response, q) {
+
+    console.log('====RAW HEADERS ' + request.rawHeaders);
+    // The headers object contains 'normalized' headers,
+    // note change of case.
+    var user = request.headers['x-remote-user'] || 'Unknown';
+    console.log('====REMOTE USER IS ' + user);
+
+    response.setHeader("Content-Type", 'text/html');
+    response.write('<html><body><h1>Hello, ' +  user + '</h1></body></html>');
+    response.end();
 }
 
 function handleRequest(request, response){
@@ -231,6 +245,9 @@ function handleRequest(request, response){
         response.setHeader('Trailer', 'data_truncated'); 
 
     	switch(path) {
+            case '/test':
+            runTest(request, response, q);
+                break;
             case '/file':
                 getFile(response, q);
                 break;
@@ -268,12 +285,12 @@ function createTempDataDir() {
 var server = http.createServer(handleRequest);
 
 var mongo_options = {
-  db:{
-    numberOfRetries : 5
+  db: {
+    numberOfRetries: 5
   },
   server: {
     auto_reconnect: true,
-    poolSize : 40,
+    poolSize: 40,
     socketOptions: {
         connectTimeoutMS: 5000
     }
@@ -296,7 +313,8 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     });
 
     createTempDataDir();
-
+    
+    var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
     //Lets start our server
     server.listen(PORT, function(){
         //Callback triggered when server is successfully listening. Hurray!
