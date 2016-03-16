@@ -46,6 +46,8 @@ Trailer header is used to communicate that an error occured durin gthe data tran
 
 It is possible to dynamically compute md5 and send it in a trailer.
 
+Doing merge inside db callbacks - how to tidy up db memory immediately.
+
 
 APACHE REVERSE PROXY
 ====================

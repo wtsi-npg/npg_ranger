@@ -15,6 +15,7 @@ const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
 const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
+const DATA_TRUNCATION_TRAILER = 'data-truncated';
 
 var db;
 
@@ -88,12 +89,27 @@ function bbbMarkDupsAttrs() {
     return attrs;
 }
 
-function setProcessCallbacks (pr, child, response) {
+function setProcessCallbacks (pr, isHead, child, response) {
 
     var title = pr.title;   
 
     pr.stderr.on('data', function (data) {
         console.log('STDERR for ' + title + ': ' + data);
+    });
+
+    pr.stdout.on('end', function () {
+        // Set trailers while the response has not been flashed
+        var header = {};
+        if (pr.exitCode !== 0 && isHead) {
+             console.log('END - SETTING ERROR TRAILER IN ' + title);
+             var header = {};
+             header[DATA_TRUNCATION_TRAILER] = 'true';
+             response.addTrailers(header);
+        } else if (pr.exitCode === 0) {
+             console.log('END - SETTING SUCCESS TRAILER IN ' + title);
+             header[DATA_TRUNCATION_TRAILER] = 'false';
+             response.addTrailers(header);
+	}
     });
 
     pr.on('error', function (err) {
@@ -105,25 +121,20 @@ function setProcessCallbacks (pr, child, response) {
     });
 
     pr.on('exit', function (code) {
-        var m; 
         if (code) {
-            m = title + ' exited (on exit) with code ' + code;
-            console.log(m);
             if (child) {
                 child.kill();
-            } else {
-                errorResponse(response, 500, m);
-            }
+            } 
+            errorResponse(response, 500,
+                title + ' exited (on exit) with code ' + code);
         }
     });
 
     pr.on('close', function (code, signal) {
-        if (code) {
-            var m = title + ' exited (on close) with code ' + code;
-            if (!child) {
-                errorResponse(response, 500, m);
-	    }
-        } else if (signal != null) {
+        if (code) {  
+            errorResponse(response, 500,
+                title + ' exited (on close) with code ' + code);  
+        }  else if (signal != null) {
             console.log(title + ' terminated by a parent ' + signal);
             if (child) {
                 child.kill();
@@ -142,8 +153,6 @@ function errorResponse (response, code, m) {
     if (!response.headersSent) {
         response.statusCode    = code;
         response.statusMessage = m;
-    } else {
-        response.addTrailers({'data_truncated': 'true'});
     }
     response.end();
 }
@@ -160,7 +169,7 @@ function getFile(response, query, authorised){
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
     view.title = 'samtools view';
     view.stdout.pipe(response);
-    setProcessCallbacks(view, null, response);
+    setProcessCallbacks(view, 1, null, response);
 }
 
 function mergeFiles(response, query){
@@ -182,9 +191,9 @@ function mergeFiles(response, query){
     markdup.stdout.pipe(view.stdin);
     view.stdout.pipe(response);
 
-    setProcessCallbacks(merge,   markdup, response);
-    setProcessCallbacks(markdup, view,    response);
-    setProcessCallbacks(view,    null,    response);
+    setProcessCallbacks(merge,   1, markdup, response);
+    setProcessCallbacks(markdup, 0, view,    response);
+    setProcessCallbacks(view,    0, null,    response);
 }
 
 function authorise(user, files, whatnot, badluck) {
@@ -247,6 +256,7 @@ function getSampleData(response, query, user){
         if (doc != null) {
             files.push(doc);
         } else {
+            cursor.close(); // Got all results, do not need the cursor any longer.
             var numFiles = files.length;
             if (numFiles === 0) {
                 console.log('No files for sample accession ' + a);
@@ -309,7 +319,7 @@ function handleRequest(request, response){
             q.format = 'bam';
         }
 
-        response.setHeader('Trailer', 'data_truncated'); 
+        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER); 
 
     	switch(path) {
             case '/test':
