@@ -10,7 +10,7 @@ var util        = require('util');
 var MongoClient = require('mongodb').MongoClient;
 
 const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND     = 'samtools';
+const SAMTOOLS_COMMAND     = 'samtools_irods';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
 const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
