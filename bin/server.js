@@ -85,7 +85,7 @@ function stMergeAttrs(query) {
 function bbbMarkDupsAttrs() {
     var attrs = ['level=0','verbose=0','resetdupflag=1'];
     attrs.push('tmpfile=' + tempFilePath());
-    attrs.push('M=' + tempFilePath());
+    attrs.push('M=/dev/null');
     return attrs;
 }
 
@@ -95,21 +95,6 @@ function setProcessCallbacks (pr, isHead, child, response) {
 
     pr.stderr.on('data', function (data) {
         console.log('STDERR for ' + title + ': ' + data);
-    });
-
-    pr.stdout.on('end', function () {
-        // Set trailers while the response has not been flashed
-        var header = {};
-        if (pr.exitCode !== 0 && isHead) {
-             console.log('END - SETTING ERROR TRAILER IN ' + title);
-             var header = {};
-             header[DATA_TRUNCATION_TRAILER] = 'true';
-             response.addTrailers(header);
-        } else if (pr.exitCode === 0) {
-             console.log('END - SETTING SUCCESS TRAILER IN ' + title);
-             header[DATA_TRUNCATION_TRAILER] = 'false';
-             response.addTrailers(header);
-	}
     });
 
     pr.on('error', function (err) {
