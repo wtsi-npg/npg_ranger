@@ -194,7 +194,8 @@ function getSampleData(response, query){
                            {'avh.manual_qc': "1"},
                            {'avh.alignment': "1"} ]};
     var localkey = 'filepath_by_host.' + HOST;
-    var columns = {_id:0, 'filepath_by_host.*':1, localkey:1, 'access_control_group_id': 1};
+    var columns = {_id:0, 'filepath_by_host.*':1, 'access_control_group_id': 1};
+    columns[localkey]=1;
     var files   = [];
     
     var cursor = db.collection('fileinfo').find(dbquery, columns);
