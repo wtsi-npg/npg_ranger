@@ -6,14 +6,16 @@ var path        = require('path');
 var http        = require('http');
 var child       = require('child_process');
 var url         = require('url');
+var util        = require('util');
 var MongoClient = require('mongodb').MongoClient;
 
 const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND     = 'samtools';
+const SAMTOOLS_COMMAND     = 'samtools_irods';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
 const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
+const DATA_TRUNCATION_TRAILER = 'data-truncated';
 
 var db;
 
@@ -87,12 +89,27 @@ function bbbMarkDupsAttrs() {
     return attrs;
 }
 
-function setProcessCallbacks (pr, child, response) {
+function setProcessCallbacks (pr, isHead, child, response) {
 
     var title = pr.title;   
 
     pr.stderr.on('data', function (data) {
         console.log('STDERR for ' + title + ': ' + data);
+    });
+
+    pr.stdout.on('end', function () {
+        // Set trailers while the response has not been flashed
+        var header = {};
+        if (pr.exitCode !== 0 && isHead) {
+             console.log('END - SETTING ERROR TRAILER IN ' + title);
+             var header = {};
+             header[DATA_TRUNCATION_TRAILER] = 'true';
+             response.addTrailers(header);
+        } else if (pr.exitCode === 0) {
+             console.log('END - SETTING SUCCESS TRAILER IN ' + title);
+             header[DATA_TRUNCATION_TRAILER] = 'false';
+             response.addTrailers(header);
+	}
     });
 
     pr.on('error', function (err) {
@@ -104,25 +121,20 @@ function setProcessCallbacks (pr, child, response) {
     });
 
     pr.on('exit', function (code) {
-        var m; 
         if (code) {
-            m = title + ' exited (on exit) with code ' + code;
-            console.log(m);
             if (child) {
                 child.kill();
-            } else {
-                errorResponse(response, 500, m);
-            }
+            } 
+            errorResponse(response, 500,
+                title + ' exited (on exit) with code ' + code);
         }
     });
 
     pr.on('close', function (code, signal) {
-        if (code) {
-            var m = title + ' exited (on close) with code ' + code;
-            if (!child) {
-                errorResponse(response, 500, m);
-	    }
-        } else if (signal != null) {
+        if (code) {  
+            errorResponse(response, 500,
+                title + ' exited (on close) with code ' + code);  
+        }  else if (signal != null) {
             console.log(title + ' terminated by a parent ' + signal);
             if (child) {
                 child.kill();
@@ -141,14 +153,15 @@ function errorResponse (response, code, m) {
     if (!response.headersSent) {
         response.statusCode    = code;
         response.statusMessage = m;
-    } else {
-        response.addTrailers({'data_truncated': 'true'});
     }
     response.end();
 }
 
-function getFile(response, query){
-
+function getFile(response, query, authorised){
+  
+    if (!authorised) {
+        throw 'Authorisation flag is not set';
+    }
     if (!(query.directory && query.name)) {
         throw 'Both directory and name should be given';
     }
@@ -156,7 +169,7 @@ function getFile(response, query){
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
     view.title = 'samtools view';
     view.stdout.pipe(response);
-    setProcessCallbacks(view, null, response);
+    setProcessCallbacks(view, 1, null, response);
 }
 
 function mergeFiles(response, query){
@@ -178,12 +191,52 @@ function mergeFiles(response, query){
     markdup.stdout.pipe(view.stdin);
     view.stdout.pipe(response);
 
-    setProcessCallbacks(merge,   markdup, response);
-    setProcessCallbacks(markdup, view,    response);
-    setProcessCallbacks(view,    null,    response);
+    setProcessCallbacks(merge,   1, markdup, response);
+    setProcessCallbacks(markdup, 0, view,    response);
+    setProcessCallbacks(view,    0, null,    response);
 }
 
-function getSampleData(response, query){
+function authorise(user, files, whatnot, badluck) {
+
+    if (user.username) {
+        if (files && (files instanceof Array) && files.length) {
+            var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
+            if (agroup_ids.every(function(id) { return id; })) {
+                agroup_ids.sort();
+                // Get a list of unique ids
+                agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
+                    return (index == 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1)});
+                console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
+                var dbquery = {
+                    "members"                : user.username,
+                    "access_control_group_id": {$in: agroup_ids}
+                              };
+                db.collection('access_control_group').count(dbquery,
+                    function (err, count) {
+                        if (err) {
+                            badluck('Failed to get authorisation info');
+                            return;
+			}
+	                if (count == agroup_ids.length) {
+                            whatnot();
+		        } else {
+                            var qualifier = count ? 'any' : 'some';
+                            badluck('Not authorised for ' + qualifier + ' of the files');
+		        }
+	            }
+                );
+	    } else {
+                badluck('Access group id is missing for one of the files');
+	    }
+	} else {
+            badluck('File info is not available, cannot authorise access');
+	}
+    } else {
+        badluck('Username is not known');
+    }
+}
+
+function getSampleData(response, query, user){
 
     var a = query.accession;
     if (!a) {
@@ -194,7 +247,7 @@ function getSampleData(response, query){
                            {'avh.target':    "1"},
                            {'avh.manual_qc': "1"},
                            {'avh.alignment': "1"} ]};
-    var columns = {_id:0, collection:1, data_object: 1};
+    var columns = {_id:0, collection:1, data_object: 1, access_control_group_id: 1};
     var files   = [];
     
     var cursor = db.collection('fileinfo').find(dbquery, columns);
@@ -203,19 +256,33 @@ function getSampleData(response, query){
         if (doc != null) {
             files.push(doc);
         } else {
+            cursor.close(); // Got all results, do not need the cursor any longer.
             var numFiles = files.length;
             if (numFiles === 0) {
                 console.log('No files for sample accession ' + a);
                 response.end();
-            } else if (numFiles === 1) {
-                var d = files[0];
-                query.directory = d.collection;
-                query.name      = d.data_object;
-                query.irods     = 1;
-                getFile(response, query);
             } else {
-                query.files = files;
-                mergeFiles(response, query);
+                var whatnot = function() {
+                    console.log("User " + user.username + " is given access");
+                    if (numFiles === 1) {
+                        var d = files[0];
+                        query.directory = d.collection;
+                        query.name      = d.data_object;
+                        query.irods     = 1;
+                        getFile(response, query, 1);
+                    } else {
+                        query.files = files;
+                        mergeFiles(response, query);
+                    }
+		}
+                var badluck = function(message) {
+                   var m = util.format(
+                       "Authorisation failed for %s: %s", user.username, message);
+                   console.log(m);
+                   errorResponse(response, 401, m);
+		};
+                
+                authorise(user, files, whatnot, badluck);
             }
         }
     });
@@ -234,6 +301,12 @@ function runTest(request, response, q) {
     response.end();
 }
 
+function getUser(request) {
+    var user = {};
+    user.username   = request.headers['x-remote-user'] || null;
+    return user;
+}
+
 function handleRequest(request, response){
 
     try {
@@ -246,17 +319,17 @@ function handleRequest(request, response){
             q.format = 'bam';
         }
 
-        response.setHeader('Trailer', 'data_truncated'); 
+        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER); 
 
     	switch(path) {
             case '/test':
-            runTest(request, response, q);
+                runTest(request, response, q);
                 break;
             case '/file':
                 getFile(response, q);
                 break;
             case '/sample':
-                getSampleData(response, q);
+                getSampleData(response, q, getUser(request));
                 break;
             default:
                 errorResponse(response, 404, 'Not found: ' + request.url);
