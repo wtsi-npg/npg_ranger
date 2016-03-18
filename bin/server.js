@@ -2,6 +2,7 @@
 
 var os          = require('os');
 var fs          = require('fs');
+var fse         = require('fs-extra');
 var path        = require('path');
 var http        = require('http');
 var child       = require('child_process');
@@ -173,8 +174,11 @@ function getFile(response, query, user){
 function mergeFiles(response, query){
 
     setContentType(response, query);
-
-    const merge = child.spawn(SAMTOOLS_COMMAND, stMergeAttrs(query));
+    var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
+    fs.mkdirSync(dir);
+    const merge = child.spawn(SAMTOOLS_COMMAND,
+                              stMergeAttrs(query),
+                              {cwd: dir});
     merge.title = 'samtools merge';
 
     const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
@@ -192,6 +196,13 @@ function mergeFiles(response, query){
     setProcessCallbacks(merge,   markdup, response);
     setProcessCallbacks(markdup, view,    response);
     setProcessCallbacks(view,    null,    response);
+    merge.on('close', function () {
+	fse.remove(dir, function(err) {
+            if (err) {
+                console.log(`Failed to remove ${dir}: ${err}`);
+	    }
+        });
+    });
 }
 
 function authorise(user, files, whatnot, badluck) {
