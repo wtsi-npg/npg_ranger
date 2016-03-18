@@ -16,6 +16,7 @@ const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
 const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
+const DEFAULT_FORMAT       = 'bam';
 
 var db;
 
@@ -89,50 +90,61 @@ function bbbMarkDupsAttrs() {
     return attrs;
 }
 
-function setProcessCallbacks (pr, isHead, child, response) {
+function setProcessCallbacks (pr, child, response) {
 
     var title = pr.title;   
 
     pr.stderr.on('data', function (data) {
-        console.log('STDERR for ' + title + ': ' + data);
+        console.log('STDERR FOR ' + title + ': ' + data);
     });
 
     pr.on('error', function (err) {
-        var m =  'Error creating process ' + title + ' ' + err;
+        console.log('ERROR CREATING PROCESS ' + title + ': ' + err);
         if (child) {
             child.kill();
         }
-        errorResponse(response, 500, m);
+        endResponse(response, 0);
     });
 
-    pr.on('exit', function (code) {
-        if (code) {
-            if (child) {
-                child.kill();
-            } 
-            errorResponse(response, 500,
-                title + ' exited (on exit) with code ' + code);
-        }
-    });
-
-    pr.on('close', function (code, signal) {
-        if (code) {  
-            errorResponse(response, 500,
-                title + ' exited (on close) with code ' + code);  
-        }  else if (signal != null) {
-            console.log(title + ' terminated by a parent ' + signal);
+    pr.on('exit', function (code, signal) {
+        if (code != null) {
+            if (code) {
+                console.log(`CLOSED WITH CODE ${code}: ${title}`);
+                endResponse(response, 0);
+                if (child) {
+                    child.kill();
+	        }   
+	    } else {
+                if (!child) {
+		    endResponse(response, 1);
+	        }
+	    }
+        }  else {
+            console.log(`RECEIVED SIGNAL ${signal} IN ${title}`);
             if (child) {
                 child.kill();
 	    }
-	}
+        }    
     });
+}
+
+function endResponse(response, success, title ) {
+    // Unfortunatelly, no way to access the trailers already set.
+    // We cannot check that, if the message has gone already,
+    // it had correct trailer.
+    if (!response.finished) {
+        var header = {};
+        header[DATA_TRUNCATION_TRAILER] = success ? 'false' : 'true';
+        response.addTrailers(header);
+        response.end();
+    }
 }
 
 function errorResponse (response, code, m) {
 
-    m = m || '';
+    m = m || 'Unknown error';
     if (code == 500) {
-        m = m ? ('Internal server error: ' + m) : 'Internal server error';
+        m = 'Internal server error: ' + m;
     }
     console.log(m);
     if (!response.headersSent) {
@@ -142,11 +154,12 @@ function errorResponse (response, code, m) {
     response.end();
 }
 
-function getFile(response, query, authorised){
-  
-    if (!authorised) {
-        throw 'Authorisation flag is not set';
+function getFile(response, query, user){
+
+    if (user) {
+        console.log('IMPLEMENT USER AUTHORISATION FOR FILES FROM IRODS!');
     }
+  
     if (!(query.directory && query.name)) {
         throw 'Both directory and name should be given';
     }
@@ -154,7 +167,7 @@ function getFile(response, query, authorised){
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
     view.title = 'samtools view';
     view.stdout.pipe(response);
-    setProcessCallbacks(view, 1, null, response);
+    setProcessCallbacks(view, null, response);
 }
 
 function mergeFiles(response, query){
@@ -174,11 +187,11 @@ function mergeFiles(response, query){
 
     merge.stdout.pipe(markdup.stdin);
     markdup.stdout.pipe(view.stdin);
-    view.stdout.pipe(response);
+    view.stdout.pipe(response, {end: false});
 
-    setProcessCallbacks(merge,   1, markdup, response);
-    setProcessCallbacks(markdup, 0, view,    response);
-    setProcessCallbacks(view,    0, null,    response);
+    setProcessCallbacks(merge,   markdup, response);
+    setProcessCallbacks(markdup, view,    response);
+    setProcessCallbacks(view,    null,    response);
 }
 
 function authorise(user, files, whatnot, badluck) {
@@ -254,7 +267,7 @@ function getSampleData(response, query, user){
                         query.directory = d.collection;
                         query.name      = d.data_object;
                         query.irods     = 1;
-                        getFile(response, query, 1);
+                        getFile(response, query);
                     } else {
                         query.files = files;
                         mergeFiles(response, query);
@@ -273,19 +286,6 @@ function getSampleData(response, query, user){
     });
 }
 
-function runTest(request, response, q) {
-
-    console.log('====RAW HEADERS ' + request.rawHeaders);
-    // The headers object contains 'normalized' headers,
-    // note change of case.
-    var user = request.headers['x-remote-user'] || 'Unknown';
-    console.log('====REMOTE USER IS ' + user);
-
-    response.setHeader("Content-Type", 'text/html');
-    response.write('<html><body><h1>Hello, ' +  user + '</h1></body></html>');
-    response.end();
-}
-
 function getUser(request) {
     var user = {};
     user.username   = request.headers['x-remote-user'] || null;
@@ -301,28 +301,26 @@ function handleRequest(request, response){
         var q = url_obj.query;
 
         if (!q.format) {
-            q.format = 'bam';
+            q.format = DEFAULT_FORMAT;
         }
 
-        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER); 
+        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
+        user = getUser(request);
 
     	switch(path) {
-            case '/test':
-                runTest(request, response, q);
-                break;
             case '/file':
-                getFile(response, q);
+            getFile(response, q, user);
                 break;
             case '/sample':
-                getSampleData(response, q, getUser(request));
+                getSampleData(response, q, user);
                 break;
             default:
                 errorResponse(response, 404, 'Not found: ' + request.url);
     	}
 
     } catch (err) {
-        console.log('Error handling request for ' + request.url + ': ' + err);
-        errorResponse(response, 500);
+        errorResponse(response, 500,
+            'Error handling request for ' + request.url + ': ' + err);
     }
 }
 
