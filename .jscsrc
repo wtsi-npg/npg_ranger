@@ -1,5 +1,5 @@
 {
-  "preset": "jquery",
+  "preset": "node-style-guide",
   "disallowTrailingComma": false,
   "maximumLineLength": {
     "value": 120,
