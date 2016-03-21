@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+"use strict";
+
 var os      = require('os');
 var fs      = require('fs');
 var fse     = require('fs-extra');
@@ -70,8 +72,8 @@ function stMergeAttrs(query) {
   var files = query.files;
   var re_bam  = /\.bam$/;
   var re_cram = /\.cram$/;
-  var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object)});
-  var some_cram = files.some(function(f){ return re_cram.test(f.data_object)});
+  var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object); });
+  var some_cram = files.some(function(f){ return re_cram.test(f.data_object); });
   if (some_bam && some_cram) {
     throw 'Either some files are bam and some are cram or all files are in unexpected format';
   }
@@ -129,7 +131,7 @@ function setProcessCallbacks (pr, child, response) {
   });
 }
 
-function endResponse(response, success, title ) {
+function endResponse(response, success) {
   // Unfortunatelly, no way to access the trailers already set.
   // We cannot check that, if the message has gone already,
   // it had correct trailer.
@@ -184,8 +186,8 @@ function mergeFiles(response, query){
   const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
   markdup.title = BBB_MARKDUPS_COMMAND;
 
-  delete query['region'];
-  delete query['directory'];
+  delete query.region;
+  delete query.directory;
   const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
   view.title = 'samtools view (post-merge)';
 
@@ -214,7 +216,8 @@ function authorise(user, files, whatnot, badluck) {
         agroup_ids.sort();
         // Get a list of unique ids
         agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-          return (index == 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1)});
+          return (index === 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1);
+        });
         console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
         var dbquery = {
           "members"        : user.username,
@@ -261,7 +264,9 @@ function getSampleData(response, query, user){
   
   var cursor = db.collection('fileinfo').find(dbquery, columns);
   cursor.each(function(err, doc) {
-    if(err) throw err;
+    if(err) {
+      throw err;
+    }
     if (doc != null) {
       files.push(doc);
     } else {
@@ -283,7 +288,7 @@ function getSampleData(response, query, user){
             query.files = files;
             mergeFiles(response, query);
           }
-        }
+        };
         var badluck = function(message) {
           var m = util.format(
             "Authorisation failed for %s: %s", user.username, message);
@@ -316,7 +321,7 @@ function handleRequest(request, response){
     }
 
     response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
-    user = getUser(request);
+    var user = getUser(request);
 
     switch(path) {
       case '/file':
@@ -372,7 +377,9 @@ var mongo_options = {
 
 MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
-  if(err) throw err;
+  if(err) {
+    throw err;
+  }
   db = database;
   console.log('Connected to mongodb');
 

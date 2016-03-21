@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+
+"use strict";
+
 var http    = require('http');
 
 // HTTP client to connect to an HTTP server runnign on a
