@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+"use strict";
+
 var os          = require('os');
 var fs          = require('fs');
 var path        = require('path');
@@ -32,7 +34,7 @@ function stViewAttrs(query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
        attrs.push(query.format === 'bam' ? '-b' : '-C');
     }
-    
+
     var file = '-';
     if (query.directory && query.name) {
         file = query.directory + '/' + query.name;
@@ -45,7 +47,7 @@ function stViewAttrs(query) {
     if (query.region) {
         attrs = attrs.concat(query.region);
     }
-    
+
     console.log(attrs);
     return attrs;
 }
@@ -64,12 +66,12 @@ function stMergeAttrs(query) {
         });
     }
     attrs.push('-');
- 
+
     var files = query.files;
     var re_bam  = /\.bam$/;
     var re_cram = /\.cram$/;
-    var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object)});
-    var some_cram = files.some(function(f){ return re_cram.test(f.data_object)});
+    var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object); });
+    var some_cram = files.some(function(f){ return re_cram.test(f.data_object); });
     if (some_bam && some_cram) {
         throw 'Either some files are bam and some are cram or all files are in unexpected format';
     }
@@ -91,7 +93,7 @@ function bbbMarkDupsAttrs() {
 
 function setProcessCallbacks (pr, isHead, child, response) {
 
-    var title = pr.title;   
+    var title = pr.title;
 
     pr.stderr.on('data', function (data) {
         console.log('STDERR for ' + title + ': ' + data);
@@ -109,22 +111,22 @@ function setProcessCallbacks (pr, isHead, child, response) {
         if (code) {
             if (child) {
                 child.kill();
-            } 
+            }
             errorResponse(response, 500,
                 title + ' exited (on exit) with code ' + code);
         }
     });
 
     pr.on('close', function (code, signal) {
-        if (code) {  
+        if (code) {
             errorResponse(response, 500,
-                title + ' exited (on close) with code ' + code);  
+                title + ' exited (on close) with code ' + code);
         }  else if (signal != null) {
             console.log(title + ' terminated by a parent ' + signal);
             if (child) {
                 child.kill();
-	    }
-	}
+        }
+    }
     });
 }
 
@@ -143,7 +145,7 @@ function errorResponse (response, code, m) {
 }
 
 function getFile(response, query, authorised){
-  
+
     if (!authorised) {
         throw 'Authorisation flag is not set';
     }
@@ -190,7 +192,7 @@ function authorise(user, files, whatnot, badluck) {
                 agroup_ids.sort();
                 // Get a list of unique ids
                 agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-                    return (index == 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1)});
+                    return (index === 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1); });
                 console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
                 var dbquery = {
                     "members"                : user.username,
@@ -201,21 +203,21 @@ function authorise(user, files, whatnot, badluck) {
                         if (err) {
                             badluck('Failed to get authorisation info');
                             return;
-			}
-	                if (count == agroup_ids.length) {
+            }
+                    if (count == agroup_ids.length) {
                             whatnot();
-		        } else {
+                } else {
                             var qualifier = count ? 'any' : 'some';
                             badluck('Not authorised for ' + qualifier + ' of the files');
-		        }
-	            }
+                }
+                }
                 );
-	    } else {
+        } else {
                 badluck('Access group id is missing for one of the files');
-	    }
-	} else {
+        }
+    } else {
             badluck('File info is not available, cannot authorise access');
-	}
+    }
     } else {
         badluck('Username is not known');
     }
@@ -227,17 +229,17 @@ function getSampleData(response, query, user){
     if (!a) {
         throw 'Sample accession number should be given';
     }
-    
+
     var dbquery = { $and: [{'avh.sample_accession_number': a},
                            {'avh.target':    "1"},
                            {'avh.manual_qc': "1"},
                            {'avh.alignment': "1"} ]};
     var columns = {_id:0, collection:1, data_object: 1, access_control_group_id: 1};
     var files   = [];
-    
+
     var cursor = db.collection('fileinfo').find(dbquery, columns);
     cursor.each(function(err, doc) {
-        if(err) throw err;
+        if(err) { throw err; }
         if (doc != null) {
             files.push(doc);
         } else {
@@ -259,14 +261,14 @@ function getSampleData(response, query, user){
                         query.files = files;
                         mergeFiles(response, query);
                     }
-		}
+        }
                 var badluck = function(message) {
                    var m = util.format(
                        "Authorisation failed for %s: %s", user.username, message);
                    console.log(m);
                    errorResponse(response, 401, m);
-		};
-                
+        };
+
                 authorise(user, files, whatnot, badluck);
             }
         }
@@ -304,9 +306,9 @@ function handleRequest(request, response){
             q.format = 'bam';
         }
 
-        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER); 
+        response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
 
-    	switch(path) {
+        switch(path) {
             case '/test':
                 runTest(request, response, q);
                 break;
@@ -318,7 +320,7 @@ function handleRequest(request, response){
                 break;
             default:
                 errorResponse(response, 404, 'Not found: ' + request.url);
-    	}
+        }
 
     } catch (err) {
         console.log('Error handling request for ' + request.url + ': ' + err);
@@ -363,7 +365,7 @@ var mongo_options = {
 
 MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
-    if(err) throw err;
+    if(err) { throw err; }
     db = database;
     console.log('Connected to mongodb');
 
@@ -375,7 +377,7 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     });
 
     createTempDataDir();
-    
+
     var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
     //Lets start our server
     server.listen(sock, function(){
