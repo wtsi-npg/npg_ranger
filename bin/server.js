@@ -8,14 +8,24 @@ var child       = require('child_process');
 var url         = require('url');
 var util        = require('util');
 var MongoClient = require('mongodb').MongoClient;
+var GetOpt      = require('node-getopt');
 
-const MONGO                = 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND     = 'samtools_irods';
+var opt = new GetOpt([
+    ['p','port=PORT'        ,'PORT or socket server listens on'],
+    ['m','mongourl=URI'     ,'URI to contact mongodb'],
+    ['t','tempdir=PATH'     ,'PATH of temporary directory'],
+    ['H','hostname=HOST'    ,'override hostname with HOST'],
+    ['h','help'             ,'display this help']
+]).bindHelp().parseSystem();
+
+const PORT                 = opt.options.port || opt.argv[0] || 9444;
+const HOST                 = opt.options.hostname || os.hostname() || 'localhost';
+const MONGO                = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
+const SAMTOOLS_COMMAND     = 'samtools';
 const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
-const IRODS_PATH_PREFIX    = 'irods:';
 const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
-const TEMP_DATA_DIR        = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
+const TEMP_DATA_DIR        = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 var db;
 
@@ -32,16 +42,9 @@ function stViewAttrs(query) {
     if (query.format && (query.format === 'bam' || query.format === 'cram')) {
        attrs.push(query.format === 'bam' ? '-b' : '-C');
     }
-    
-    var file = '-';
-    if (query.directory && query.name) {
-        file = query.directory + '/' + query.name;
-        if (query.irods) {
-            file = IRODS_PATH_PREFIX + file;
-        }
-    }
-    attrs.push(file);
 
+    attrs.push(query.files.shift() || "-");
+    
     if (query.region) {
         attrs = attrs.concat(query.region);
     }
@@ -52,7 +55,7 @@ function stViewAttrs(query) {
 
 function stMergeAttrs(query) {
 
-    var attrs = ['merge'];
+    var attrs = ['merge', "-u"];
     if (query.region) {
         var regions = query.region;
         if (typeof regions != 'object') {
@@ -74,9 +77,8 @@ function stMergeAttrs(query) {
         throw 'Either some files are bam and some are cram or all files are in unexpected format';
     }
 
-    attrs = attrs.concat(files.map(function(f){
-        return IRODS_PATH_PREFIX + f.collection + '/' + f.data_object;
-    }));
+    attrs = attrs.concat(files );
+    query.files.length=0;
 
     console.log(attrs);
     return attrs;
@@ -146,9 +148,6 @@ function getFile(response, query, authorised){
   
     if (!authorised) {
         throw 'Authorisation flag is not set';
-    }
-    if (!(query.directory && query.name)) {
-        throw 'Both directory and name should be given';
     }
     setContentType(response, query);
     const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
@@ -232,7 +231,9 @@ function getSampleData(response, query, user){
                            {'avh.target':    "1"},
                            {'avh.manual_qc': "1"},
                            {'avh.alignment': "1"} ]};
-    var columns = {_id:0, collection:1, data_object: 1, access_control_group_id: 1};
+    var localkey = 'filepath_by_host.' + HOST;
+    var columns = {_id:0, 'filepath_by_host.*':1, 'access_control_group_id': 1};
+    columns[localkey]=1;
     var files   = [];
     
     var cursor = db.collection('fileinfo').find(dbquery, columns);
@@ -242,6 +243,7 @@ function getSampleData(response, query, user){
             files.push(doc);
         } else {
             cursor.close(); // Got all results, do not need the cursor any longer.
+            query.files = files.map(function(f){ return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
             var numFiles = files.length;
             if (numFiles === 0) {
                 console.log('No files for sample accession ' + a);
@@ -250,13 +252,8 @@ function getSampleData(response, query, user){
                 var whatnot = function() {
                     console.log("User " + user.username + " is given access");
                     if (numFiles === 1) {
-                        var d = files[0];
-                        query.directory = d.collection;
-                        query.name      = d.data_object;
-                        query.irods     = 1;
                         getFile(response, query, 1);
                     } else {
-                        query.files = files;
                         mergeFiles(response, query);
                     }
 		}
@@ -365,7 +362,7 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
     if(err) throw err;
     db = database;
-    console.log('Connected to mongodb');
+    console.log('Connected to mongodb at ' + MONGO);
 
     //Callback for a graceful exit
     server.on('close', function(){
@@ -378,9 +375,9 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     
     var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
     //Lets start our server
-    server.listen(sock, function(){
+    server.listen(PORT, function(){
         //Callback triggered when server is successfully listening. Hurray!
-        console.log("Server listening on %s, %s", os.hostname(), sock);
+        console.log("Server listening on: http://%s:%s", HOST, PORT);
     });
 });
 

@@ -32,7 +32,8 @@
     "bin/client.js"
   ],
   "dependencies": {
-    "mongodb": "^2.1.7"
+    "mongodb": "^2.1.7",
+    "node-getopt": "^0.2.3"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
