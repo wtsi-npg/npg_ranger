@@ -34,9 +34,9 @@ function stViewAttrs(query) {
   var attrs = ['view', '-h'];
 
   if (query.format && (query.format === 'bam' || query.format === 'cram')) {
-     attrs.push(query.format === 'bam' ? '-b' : '-C');
+    attrs.push(query.format === 'bam' ? '-b' : '-C');
   }
-  
+
   var file = '-';
   if (query.directory && query.name) {
     file = query.directory + '/' + query.name;
@@ -49,7 +49,7 @@ function stViewAttrs(query) {
   if (query.region) {
     attrs = attrs.concat(query.region);
   }
-  
+
   console.log(attrs);
   return attrs;
 }
@@ -62,23 +62,23 @@ function stMergeAttrs(query) {
     if (typeof regions != 'object') {
       regions = [regions];
     }
-    regions.map(function(r){
+    regions.map(function(r) {
       attrs.push('-R');
       attrs.push(r);
     });
   }
   attrs.push('-');
- 
+
   var files = query.files;
   var re_bam  = /\.bam$/;
   var re_cram = /\.cram$/;
-  var some_bam  = files.some(function(f){ return  re_bam.test(f.data_object); });
-  var some_cram = files.some(function(f){ return re_cram.test(f.data_object); });
+  var some_bam  = files.some(function(f) { return re_bam.test(f.data_object); });
+  var some_cram = files.some(function(f) { return re_cram.test(f.data_object); });
   if (some_bam && some_cram) {
     throw 'Either some files are bam and some are cram or all files are in unexpected format';
   }
 
-  attrs = attrs.concat(files.map(function(f){
+  attrs = attrs.concat(files.map(function(f) {
     return IRODS_PATH_PREFIX + f.collection + '/' + f.data_object;
   }));
 
@@ -93,15 +93,15 @@ function bbbMarkDupsAttrs() {
   return attrs;
 }
 
-function setProcessCallbacks (pr, child, response) {
+function setProcessCallbacks(pr, child, response) {
 
-  var title = pr.title;   
+  var title = pr.title;
 
-  pr.stderr.on('data', function (data) {
+  pr.stderr.on('data', function(data) {
     console.log('STDERR FOR ' + title + ': ' + data);
   });
 
-  pr.on('error', function (err) {
+  pr.on('error', function(err) {
     console.log('ERROR CREATING PROCESS ' + title + ': ' + err);
     if (child) {
       child.kill();
@@ -109,14 +109,14 @@ function setProcessCallbacks (pr, child, response) {
     endResponse(response, 0);
   });
 
-  pr.on('exit', function (code, signal) {
+  pr.on('exit', function(code, signal) {
     if (code != null) {
       if (code) {
         console.log(`CLOSED WITH CODE ${code}: ${title}`);
         endResponse(response, 0);
         if (child) {
           child.kill();
-        }   
+        }
       } else {
         if (!child) {
           endResponse(response, 1);
@@ -127,11 +127,12 @@ function setProcessCallbacks (pr, child, response) {
       if (child) {
         child.kill();
       }
-    }  
+    }
   });
 }
 
 function endResponse(response, success) {
+
   // Unfortunatelly, no way to access the trailers already set.
   // We cannot check that, if the message has gone already,
   // it had correct trailer.
@@ -143,7 +144,7 @@ function endResponse(response, success) {
   }
 }
 
-function errorResponse (response, code, m) {
+function errorResponse(response, code, m) {
 
   m = m || 'Unknown error';
   if (code == 500) {
@@ -157,12 +158,12 @@ function errorResponse (response, code, m) {
   response.end();
 }
 
-function getFile(response, query, user){
+function getFile(response, query, user) {
 
   if (user) {
     console.log('IMPLEMENT USER AUTHORISATION FOR FILES FROM IRODS!');
   }
-  
+
   if (!(query.directory && query.name)) {
     throw 'Both directory and name should be given';
   }
@@ -173,7 +174,7 @@ function getFile(response, query, user){
   setProcessCallbacks(view, null, response);
 }
 
-function mergeFiles(response, query){
+function mergeFiles(response, query) {
 
   setContentType(response, query);
   var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
@@ -198,7 +199,7 @@ function mergeFiles(response, query){
   setProcessCallbacks(merge,   markdup, response);
   setProcessCallbacks(markdup, view,  response);
   setProcessCallbacks(view,  null,  response);
-  merge.on('close', function () {
+  merge.on('close', function() {
     fse.remove(dir, function(err) {
       if (err) {
         console.log(`Failed to remove ${dir}: ${err}`);
@@ -216,15 +217,15 @@ function authorise(user, files, whatnot, badluck) {
         agroup_ids.sort();
         // Get a list of unique ids
         agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-          return (index === 0) ? 1 : ((item === thisArray[index-1]) ? 0 : 1);
+          return (index === 0) ? 1 : ((item === thisArray[index - 1]) ? 0 : 1);
         });
         console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
         var dbquery = {
-          "members"        : user.username,
-          "access_control_group_id": {$in: agroup_ids}
-                };
+          members:                 user.username,
+          access_control_group_id: {$in: agroup_ids}
+        };
         db.collection('access_control_group').count(dbquery,
-          function (err, count) {
+          function(err, count) {
             if (err) {
               badluck('Failed to get authorisation info');
               return;
@@ -248,23 +249,23 @@ function authorise(user, files, whatnot, badluck) {
   }
 }
 
-function getSampleData(response, query, user){
+function getSampleData(response, query, user) {
 
   var a = query.accession;
   if (!a) {
     throw 'Sample accession number should be given';
   }
-  
+
   var dbquery = { $and: [{'avh.sample_accession_number': a},
-               {'avh.target':  "1"},
+               {'avh.target':    "1"},
                {'avh.manual_qc': "1"},
                {'avh.alignment': "1"} ]};
-  var columns = {_id:0, collection:1, data_object: 1, access_control_group_id: 1};
+  var columns = {_id: 0, collection: 1, data_object: 1, access_control_group_id: 1};
   var files   = [];
-  
+
   var cursor = db.collection('fileinfo').find(dbquery, columns);
   cursor.each(function(err, doc) {
-    if(err) {
+    if (err) {
       throw err;
     }
     if (doc != null) {
@@ -295,7 +296,7 @@ function getSampleData(response, query, user){
           console.log(m);
           errorResponse(response, 401, m);
         };
-        
+
         authorise(user, files, whatnot, badluck);
       }
     }
@@ -308,7 +309,7 @@ function getUser(request) {
   return user;
 }
 
-function handleRequest(request, response){
+function handleRequest(request, response) {
 
   try {
     var url_obj = url.parse(request.url, true);
@@ -323,15 +324,18 @@ function handleRequest(request, response){
     response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
     var user = getUser(request);
 
-    switch(path) {
-      case '/file':
-      getFile(response, q, user);
+    switch (path) {
+      case '/file': {
+        getFile(response, q, user);
         break;
-      case '/sample':
+      }
+      case '/sample': {
         getSampleData(response, q, user);
         break;
-      default:
+      }
+      default: {
         errorResponse(response, 404, 'Not found: ' + request.url);
+      }
     }
 
   } catch (err) {
@@ -357,19 +361,19 @@ function createTempDataDir() {
   }
 }
 
-//Create a server
+// Create a server
 var server = http.createServer(handleRequest);
 
 var mongo_options = {
   db: {
-  numberOfRetries: 5
+    numberOfRetries: 5
   },
   server: {
-  auto_reconnect: true,
-  poolSize: 40,
-  socketOptions: {
-    connectTimeoutMS: 5000
-  }
+    auto_reconnect: true,
+    poolSize: 40,
+    socketOptions: {
+      connectTimeoutMS: 5000
+    }
   },
   replSet: {},
   mongos: {}
@@ -377,37 +381,37 @@ var mongo_options = {
 
 MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
-  if(err) {
+  if (err) {
     throw err;
   }
   db = database;
   console.log('Connected to mongodb');
 
-  //Callback for a graceful exit
-  server.on('close', function(){
-     console.log('Database connection closing');
-     database.close();
-     console.log('Server closing');
+  // Callback for a graceful exit
+  server.on('close', function() {
+    console.log('Database connection closing');
+    database.close();
+    console.log('Server closing');
   });
 
   createTempDataDir();
-  
+
   var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
-  //Lets start our server
-  server.listen(sock, function(){
-    //Callback triggered when server is successfully listening. Hurray!
+  // Lets start our server
+  server.listen(sock, function() {
+    // Callback triggered when server is successfully listening. Hurray!
     console.log("Server listening on %s, %s", os.hostname(), sock);
   });
 });
 
-process.on('SIGTERM', function () {
-  server.close(function () {
+process.on('SIGTERM', function() {
+  server.close(function() {
     process.exit(0);
   });
 });
 
-process.on('SIGINT', function () {
-  server.close(function () {
+process.on('SIGINT', function() {
+  server.close(function() {
     process.exit(0);
   });
 });
