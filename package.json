@@ -35,5 +35,12 @@
     "fs-extra": "^0.26.7",
     "mongodb": "^2.1.7"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-cli": "*",
+    "load-grunt-tasks": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-jscs": "*"
+  }
 }
