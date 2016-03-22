@@ -15,6 +15,7 @@ var opt = new GetOpt([
     ['m','mongourl=URI'     ,'URI to contact mongodb'],
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
     ['H','hostname=HOST'    ,'override hostname with HOST'],
+    ['s','skipauth'         ,'skip authorisation steps'],
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
@@ -182,6 +183,9 @@ function mergeFiles(response, query){
 
 function authorise(user, files, whatnot, badluck) {
 
+    if (opt.options.skipauth) {
+      whatnot();
+    } else
     if (user.username) {
         if (files && (files instanceof Array) && files.length) {
             var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
