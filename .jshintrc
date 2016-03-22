@@ -11,12 +11,11 @@
   "nocomma" : true,
   "curly"  : true,
   "eqnull" : true,
-  "latedef": true,
+  "latedef": false, // Do tolerate misordered definitions
   "newcap" : true,
   "noarg"  : true,
   "undef"  : true,
   "unused" : true,
   "node"   : true,
-  
   "laxbreak" : true
 } 

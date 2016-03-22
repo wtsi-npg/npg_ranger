@@ -22,7 +22,7 @@ module.exports = function(grunt) {
     },
     watch: {
       js: {
-        files:[
+        files: [
           'Gruntfile.js',
           '.jshintrc',
           '.jscsrc',

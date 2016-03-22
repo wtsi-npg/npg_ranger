@@ -1,6 +1,8 @@
 {
-  "preset": "jquery",
+  "preset": "node-style-guide",
   "disallowTrailingComma": false,
+  "disallowSpacesInsideParentheses": false,
+  "requireTrailingComma": false,
   "maximumLineLength": {
     "value": 120,
     "tabSize": 2,
