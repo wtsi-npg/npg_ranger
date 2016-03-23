@@ -406,7 +406,6 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
   createTempDataDir();
 
-  var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
   //Lets start our server
   server.listen(PORT, function(){
     //Callback triggered when server is successfully listening. Hurray!
