@@ -22,7 +22,8 @@ var opt = new GetOpt([
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
-const PORT                    = opt.options.port || opt.argv[0] || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
+const PORT                    = opt.options.port || opt.argv[0]
+                                || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
 const HOST                    = opt.options.hostname || os.hostname() || 'localhost';
 const MONGO                   = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
 const SAMTOOLS_COMMAND        = 'samtools';
@@ -49,7 +50,7 @@ function stViewAttrs(query) {
   }
 
   attrs.push(query.files.shift() || "-");
-  
+
   if (query.region) {
     attrs = attrs.concat(query.region);
   }
@@ -82,7 +83,7 @@ function stMergeAttrs(query) {
   }
 
   attrs = attrs.concat(files );
-  query.files.length=0;
+  query.files.length = 0;
 
   console.log(attrs);
   return attrs;
@@ -258,14 +259,14 @@ function getData(response, query, user) {
   var a = query.accession;
   var dbquery;
   if (a) {
-    dbquery =  { '$and': [{'avh.sample_accession_number': a},
+    dbquery =  { $and: [{'avh.sample_accession_number': a},
                {'avh.target':    "1"},
                {'avh.manual_qc': "1"},
                {'avh.alignment': "1"} ]};
   } else if (query.name) {
-    dbquery =  {'data_object': query.name};
+    dbquery =  {data_object: query.name};
     if (query.directory) {
-      dbquery =  { '$and': [ dbquery, {'collection': query.directory} ]};
+      dbquery =  { $and: [ dbquery, {collection: query.directory} ]};
     }
   } else {
     throw 'Sample accession number or file should be given';
@@ -273,8 +274,8 @@ function getData(response, query, user) {
   console.log(dbquery);
 
   var localkey = 'filepath_by_host.' + HOST;
-  var columns = {_id:0, 'filepath_by_host.*':1, 'access_control_group_id': 1};
-  columns[localkey]=1;
+  var columns = {_id: 0, 'filepath_by_host.*': 1, access_control_group_id: 1};
+  columns[localkey] = 1;
   var files   = [];
 
   var cursor = db.collection('fileinfo').find(dbquery, columns);
@@ -286,7 +287,7 @@ function getData(response, query, user) {
       files.push(doc);
     } else {
       cursor.close(); // Got all results, do not need the cursor any longer.
-      query.files = files.map(function(f){ return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
+      query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
       var numFiles = files.length;
       if (numFiles === 0) {
         console.log('No files for ' + a ? a : query.name);
@@ -406,9 +407,9 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
   createTempDataDir();
 
-  //Lets start our server
-  server.listen(PORT, function(){
-    //Callback triggered when server is successfully listening. Hurray!
+  // Lets start our server
+  server.listen(PORT, function() {
+    // Callback triggered when server is successfully listening. Hurray!
     console.log("Server listening on %s, %s", HOST, PORT);
   });
 });
