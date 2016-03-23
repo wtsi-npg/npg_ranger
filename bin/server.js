@@ -253,17 +253,25 @@ function authorise(user, files, whatnot, badluck) {
   }
 }
 
-function getSampleData(response, query, user) {
+function getData(response, query, user) {
 
   var a = query.accession;
-  if (!a) {
-    throw 'Sample accession number should be given';
-  }
-
-  var dbquery = { $and: [{'avh.sample_accession_number': a},
+  var dbquery;
+  if (a) {
+    dbquery =  { '$and': [{'avh.sample_accession_number': a},
                {'avh.target':    "1"},
                {'avh.manual_qc': "1"},
                {'avh.alignment': "1"} ]};
+  } else if (query.name) {
+    dbquery =  {'data_object': query.name};
+    if (query.directory) {
+      dbquery =  { '$and': [ dbquery, {'collection': query.directory} ]};
+    }
+  } else {
+    throw 'Sample accession number or file should be given';
+  }
+  console.log(dbquery);
+
   var localkey = 'filepath_by_host.' + HOST;
   var columns = {_id:0, 'filepath_by_host.*':1, 'access_control_group_id': 1};
   columns[localkey]=1;
@@ -281,7 +289,7 @@ function getSampleData(response, query, user) {
       query.files = files.map(function(f){ return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
       var numFiles = files.length;
       if (numFiles === 0) {
-        console.log('No files for sample accession ' + a);
+        console.log('No files for ' + a ? a : query.name);
         response.end();
       } else {
         var whatnot = function() {
@@ -328,11 +336,11 @@ function handleRequest(request, response) {
 
     switch (path) {
       case '/file': {
-        getFile(response, q, user);
+        getData(response, q, user);
         break;
       }
       case '/sample': {
-        getSampleData(response, q, user);
+        getData(response, q, user);
         break;
       }
       default: {
