@@ -33,6 +33,30 @@ const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), pr
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
 const DEFAULT_FORMAT          = 'bam';
 
+function createPromiseForProcess(p) {
+  return new Promise(
+    function(resolve, reject) {
+      p.on('close', function(code, signal) {
+        if (code || signal) {
+          reject(code || signal);
+        } else {
+          resolve();
+        }
+      });
+      p.on('error', function(err) {
+        reject(err);
+      });
+      p.stdin.on('error', (err) => {
+        reject(err);
+      });
+      p.stdout.on('error', (err) => {
+        reject(err);
+      });
+    }
+  );
+}
+
+
 var db;
 
 function setContentType(response, query) {
@@ -55,7 +79,7 @@ function stViewAttrs(query) {
     attrs = attrs.concat(query.region);
   }
 
-  console.log(attrs);
+  console.log('view attrs: ' + attrs);
   return attrs;
 }
 
@@ -85,7 +109,7 @@ function stMergeAttrs(query) {
   attrs = attrs.concat(files );
   query.files.length = 0;
 
-  console.log(attrs);
+  console.log('merge attrs: ' + attrs);
   return attrs;
 }
 
@@ -96,43 +120,6 @@ function bbbMarkDupsAttrs() {
   return attrs;
 }
 
-function setProcessCallbacks(pr, child, response) {
-
-  var title = pr.title;
-
-  pr.stderr.on('data', function(data) {
-    console.log('STDERR FOR ' + title + ': ' + data);
-  });
-
-  pr.on('error', function(err) {
-    console.log('ERROR CREATING PROCESS ' + title + ': ' + err);
-    if (child) {
-      child.kill();
-    }
-    endResponse(response, 0);
-  });
-
-  pr.on('exit', function(code, signal) {
-    if (code != null) {
-      if (code) {
-        console.log(`CLOSED WITH CODE ${code}: ${title}`);
-        endResponse(response, 0);
-        if (child) {
-          child.kill();
-        }
-      } else {
-        if (!child) {
-          endResponse(response, 1);
-        }
-      }
-    } else {
-      console.log(`RECEIVED SIGNAL ${signal} IN ${title}`);
-      if (child) {
-        child.kill();
-      }
-    }
-  });
-}
 
 function endResponse(response, success) {
 
@@ -167,14 +154,14 @@ function getFile(response, query, user) {
     console.log('IMPLEMENT USER AUTHORISATION FOR FILES FROM IRODS!');
   }
 
-  if (!(query.directory && query.name)) {
-    throw 'Both directory and name should be given';
-  }
   setContentType(response, query);
   const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+  const prom = createPromiseForProcess(view);
   view.title = 'samtools view';
-  view.stdout.pipe(response);
-  setProcessCallbacks(view, null, response);
+  process.nextTick(() => {
+    view.stdout.pipe(response, {end: false});
+  });
+  return prom;
 }
 
 function mergeFiles(response, query) {
@@ -182,33 +169,36 @@ function mergeFiles(response, query) {
   setContentType(response, query);
   var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
   fs.mkdirSync(dir);
+  const cleanup = function() {  fse.remove(dir, function(err) {
+      if (err) {
+        console.log(`Failed to remove ${dir}: ${err}`);
+      }
+    });
+  };
   const merge = child.spawn(SAMTOOLS_COMMAND,
                 stMergeAttrs(query),
                 {cwd: dir});
+  const mergeprom = createPromiseForProcess(merge);
   merge.title = 'samtools merge';
 
   const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
+  const markdupprom = createPromiseForProcess(markdup);
   markdup.title = BBB_MARKDUPS_COMMAND;
 
   delete query.region;
   delete query.directory;
   const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+  const viewprom = createPromiseForProcess(view);
   view.title = 'samtools view (post-merge)';
 
-  merge.stdout.pipe(markdup.stdin);
-  markdup.stdout.pipe(view.stdin);
-  view.stdout.pipe(response, {end: false});
+  const prom = Promise.all([mergeprom,markdupprom,viewprom]).then(cleanup,cleanup);
 
-  setProcessCallbacks(merge,   markdup, response);
-  setProcessCallbacks(markdup, view,  response);
-  setProcessCallbacks(view,  null,  response);
-  merge.on('close', function() {
-    fse.remove(dir, function(err) {
-      if (err) {
-        console.log(`Failed to remove ${dir}: ${err}`);
-      }
-    });
+  process.nextTick(() => {
+    merge.stdout.pipe(markdup.stdin);
+    markdup.stdout.pipe(view.stdin);
+    view.stdout.pipe(response, {end: false});
   });
+  return prom;
 }
 
 function authorise(user, files, whatnot, badluck) {
@@ -290,16 +280,18 @@ function getData(response, query, user) {
       query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
       var numFiles = files.length;
       if (numFiles === 0) {
-        console.log('No files for ' + a ? a : query.name);
+        console.log('No files for ' + (a ? a : query.name) );
         response.end();
       } else {
         var whatnot = function() {
           console.log("User " + user.username + " is given access");
+          var prom;
           if (numFiles === 1) {
-            getFile(response, query);
+            prom = getFile(response, query);
           } else {
-            mergeFiles(response, query);
+            prom = mergeFiles(response, query);
           }
+          prom.then(function() { endResponse(response,1);}, function() { endResponse(response,0);} );
         };
         var badluck = function(message) {
           var m = util.format(
