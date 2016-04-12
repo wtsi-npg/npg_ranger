@@ -85,7 +85,7 @@ grunt jsdoc
 TESTING
 =======
 
-grunt test
+grunt test - runs all tests
 grunt jasmine_nodejs
 
 
