@@ -13,5 +13,7 @@
   "requireSpacesInsideBrackets": false,
   "requireSpacesInsideParentheses": false,
   "validateQuoteMarks": false,
-  "requirePaddingNewLinesBeforeLineComments": false
+  "requirePaddingNewLinesBeforeLineComments": false,
+  "disallowCapitalizedComments": false,
+  "requireCapitalizedComments": false
 }

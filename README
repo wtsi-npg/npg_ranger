@@ -76,8 +76,17 @@ Reverse proxy config
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
 
+GENERATING DOCUMENTATION
+========================
+
+grunt jsdoc
 
 
+TESTING
+=======
+
+grunt test
+grunt jasmine_nodejs
 
 
 
