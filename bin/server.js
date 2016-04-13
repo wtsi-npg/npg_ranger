@@ -36,6 +36,11 @@ const DEFAULT_FORMAT          = 'bam';
 function createPromiseForProcess(p) {
   return new Promise(
     function(resolve, reject) {
+
+      p.stderr.on('data', function(data) {
+        console.log('STDERR FOR ' + p.title + ': ' + data);
+      });
+
       p.on('close', function(code, signal) {
         if (code || signal) {
           reject(code || signal);
@@ -120,7 +125,6 @@ function bbbMarkDupsAttrs() {
   return attrs;
 }
 
-
 function endResponse(response, success) {
 
   // Unfortunatelly, no way to access the trailers already set.
@@ -158,10 +162,25 @@ function getFile(response, query, user) {
   const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
   const prom = createPromiseForProcess(view);
   view.title = 'samtools view';
+
+  prom.then(
+      // Report success
+      function() {
+        console.log('SUCCESS ' + view.title);
+        endResponse(response,1);
+      }
+    )
+    .catch(
+       // Log the rejection reason
+       function(code) {
+         console.log('ERROR ' + view.title + ' ' + code);
+         endResponse(response,0);
+       }
+    );
+
   process.nextTick(() => {
     view.stdout.pipe(response, {end: false});
   });
-  return prom;
 }
 
 function mergeFiles(response, query) {
@@ -169,12 +188,15 @@ function mergeFiles(response, query) {
   setContentType(response, query);
   var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
   fs.mkdirSync(dir);
-  const cleanup = function() {  fse.remove(dir, function(err) {
+
+  const cleanup = function() {
+    fse.remove(dir, function(err) {
       if (err) {
         console.log(`Failed to remove ${dir}: ${err}`);
       }
     });
   };
+
   const merge = child.spawn(SAMTOOLS_COMMAND,
                 stMergeAttrs(query),
                 {cwd: dir});
@@ -191,14 +213,34 @@ function mergeFiles(response, query) {
   const viewprom = createPromiseForProcess(view);
   view.title = 'samtools view (post-merge)';
 
-  const prom = Promise.all([mergeprom,markdupprom,viewprom]).then(cleanup,cleanup);
+  var processes = [merge,markdup,view];
+  var promises = [mergeprom,markdupprom,viewprom];
+  promises.forEach(function(promise, i) {
+    var title = processes[i].title;
+    promise.then(
+      // Report success
+      function() {
+        console.log('SUCCESS ' + title);
+      }
+    )
+    .catch(
+      // Log the rejection reason
+      function(code) {
+        console.log('ERROR ' + title + ' ' + code);
+      }
+    );
+  });
+
+  Promise.all(promises).then(
+      function() { endResponse(response,1); cleanup();},
+      function() { endResponse(response,0); cleanup();}
+                            );
 
   process.nextTick(() => {
     merge.stdout.pipe(markdup.stdin);
     markdup.stdout.pipe(view.stdin);
     view.stdout.pipe(response, {end: false});
   });
-  return prom;
 }
 
 function authorise(user, files, whatnot, badluck) {
@@ -285,13 +327,11 @@ function getData(response, query, user) {
       } else {
         var whatnot = function() {
           console.log("User " + user.username + " is given access");
-          var prom;
           if (numFiles === 1) {
-            prom = getFile(response, query);
+            getFile(response, query);
           } else {
-            prom = mergeFiles(response, query);
+            mergeFiles(response, query);
           }
-          prom.then(function() { endResponse(response,1);}, function() { endResponse(response,0);} );
         };
         var badluck = function(message) {
           var m = util.format(
