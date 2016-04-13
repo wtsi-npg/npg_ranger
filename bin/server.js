@@ -11,15 +11,56 @@ var child     = require('child_process');
 var url     = require('url');
 var util    = require('util');
 var MongoClient = require('mongodb').MongoClient;
+var GetOpt      = require('node-getopt');
 
-const MONGO        = 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND   = 'samtools_irods';
-const BBB_MARKDUPS_COMMAND = 'bamstreamingmarkduplicates';
-const IRODS_PATH_PREFIX  = 'irods:';
-const TEMP_DATA_DIR_NAME   = 'npg_ranger_data';
-const TEMP_DATA_DIR    = path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
+var opt = new GetOpt([
+    ['p','port=PORT'        ,'PORT or socket which server listens on'],
+    ['m','mongourl=URI'     ,'URI to contact mongodb'],
+    ['t','tempdir=PATH'     ,'PATH of temporary directory'],
+    ['H','hostname=HOST'    ,'override hostname with HOST'],
+    ['s','skipauth'         ,'skip authorisation steps'],
+    ['h','help'             ,'display this help']
+]).bindHelp().parseSystem();
+
+const PORT                    = opt.options.port || opt.argv[0]
+                                || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
+const HOST                    = opt.options.hostname || os.hostname() || 'localhost';
+const MONGO                   = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
+const SAMTOOLS_COMMAND        = 'samtools';
+const BBB_MARKDUPS_COMMAND    = 'bamstreamingmarkduplicates';
+const TEMP_DATA_DIR_NAME      = 'npg_ranger_data';
+const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
-const DEFAULT_FORMAT     = 'bam';
+const DEFAULT_FORMAT          = 'bam';
+
+function createPromiseForProcess(p) {
+  return new Promise(
+    function(resolve, reject) {
+
+      p.stderr.on('data', function(data) {
+        console.log('STDERR FOR ' + p.title + ': ' + data);
+      });
+
+      p.on('close', function(code, signal) {
+        if (code || signal) {
+          reject(code || signal);
+        } else {
+          resolve();
+        }
+      });
+      p.on('error', function(err) {
+        reject(err);
+      });
+      p.stdin.on('error', (err) => {
+        reject(err);
+      });
+      p.stdout.on('error', (err) => {
+        reject(err);
+      });
+    }
+  );
+}
+
 
 var db;
 
@@ -37,26 +78,18 @@ function stViewAttrs(query) {
     attrs.push(query.format === 'bam' ? '-b' : '-C');
   }
 
-  var file = '-';
-  if (query.directory && query.name) {
-    file = query.directory + '/' + query.name;
-    if (query.irods) {
-      file = IRODS_PATH_PREFIX + file;
-    }
-  }
-  attrs.push(file);
+  attrs.push(query.files.shift() || "-");
 
   if (query.region) {
     attrs = attrs.concat(query.region);
   }
 
-  console.log(attrs);
+  console.log('view attrs: ' + attrs);
   return attrs;
 }
 
 function stMergeAttrs(query) {
-
-  var attrs = ['merge'];
+  var attrs = ['merge', "-u"];
   if (query.region) {
     var regions = query.region;
     if (typeof regions != 'object') {
@@ -78,11 +111,10 @@ function stMergeAttrs(query) {
     throw 'Either some files are bam and some are cram or all files are in unexpected format';
   }
 
-  attrs = attrs.concat(files.map(function(f) {
-    return IRODS_PATH_PREFIX + f.collection + '/' + f.data_object;
-  }));
+  attrs = attrs.concat(files );
+  query.files.length = 0;
 
-  console.log(attrs);
+  console.log('merge attrs: ' + attrs);
   return attrs;
 }
 
@@ -91,44 +123,6 @@ function bbbMarkDupsAttrs() {
   attrs.push('tmpfile=' + tempFilePath());
   attrs.push('M=/dev/null');
   return attrs;
-}
-
-function setProcessCallbacks(pr, child, response) {
-
-  var title = pr.title;
-
-  pr.stderr.on('data', function(data) {
-    console.log('STDERR FOR ' + title + ': ' + data);
-  });
-
-  pr.on('error', function(err) {
-    console.log('ERROR CREATING PROCESS ' + title + ': ' + err);
-    if (child) {
-      child.kill();
-    }
-    endResponse(response, 0);
-  });
-
-  pr.on('exit', function(code, signal) {
-    if (code != null) {
-      if (code) {
-        console.log(`CLOSED WITH CODE ${code}: ${title}`);
-        endResponse(response, 0);
-        if (child) {
-          child.kill();
-        }
-      } else {
-        if (!child) {
-          endResponse(response, 1);
-        }
-      }
-    } else {
-      console.log(`RECEIVED SIGNAL ${signal} IN ${title}`);
-      if (child) {
-        child.kill();
-      }
-    }
-  });
 }
 
 function endResponse(response, success) {
@@ -164,14 +158,29 @@ function getFile(response, query, user) {
     console.log('IMPLEMENT USER AUTHORISATION FOR FILES FROM IRODS!');
   }
 
-  if (!(query.directory && query.name)) {
-    throw 'Both directory and name should be given';
-  }
   setContentType(response, query);
   const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+  const prom = createPromiseForProcess(view);
   view.title = 'samtools view';
-  view.stdout.pipe(response);
-  setProcessCallbacks(view, null, response);
+
+  prom.then(
+      // Report success
+      function() {
+        console.log('SUCCESS ' + view.title);
+        endResponse(response,1);
+      }
+    )
+    .catch(
+       // Log the rejection reason
+       function(code) {
+         console.log('ERROR ' + view.title + ' ' + code);
+         endResponse(response,0);
+       }
+    );
+
+  process.nextTick(() => {
+    view.stdout.pipe(response, {end: false});
+  });
 }
 
 function mergeFiles(response, query) {
@@ -179,37 +188,65 @@ function mergeFiles(response, query) {
   setContentType(response, query);
   var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
   fs.mkdirSync(dir);
-  const merge = child.spawn(SAMTOOLS_COMMAND,
-                stMergeAttrs(query),
-                {cwd: dir});
-  merge.title = 'samtools merge';
 
-  const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
-  markdup.title = BBB_MARKDUPS_COMMAND;
-
-  delete query.region;
-  delete query.directory;
-  const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
-  view.title = 'samtools view (post-merge)';
-
-  merge.stdout.pipe(markdup.stdin);
-  markdup.stdout.pipe(view.stdin);
-  view.stdout.pipe(response, {end: false});
-
-  setProcessCallbacks(merge,   markdup, response);
-  setProcessCallbacks(markdup, view,  response);
-  setProcessCallbacks(view,  null,  response);
-  merge.on('close', function() {
+  const cleanup = function() {
     fse.remove(dir, function(err) {
       if (err) {
         console.log(`Failed to remove ${dir}: ${err}`);
       }
     });
+  };
+
+  const merge = child.spawn(SAMTOOLS_COMMAND,
+                stMergeAttrs(query),
+                {cwd: dir});
+  const mergeprom = createPromiseForProcess(merge);
+  merge.title = 'samtools merge';
+
+  const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
+  const markdupprom = createPromiseForProcess(markdup);
+  markdup.title = BBB_MARKDUPS_COMMAND;
+
+  delete query.region;
+  delete query.directory;
+  const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
+  const viewprom = createPromiseForProcess(view);
+  view.title = 'samtools view (post-merge)';
+
+  var processes = [merge,markdup,view];
+  var promises = [mergeprom,markdupprom,viewprom];
+  promises.forEach(function(promise, i) {
+    var title = processes[i].title;
+    promise.then(
+      // Report success
+      function() {
+        console.log('SUCCESS ' + title);
+      }
+    )
+    .catch(
+      // Log the rejection reason
+      function(code) {
+        console.log('ERROR ' + title + ' ' + code);
+      }
+    );
+  });
+
+  Promise.all(promises).then(
+      function() { endResponse(response,1); cleanup();},
+      function() { endResponse(response,0); cleanup();}
+                            );
+
+  process.nextTick(() => {
+    merge.stdout.pipe(markdup.stdin);
+    markdup.stdout.pipe(view.stdin);
+    view.stdout.pipe(response, {end: false});
   });
 }
 
 function authorise(user, files, whatnot, badluck) {
-
+  if (opt.options.skipauth) {
+    whatnot();
+  } else
   if (user.username) {
     if (files && (files instanceof Array) && files.length) {
       var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
@@ -249,18 +286,28 @@ function authorise(user, files, whatnot, badluck) {
   }
 }
 
-function getSampleData(response, query, user) {
+function getData(response, query, user) {
 
   var a = query.accession;
-  if (!a) {
-    throw 'Sample accession number should be given';
-  }
-
-  var dbquery = { $and: [{'avh.sample_accession_number': a},
+  var dbquery;
+  if (a) {
+    dbquery =  { $and: [{'avh.sample_accession_number': a},
                {'avh.target':    "1"},
                {'avh.manual_qc': "1"},
                {'avh.alignment': "1"} ]};
-  var columns = {_id: 0, collection: 1, data_object: 1, access_control_group_id: 1};
+  } else if (query.name) {
+    dbquery =  {data_object: query.name};
+    if (query.directory) {
+      dbquery =  { $and: [ dbquery, {collection: query.directory} ]};
+    }
+  } else {
+    throw 'Sample accession number or file should be given';
+  }
+  console.log(dbquery);
+
+  var localkey = 'filepath_by_host.' + HOST;
+  var columns = {_id: 0, 'filepath_by_host.*': 1, access_control_group_id: 1};
+  columns[localkey] = 1;
   var files   = [];
 
   var cursor = db.collection('fileinfo').find(dbquery, columns);
@@ -272,21 +319,17 @@ function getSampleData(response, query, user) {
       files.push(doc);
     } else {
       cursor.close(); // Got all results, do not need the cursor any longer.
+      query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
       var numFiles = files.length;
       if (numFiles === 0) {
-        console.log('No files for sample accession ' + a);
+        console.log('No files for ' + (a ? a : query.name) );
         response.end();
       } else {
         var whatnot = function() {
           console.log("User " + user.username + " is given access");
           if (numFiles === 1) {
-            var d = files[0];
-            query.directory = d.collection;
-            query.name    = d.data_object;
-            query.irods   = 1;
             getFile(response, query);
           } else {
-            query.files = files;
             mergeFiles(response, query);
           }
         };
@@ -326,11 +369,11 @@ function handleRequest(request, response) {
 
     switch (path) {
       case '/file': {
-        getFile(response, q, user);
+        getData(response, q, user);
         break;
       }
       case '/sample': {
-        getSampleData(response, q, user);
+        getData(response, q, user);
         break;
       }
       default: {
@@ -385,7 +428,7 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
     throw err;
   }
   db = database;
-  console.log('Connected to mongodb');
+  console.log('Connected to mongodb at ' + MONGO);
 
   // Callback for a graceful exit
   server.on('close', function() {
@@ -396,11 +439,10 @@ MongoClient.connect(MONGO, mongo_options, function(err, database) {
 
   createTempDataDir();
 
-  var sock = process.argv[2] || '/tmp/' + process.env.USER + '/npg_ranger.sock';
   // Lets start our server
-  server.listen(sock, function() {
+  server.listen(PORT, function() {
     // Callback triggered when server is successfully listening. Hurray!
-    console.log("Server listening on %s, %s", os.hostname(), sock);
+    console.log("Server listening on %s, %s", HOST, PORT);
   });
 });
 

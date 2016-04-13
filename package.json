@@ -32,6 +32,7 @@
     "bin/client.js"
   ],
   "dependencies": {
+    "node-getopt": "^0.2.3",
     "fs-extra": "^0.26.7",
     "mongodb": "^2.1.7"
   },
