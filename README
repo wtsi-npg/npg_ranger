@@ -1,10 +1,24 @@
 Proof of concept for retrieving sequence files (sam, bam, cram) via a streaming service
 =======================================================================================
 
-----Dowload additional js dependencies
-npm install mongodb
+====INSTALL DEPENDENCIES
 
-----Connect to iRODs if needed'
+npm install
+
+====GENERATE DOCUMENTATION
+
+grunt jsdoc
+
+====TEST
+
+grunt test - runs all tests
+grunt jasmine_nodejs
+
+====RUN
+
+----Connect to iRODs if not already connected
+
+----Ensure that samtools v1.3 is on your path
 
 ----Run server on the default socket /tmp/${USER}/npg_ranger.sock
 bin/server.js
@@ -15,15 +29,6 @@ bin/server.js 9447
 ----Run server on a custom socket
 bin/server.js 9447 /tmp/my.sock
 
------Run a client to query the server that is listening
-on a default socket ( /test URL)
-bin/client.js
-
-Output:
-====RAW HEADERS X-Remote-User,mg8,Host,localhost,Connection,close
-====REMOTE USER IS mg8
-RECEIVED: <html><body><h1>Hello, mg8</h1></body></html>
-
 Queries:
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
   no files found - an empty reply
@@ -33,24 +38,41 @@ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
-The 'region' option can be specified multiple times.
-
 The default output format is bam. Use 'format' option with value either 'sam' or 'bam' or 'cram' to change the output format.
 
-TODO LIST
-=========
+====Authentication
+Should be done by a front server
 
-Client disconnects - any action on the server side to set up?
+====Authorisation
+It is expected that the incoming request has X-Remote-User header set. The data will be served if the remote user has 'read' permission for alll files that have to be merged/served.
 
-Trailer header is used to communicate that an error occured durin gthe data transmission, ie after the headers have been sent. CURL does not understand trailers. It is possible to build a nodejs HTTP client that understands trailers.
+====TODO LIST
 
-It is possible to dynamically compute md5 and send it in a trailer.
+Client disconnects - any action on the server side?
 
-Doing merge inside db callbacks - how to tidy up db memory immediately.
+Where reaponse code 200 is set, set the trailer with a boolean value for success/failure of the server operation.
+
+Compute md5 and send it in a trailer.
+
+Use Promise for authorisation, get rid of doing merge inside db callbacks.
 
 
-APACHE REVERSE PROXY
-====================
+====APACHE REVERSE PROXY
+
+Setting up the server
+---------------------
+
+wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.18.tar.gz
+tar -xzvf httpd-2.4.18.tar.gz
+cd httpd-2.4.18
+./configure --enable-load-all-modules --prefix=${HOME}/apache_build
+make 
+make install
+cd ${HOME}/apache_build
+vi conf/httpd.conf # edit the file
+
+From anywhere
+${HOME}/apache_build/bin/httpd -k start
 
 LDAP authorisation config
 -------------------------
@@ -75,9 +97,6 @@ Reverse proxy config
   # To a local URL
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
-
-
-
 
 
 

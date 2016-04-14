@@ -2,8 +2,8 @@ LIST OF CHANGES for npg_ranger project
 
 release 0.0.1
   - initial version:
-    a nodejs server runnign on a socket serving either individual
+    a nodejs server running on a socket serving either individual
       files or merging all available files for a sample,
     a range to serve and data format to serve can be specified,
-    mongodb is used to map sample names to file locations
+    mongodb is used to find file locations
 
