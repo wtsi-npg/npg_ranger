@@ -9,10 +9,11 @@ var path    = require('path');
 var http    = require('http');
 var child   = require('child_process');
 var url     = require('url');
-var util    = require('util');
 var MongoClient = require('mongodb').MongoClient;
 var GetOpt      = require('node-getopt');
-var pipeline = require('../lib/pipeline.js');
+
+var pipeline    = require('../lib/pipeline.js');
+var DataAccess  = require('../lib/auth.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -169,39 +170,16 @@ function mergeFiles(response, query) {
     .run(response);
 }
 
-function authorise(user, files, whatnot, badluck) {
-
-  if (!user.username) {
-    throw new ReferenceError('Username is not available');
+function setupPipeline(response, query) {
+  if (!query.format) {
+    query.format = DEFAULT_FORMAT;
   }
-  if (!files || (files instanceof Array === false) || (files.length === 0)) {
-    throw new Error('File info is not available');
-  }
-  var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
-  if (agroup_ids.every(function(id) { return id; })) {
-    agroup_ids.sort();
-    // Get a list of unique ids
-    agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-      return (index === 0) ? 1 : ((item === thisArray[index - 1]) ? 0 : 1);
-    });
-    console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
-    var dbquery = {
-      members:                 user.username,
-      access_control_group_id: {$in: agroup_ids}
-    };
-    db.collection('access_control_group').count(dbquery,
-      function(err, count) {
-        if (err || count != agroup_ids.length) {
-          badluck(user.username, err ?
-            'Failed to get authorisation info' :
-            'Not authorised for ' + (count ? 'any' : 'some') + ' of the files');
-        } else {
-          whatnot();
-        }
-      }
-    );
+  response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
+  setContentType(response, query);
+  if (query.files.length === 1) {
+    getFile(response, query);
   } else {
-    badluck(user.username, 'Access group id is missing for one of the files');
+    mergeFiles(response, query);
   }
 }
 
@@ -238,37 +216,23 @@ function getData(response, query, user) {
       files.push(doc);
     } else {
       cursor.close(); // Got all results, do not need the cursor any longer.
-      query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
-      var numFiles = files.length;
-      if (numFiles === 0) {
-        let m = 'No files for ' + (a ? a : query.name);
-        console.log(m);
-        errorResponse(response, 404, m);
+      if (files.length === 0) {
+        errorResponse(response, 404, 'No files for ' + (a ? a : query.name));
       } else {
-
-        var whatnot = function() {
-          console.log('User ' + (user.username || 'unknown') + ' is given access');
-          if (!query.format) {
-            query.format = DEFAULT_FORMAT;
-          }
-          response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
-          setContentType(response, query);
-          if (numFiles === 1) {
-            getFile(response, query);
-          } else {
-            mergeFiles(response, query);
-          }
-        };
-
-        var badluck = function(username, message) {
-          errorResponse(response, 401, util.format(
-            "Authorisation failed for user '%s': %s", username, message));
-        };
-
+        query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
         if (opt.options.skipauth) {
-          whatnot();
+          setupPipeline(response, query);
         } else {
-          authorise(user, files, whatnot, badluck);
+          var da = new DataAccess(db, files);
+          da.on('authorised', (username) => {
+            console.log(`User ${username} is given access`);
+            setupPipeline(response, query);
+          });
+          da.on('failed', (username, message) => {
+            errorResponse(response, 401,
+              `Authorisation failed for user '${username}': ${message}`);
+          });
+          da.authorise(user.username);
         }
       }
     }
