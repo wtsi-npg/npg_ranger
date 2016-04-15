@@ -76,7 +76,8 @@ function stMergeAttrs(query) {
   var some_bam  = files.some(function(f) { return re_bam.test(f.data_object); });
   var some_cram = files.some(function(f) { return re_cram.test(f.data_object); });
   if (some_bam && some_cram) {
-    throw 'Either some files are bam and some are cram or all files are in unexpected format';
+    throw new Error(
+      'Inconsistent format, all files should be either bam or cram');
   }
 
   attrs = attrs.concat(files );
@@ -103,16 +104,16 @@ function endResponse(response, success) {
 }
 
 function errorResponse(response, code, m) {
-  m = m || 'Unknown error';
-  if (code == 500) {
-    m = 'Internal server error: ' + m;
+  if (!code) {
+    throw new ReferenceError('Error code required');
   }
-  console.log(m);
+  m = m || 'Unknown error';
   if (!response.headersSent) {
-    response.statusCode  = code;
+    response.statusCode    = code;
     response.statusMessage = m;
   }
   response.end();
+  console.log(`Server error ${code}: ${m}.`);
 }
 
 function getFile(response, query) {
@@ -138,8 +139,18 @@ function mergeFiles(response, query) {
     });
   };
 
+  var attrs;
+  try {
+    attrs = stMergeAttrs(query);
+  } catch (ex) {
+    errorResponse(response, 500, ex);
+  }
+  if (!attrs) {
+    return;
+  }
+
   const merge = child.spawn(SAMTOOLS_COMMAND,
-                stMergeAttrs(query),
+                attrs,
                 {cwd: dir});
   merge.title = 'samtools merge';
 
@@ -160,45 +171,37 @@ function mergeFiles(response, query) {
 
 function authorise(user, files, whatnot, badluck) {
 
-  if (opt.options.skipauth) {
-    whatnot();
-  } else
-  if (user.username) {
-    if (files && (files instanceof Array) && files.length) {
-      var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
-      if (agroup_ids.every(function(id) { return id; })) {
-        agroup_ids.sort();
-        // Get a list of unique ids
-        agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-          return (index === 0) ? 1 : ((item === thisArray[index - 1]) ? 0 : 1);
-        });
-        console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
-        var dbquery = {
-          members:                 user.username,
-          access_control_group_id: {$in: agroup_ids}
-        };
-        db.collection('access_control_group').count(dbquery,
-          function(err, count) {
-            if (err) {
-              badluck('Failed to get authorisation info');
-              return;
-            }
-            if (count == agroup_ids.length) {
-              whatnot();
-            } else {
-              var qualifier = count ? 'any' : 'some';
-              badluck('Not authorised for ' + qualifier + ' of the files');
-            }
-          }
-        );
-      } else {
-        badluck('Access group id is missing for one of the files');
+  if (!user.username) {
+    throw new ReferenceError('Username is not available');
+  }
+  if (!files || (files instanceof Array === false) || (files.length === 0)) {
+    throw new Error('File info is not available');
+  }
+  var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
+  if (agroup_ids.every(function(id) { return id; })) {
+    agroup_ids.sort();
+    // Get a list of unique ids
+    agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
+      return (index === 0) ? 1 : ((item === thisArray[index - 1]) ? 0 : 1);
+    });
+    console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
+    var dbquery = {
+      members:                 user.username,
+      access_control_group_id: {$in: agroup_ids}
+    };
+    db.collection('access_control_group').count(dbquery,
+      function(err, count) {
+        if (err || count != agroup_ids.length) {
+          badluck(user.username, err ?
+            'Failed to get authorisation info' :
+            'Not authorised for ' + (count ? 'any' : 'some') + ' of the files');
+        } else {
+          whatnot();
+        }
       }
-    } else {
-      badluck('File info is not available, cannot authorise access');
-    }
+    );
   } else {
-    badluck('Username is not known');
+    badluck(user.username, 'Access group id is missing for one of the files');
   }
 }
 
@@ -217,7 +220,7 @@ function getData(response, query, user) {
       dbquery =  { $and: [ dbquery, {collection: query.directory} ]};
     }
   } else {
-    throw 'Sample accession number or file should be given';
+    throw new Error('Sample accession number or file should be given');
   }
   console.log(dbquery);
 
@@ -238,11 +241,17 @@ function getData(response, query, user) {
       query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
       var numFiles = files.length;
       if (numFiles === 0) {
-        console.log('No files for ' + (a ? a : query.name) );
-        response.end();
+        let m = 'No files for ' + (a ? a : query.name);
+        console.log(m);
+        errorResponse(response, 404, m);
       } else {
+
         var whatnot = function() {
-          console.log("User " + user.username + " is given access");
+          console.log('User ' + (user.username || 'unknown') + ' is given access');
+          if (!query.format) {
+            query.format = DEFAULT_FORMAT;
+          }
+          response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
           setContentType(response, query);
           if (numFiles === 1) {
             getFile(response, query);
@@ -250,14 +259,17 @@ function getData(response, query, user) {
             mergeFiles(response, query);
           }
         };
-        var badluck = function(message) {
-          var m = util.format(
-            "Authorisation failed for %s: %s", user.username, message);
-          console.log(m);
-          errorResponse(response, 401, m);
+
+        var badluck = function(username, message) {
+          errorResponse(response, 401, util.format(
+            "Authorisation failed for user '%s': %s", username, message));
         };
 
-        authorise(user, files, whatnot, badluck);
+        if (opt.options.skipauth) {
+          whatnot();
+        } else {
+          authorise(user, files, whatnot, badluck);
+        }
       }
     }
   });
@@ -271,36 +283,38 @@ function getUser(request) {
 
 function handleRequest(request, response) {
 
-  try {
-    var url_obj = url.parse(request.url, true);
-    var path = url_obj.pathname;
-    path = path ? path : '';
-    var q = url_obj.query;
+  var user = getUser(request);
+  if (!user.username && !opt.options.skipauth) {
+    return errorResponse(response, 407, 'Proxy authentication required');
+  }
 
-    if (!q.format) {
-      q.format = DEFAULT_FORMAT;
-    }
+  var url_obj = url.parse(request.url, true);
+  var path = url_obj.pathname;
+  path = path ? path : '';
+  var q = url_obj.query;
 
-    response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
-    var user = getUser(request);
-
-    switch (path) {
-      case '/file': {
+  switch (path) {
+    case '/file': {
+      if (!q.name) {
+        errorResponse(response, 400,
+          'Invalid request: file name should be given');
+      } else {
         getData(response, q, user);
-        break;
       }
-      case '/sample': {
-        getData(response, q, user);
-        break;
-      }
-      default: {
-        errorResponse(response, 404, 'Not found: ' + request.url);
-      }
+      break;
     }
-
-  } catch (err) {
-    errorResponse(response, 500,
-      'Error handling request for ' + request.url + ': ' + err);
+    case '/sample': {
+      if (!q.accession) {
+        errorResponse(response, 400,
+          'Invalid request: sample accession number should be given');
+      } else {
+        getData(response, q, user);
+      }
+      break;
+    }
+    default: {
+      errorResponse(response, 400, 'URL not available: ' + path);
+    }
   }
 }
 
