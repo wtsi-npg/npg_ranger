@@ -29,7 +29,7 @@ bin/server.js 9447
 ----Run server on a custom socket
 bin/server.js 9447 /tmp/my.sock
 
-Queries:
+====EXAMPLES
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
   no files found - an empty reply
   one file found - an outcome of samtools view
