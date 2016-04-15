@@ -2,13 +2,14 @@ LIST OF CHANGES for npg_ranger project
 
   - application model and controller as separate modules
   - GA4GH API url and redirection
+  - logging with Winston
 
 release 0.1.1
   - HTTP errors compliant with GA4GH API.
 
 release 0.1
   - Initial version:
-    a node.js server running on a socket or on a port serving 
+    a node.js server running on a socket or on a port serving
       either individual files or merging all available files
       for a sample,
     a range to serve and data format to serve can be specified,
@@ -20,5 +21,5 @@ release 0.1
       authentication and set the header,
     'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
-      error in the pipeline it is set to 'true'. 
-    
+      error in the pipeline it is set to 'true'.
+
