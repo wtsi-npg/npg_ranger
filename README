@@ -26,6 +26,9 @@ bin/server.js
 ----Run server on a custom port 9447
 bin/server.js 9447
 
+----Run server on a custom port and skip authentication
+bin/server.js -p PORT -s
+
 ----Run server on a custom socket
 bin/server.js 9447 /tmp/my.sock
 
