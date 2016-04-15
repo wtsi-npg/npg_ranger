@@ -29,7 +29,9 @@ bin/server.js 9447
 ----Run server on a custom socket
 bin/server.js 9447 /tmp/my.sock
 
-====EXAMPLES
+====EXAMPLES AND COMPATIBLE CLIENTS
+
+----curl
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
   no files found - an empty reply
   one file found - an outcome of samtools view
@@ -39,6 +41,13 @@ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?d
 curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
 The default output format is bam. Use 'format' option with value either 'sam' or 'bam' or 'cram' to change the output format.
+
+----bin/client.js (this project)
+A simple trailer header aware client that works with with a socket server.
+
+----Biodalliance
+A custom npg_ranger track is added to the Biodalliance genome browser
+https://github.com/wtsi-npg/dalliance
 
 ====Authentication
 Should be done by a front server
