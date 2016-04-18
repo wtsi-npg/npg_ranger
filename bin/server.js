@@ -108,12 +108,14 @@ function errorResponse(response, code, m) {
     throw new ReferenceError('Error code required');
   }
   m = m || 'Unknown error';
-  if (!response.headersSent) {
-    response.statusCode    = code;
-    response.statusMessage = m;
-  }
-  response.end();
   console.log(`Server error ${code}: ${m}.`);
+  if (!response.finished) {
+    if (!response.headersSent) {
+      response.statusCode    = code;
+      response.statusMessage = m;
+    }
+    response.end();
+  }
 }
 
 function getFile(response, query) {
