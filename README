@@ -30,7 +30,7 @@ bin/server.js 9447
 bin/server.js -p PORT -s
 
 ----Run server on a custom socket
-bin/server.js 9447 /tmp/my.sock
+bin/server.js /tmp/my.sock
 
 ====EXAMPLES AND COMPATIBLE CLIENTS
 
