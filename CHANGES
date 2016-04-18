@@ -1,9 +1,18 @@
 LIST OF CHANGES for npg_ranger project
 
 release 0.0.1
-  - initial version:
-    a nodejs server running on a socket serving either individual
-      files or merging all available files for a sample,
+  - Initial version:
+    a node.js server running on a socket or on a port serving 
+      either individual files or merging all available files
+      for a sample,
     a range to serve and data format to serve can be specified,
-    mongodb is used to find file locations
-
+    mongodb is used to find file locations,
+    authorization is switched on by default (can be disabled),
+      relies on authentication done elsewhere (the incoming request
+      should have X-Remote-User header set), so this server
+      should be run behind a reverse proxy that will perform
+      authentication and set the header,
+    'data_truncated' trailer header is set to 'true' if the data
+      processing pipeline completed successfully, in case of an
+      error in the pipeline it is set to 'false'. 
+    

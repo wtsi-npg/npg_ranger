@@ -7,11 +7,12 @@ var fs      = require('fs');
 var fse     = require('fs-extra');
 var path    = require('path');
 var http    = require('http');
-var child     = require('child_process');
+var child   = require('child_process');
 var url     = require('url');
 var util    = require('util');
 var MongoClient = require('mongodb').MongoClient;
 var GetOpt      = require('node-getopt');
+var pipeline = require('../lib/pipeline.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -33,35 +34,6 @@ const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), pr
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
 const DEFAULT_FORMAT          = 'bam';
 
-function createPromiseForProcess(p) {
-  return new Promise(
-    function(resolve, reject) {
-
-      p.stderr.on('data', function(data) {
-        console.log('STDERR FOR ' + p.title + ': ' + data);
-      });
-
-      p.on('close', function(code, signal) {
-        if (code || signal) {
-          reject(code || signal);
-        } else {
-          resolve();
-        }
-      });
-      p.on('error', function(err) {
-        reject(err);
-      });
-      p.stdin.on('error', (err) => {
-        reject(err);
-      });
-      p.stdout.on('error', (err) => {
-        reject(err);
-      });
-    }
-  );
-}
-
-
 var db;
 
 function setContentType(response, query) {
@@ -71,19 +43,15 @@ function setContentType(response, query) {
 }
 
 function stViewAttrs(query) {
-
   var attrs = ['view', '-h'];
 
   if (query.format && (query.format === 'bam' || query.format === 'cram')) {
     attrs.push(query.format === 'bam' ? '-b' : '-C');
   }
-
   attrs.push(query.files.shift() || "-");
-
   if (query.region) {
     attrs = attrs.concat(query.region);
   }
-
   console.log('view attrs: ' + attrs);
   return attrs;
 }
@@ -126,10 +94,6 @@ function bbbMarkDupsAttrs() {
 }
 
 function endResponse(response, success) {
-
-  // Unfortunatelly, no way to access the trailers already set.
-  // We cannot check that, if the message has gone already,
-  // it had correct trailer.
   if (!response.finished) {
     var header = {};
     header[DATA_TRUNCATION_TRAILER] = success ? 'false' : 'true';
@@ -139,7 +103,6 @@ function endResponse(response, success) {
 }
 
 function errorResponse(response, code, m) {
-
   m = m || 'Unknown error';
   if (code == 500) {
     m = 'Internal server error: ' + m;
@@ -152,41 +115,19 @@ function errorResponse(response, code, m) {
   response.end();
 }
 
-function getFile(response, query, user) {
-
-  if (user) {
-    console.log('IMPLEMENT USER AUTHORISATION FOR FILES FROM IRODS!');
-  }
-
-  setContentType(response, query);
+function getFile(response, query) {
   const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
-  const prom = createPromiseForProcess(view);
   view.title = 'samtools view';
-
-  prom.then(
-      // Report success
-      function() {
-        console.log('SUCCESS ' + view.title);
-        endResponse(response,1);
-      }
-    )
-    .catch(
-       // Log the rejection reason
-       function(code) {
-         console.log('ERROR ' + view.title + ' ' + code);
-         endResponse(response,0);
-       }
-    );
-
-  process.nextTick(() => {
-    view.stdout.pipe(response, {end: false});
-  });
+  pipeline(
+    [view],
+    () => {endResponse(response,1);},
+    () => {endResponse(response,0);} )
+    .run(response);
 }
 
 function mergeFiles(response, query) {
 
-  setContentType(response, query);
-  var dir = tempFilePath();  console.log('DIRECTORY ' + dir);
+  var dir = tempFilePath();
   fs.mkdirSync(dir);
 
   const cleanup = function() {
@@ -200,50 +141,25 @@ function mergeFiles(response, query) {
   const merge = child.spawn(SAMTOOLS_COMMAND,
                 stMergeAttrs(query),
                 {cwd: dir});
-  const mergeprom = createPromiseForProcess(merge);
   merge.title = 'samtools merge';
 
   const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
-  const markdupprom = createPromiseForProcess(markdup);
   markdup.title = BBB_MARKDUPS_COMMAND;
 
   delete query.region;
   delete query.directory;
   const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
-  const viewprom = createPromiseForProcess(view);
   view.title = 'samtools view (post-merge)';
 
-  var processes = [merge,markdup,view];
-  var promises = [mergeprom,markdupprom,viewprom];
-  promises.forEach(function(promise, i) {
-    var title = processes[i].title;
-    promise.then(
-      // Report success
-      function() {
-        console.log('SUCCESS ' + title);
-      }
-    )
-    .catch(
-      // Log the rejection reason
-      function(code) {
-        console.log('ERROR ' + title + ' ' + code);
-      }
-    );
-  });
-
-  Promise.all(promises).then(
-      function() { endResponse(response,1); cleanup();},
-      function() { endResponse(response,0); cleanup();}
-                            );
-
-  process.nextTick(() => {
-    merge.stdout.pipe(markdup.stdin);
-    markdup.stdout.pipe(view.stdin);
-    view.stdout.pipe(response, {end: false});
-  });
+  pipeline(
+    [merge,markdup,view],
+    () => {endResponse(response,1); cleanup();},
+    () => {endResponse(response,0); cleanup();} )
+    .run(response);
 }
 
 function authorise(user, files, whatnot, badluck) {
+
   if (opt.options.skipauth) {
     whatnot();
   } else
@@ -327,6 +243,7 @@ function getData(response, query, user) {
       } else {
         var whatnot = function() {
           console.log("User " + user.username + " is given access");
+          setContentType(response, query);
           if (numFiles === 1) {
             getFile(response, query);
           } else {
