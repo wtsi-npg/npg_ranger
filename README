@@ -62,11 +62,17 @@ It is expected that the incoming request has X-Remote-User header set. The data 
 
 Client disconnects - any action on the server side?
 
-Where reaponse code 200 is set, set the trailer with a boolean value for success/failure of the server operation.
-
 Compute md5 and send it in a trailer.
 
-Use Promise for authorisation, get rid of doing merge inside db callbacks.
+Get rid of doing merge inside db callbacks.
+
+Nodejs client to pipe through; in - url, out - stream, log all urls and errors, including trailer headers.
+
+following from GA4GH teleconf on 22.04.2016
+-------------------------------------------
+prefix/suffix for head-less url, do generically to allow for further prefixes/suffuxes
+use query params from the spec
+syncronise error codes with the spec
 
 
 ====APACHE REVERSE PROXY
@@ -96,7 +102,7 @@ LDAP authorisation config
 	Require valid-user
 	AuthLDAPRemoteUserAttribute uid
 	RewriteEngine On
-        RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}]
+        RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER},NS]
 	RequestHeader set X-Remote-User %{PROXY_USER}e
   </Location>
 
@@ -109,6 +115,7 @@ Reverse proxy config
   # To a local URL
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
+
 
 
 
