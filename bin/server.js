@@ -2,18 +2,19 @@
 
 "use strict";
 
-var os      = require('os');
-var fs      = require('fs');
-var fse     = require('fs-extra');
-var path    = require('path');
-var http    = require('http');
-var child   = require('child_process');
-var url     = require('url');
-var MongoClient = require('mongodb').MongoClient;
-var GetOpt      = require('node-getopt');
+const os      = require('os');
+const fs      = require('fs');
+const fse     = require('fs-extra');
+const path    = require('path');
+const http    = require('http');
+const child   = require('child_process');
+const url     = require('url');
+const assert = require('assert');
+const MongoClient = require('mongodb').MongoClient;
+const GetOpt      = require('node-getopt');
 
-var pipeline    = require('../lib/pipeline.js');
-var DataAccess  = require('../lib/auth.js');
+const pipeline    = require('../lib/pipeline.js');
+const DataAccess  = require('../lib/auth.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -35,7 +36,20 @@ const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), pr
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
 const DEFAULT_FORMAT          = 'bam';
 
-var db;
+const MONGO_OPTIONS = {
+  db: {
+    numberOfRetries: 5
+  },
+  server: {
+    auto_reconnect: true,
+    poolSize: 40,
+    socketOptions: {
+      connectTimeoutMS: 5000
+    }
+  },
+  replSet: {},
+  mongos: {}
+};
 
 function setContentType(response, query) {
   if (query.format && (query.format === 'bam' || query.format === 'cram')) {
@@ -183,7 +197,7 @@ function setupPipeline(response, query) {
   }
 }
 
-function getData(response, query, user) {
+function getData(response, db, query, user) {
 
   var a = query.accession;
   var dbquery;
@@ -245,7 +259,7 @@ function getUser(request) {
   return user;
 }
 
-function handleRequest(request, response) {
+function handleRequest(request, response, db) {
 
   var user = getUser(request);
   if (!user.username && !opt.options.skipauth) {
@@ -263,7 +277,7 @@ function handleRequest(request, response) {
         errorResponse(response, 400,
           'Invalid request: file name should be given');
       } else {
-        getData(response, q, user);
+        getData(response, db, q, user);
       }
       break;
     }
@@ -272,7 +286,7 @@ function handleRequest(request, response) {
         errorResponse(response, 400,
           'Invalid request: sample accession number should be given');
       } else {
-        getData(response, q, user);
+        getData(response, db, q, user);
       }
       break;
     }
@@ -299,56 +313,71 @@ function createTempDataDir() {
   }
 }
 
-// Create a server
-var server = http.createServer(handleRequest);
+/*
+ * Main server script. Create the server object, establish database,
+ * connection, setup server callbacks, start listening for incoming
+ * requests.
+ */
 
-var mongo_options = {
-  db: {
-    numberOfRetries: 5
-  },
-  server: {
-    auto_reconnect: true,
-    poolSize: 40,
-    socketOptions: {
-      connectTimeoutMS: 5000
+const server = http.createServer();
+
+process.on('SIGTERM', () => {
+  server.close( () => {process.exit(0);} );
+});
+process.on('SIGINT', () => {
+  server.close( () => {process.exit(0);} );
+});
+
+MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
+
+  assert.equal(err, null, `Failed to connect to ${MONGO}: ${err}`);
+  console.log(`Connected to ${MONGO}`);
+
+  var dbClose = (dbConn) => {
+    if (dbConn) {
+      console.log('Database connection closing');
+      try {
+        dbConn.close();
+      } catch (err) {
+        console.log(`Error closing db connection: ${err}`);
+      }
     }
-  },
-  replSet: {},
-  mongos: {}
-};
+  };
 
-MongoClient.connect(MONGO, mongo_options, function(err, database) {
-
-  if (err) {
-    throw err;
-  }
-  db = database;
-  console.log('Connected to mongodb at ' + MONGO);
-
-  // Callback for a graceful exit
-  server.on('close', function() {
-    console.log('Database connection closing');
-    database.close();
-    console.log('Server closing');
+  // Exit gracefully on signal to quit.
+  server.on('close', () => {
+    console.log("\nServer closing");
+    dbClose(db);
   });
 
+  // Exit gracefully on error.
+  process.on('uncaughtException', (err) => {
+    console.log(`Caught exception: ${err}\n`);
+    dbClose(db);
+    try {
+      if (typeof PORT != 'number') {
+        // Throws an error if the assertion fails
+        fs.accessSync(PORT, fs.W_OK);
+        console.log(`Remove socket file ${PORT} that is left behind`);
+        fs.unlinkSync(PORT);
+      }
+    } catch (err) {
+      console.log(`Error removing socket file: ${err}`);
+    }
+    let code = 1;
+    console.log(`Exiting with code ${code}`);
+    process.exit(code);
+  });
+
+  // Pass db connection to each request handler.
+  server.on('request', (request, response) => {
+    handleRequest(request, response, db);
+  });
+
+  // Synchronously create directory for data, then start listening.
   createTempDataDir();
-
-  // Lets start our server
-  server.listen(PORT, function() {
-    // Callback triggered when server is successfully listening. Hurray!
-    console.log("Server listening on %s, %s", HOST, PORT);
+  server.listen(PORT, () => {
+    console.log(`Server listening on ${HOST}, ${PORT}`);
   });
 });
 
-process.on('SIGTERM', function() {
-  server.close(function() {
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', function() {
-  server.close(function() {
-    process.exit(0);
-  });
-});
