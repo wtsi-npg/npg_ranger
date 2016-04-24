@@ -11,6 +11,12 @@ module.exports = function(grunt) {
       }
     },
 
+    jsonlint: {
+      pkg: {
+        src: ['package.json', 'test/data/fixtures/*.json']
+      }
+    },
+
     jscs: {
       main: [ 'bin/server.js',
               'lib/*.js'
@@ -38,8 +44,7 @@ module.exports = function(grunt) {
         helperNameSuffix: "helper.js",
         useHelpers: false,
         random: false,
-        seed: null,
-        //defaultTimeout: null, // defaults to 5000 
+        seed: null, 
         defaultTimeout: 5000, 
         stopOnFailure: false,
         traceFatal: 2,
@@ -86,7 +91,7 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('lint', ['jshint', 'jscs']);
+  grunt.registerTask('lint', ['jshint', 'jscs', 'jsonlint']);
   grunt.registerTask('test', ['lint', 'jasmine_nodejs']);
   grunt.registerTask('default', ['test']);
 };

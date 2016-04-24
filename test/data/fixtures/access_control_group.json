@@ -1,0 +1,10 @@
+[
+  {
+    "access_control_group_id": "6",
+    "members": ["alice", "bob", "charles"]
+  },
+  {
+    "access_control_group_id": "7",
+    "members": ["alice", "bob", "james"]
+  }
+]
