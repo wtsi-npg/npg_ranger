@@ -1,0 +1,13 @@
+net:
+  bindIp: 127.0.0.1
+  maxIncomingConnections: 5
+processManagement:
+  fork: true
+storage:
+  engine: wiredTiger
+  wiredTiger: 
+    engineConfig:
+      cacheSizeGB: 1
+setParameter:
+  cursorTimeoutMillis: 1000
+  logLevel: 1

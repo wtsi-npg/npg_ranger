@@ -2,17 +2,19 @@
 
 "use strict";
 
-var os      = require('os');
-var fs      = require('fs');
-var fse     = require('fs-extra');
-var path    = require('path');
-var http    = require('http');
-var child   = require('child_process');
-var url     = require('url');
-var util    = require('util');
-var MongoClient = require('mongodb').MongoClient;
-var GetOpt      = require('node-getopt');
-var pipeline = require('../lib/pipeline.js');
+const os      = require('os');
+const fs      = require('fs');
+const fse     = require('fs-extra');
+const path    = require('path');
+const http    = require('http');
+const child   = require('child_process');
+const url     = require('url');
+const assert = require('assert');
+const MongoClient = require('mongodb').MongoClient;
+const GetOpt      = require('node-getopt');
+
+const pipeline    = require('../lib/pipeline.js');
+const DataAccess  = require('../lib/auth.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -34,7 +36,20 @@ const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), pr
 const DATA_TRUNCATION_TRAILER = 'data-truncated';
 const DEFAULT_FORMAT          = 'bam';
 
-var db;
+const MONGO_OPTIONS = {
+  db: {
+    numberOfRetries: 5
+  },
+  server: {
+    auto_reconnect: true,
+    poolSize: 40,
+    socketOptions: {
+      connectTimeoutMS: 5000
+    }
+  },
+  replSet: {},
+  mongos: {}
+};
 
 function setContentType(response, query) {
   if (query.format && (query.format === 'bam' || query.format === 'cram')) {
@@ -171,43 +186,20 @@ function mergeFiles(response, query) {
     .run(response);
 }
 
-function authorise(user, files, whatnot, badluck) {
-
-  if (!user.username) {
-    throw new ReferenceError('Username is not available');
+function setupPipeline(response, query) {
+  if (!query.format) {
+    query.format = DEFAULT_FORMAT;
   }
-  if (!files || (files instanceof Array === false) || (files.length === 0)) {
-    throw new Error('File info is not available');
-  }
-  var agroup_ids = files.map(function(file) { return file.access_control_group_id; });
-  if (agroup_ids.every(function(id) { return id; })) {
-    agroup_ids.sort();
-    // Get a list of unique ids
-    agroup_ids = agroup_ids.filter(function(item, index, thisArray) {
-      return (index === 0) ? 1 : ((item === thisArray[index - 1]) ? 0 : 1);
-    });
-    console.log('ACCESS GROUP IDS: ' + agroup_ids.join(' '));
-    var dbquery = {
-      members:                 user.username,
-      access_control_group_id: {$in: agroup_ids}
-    };
-    db.collection('access_control_group').count(dbquery,
-      function(err, count) {
-        if (err || count != agroup_ids.length) {
-          badluck(user.username, err ?
-            'Failed to get authorisation info' :
-            'Not authorised for ' + (count ? 'any' : 'some') + ' of the files');
-        } else {
-          whatnot();
-        }
-      }
-    );
+  response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
+  setContentType(response, query);
+  if (query.files.length === 1) {
+    getFile(response, query);
   } else {
-    badluck(user.username, 'Access group id is missing for one of the files');
+    mergeFiles(response, query);
   }
 }
 
-function getData(response, query, user) {
+function getData(response, db, query, user) {
 
   var a = query.accession;
   var dbquery;
@@ -240,37 +232,23 @@ function getData(response, query, user) {
       files.push(doc);
     } else {
       cursor.close(); // Got all results, do not need the cursor any longer.
-      query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
-      var numFiles = files.length;
-      if (numFiles === 0) {
-        let m = 'No files for ' + (a ? a : query.name);
-        console.log(m);
-        errorResponse(response, 404, m);
+      if (files.length === 0) {
+        errorResponse(response, 404, 'No files for ' + (a ? a : query.name));
       } else {
-
-        var whatnot = function() {
-          console.log('User ' + (user.username || 'unknown') + ' is given access');
-          if (!query.format) {
-            query.format = DEFAULT_FORMAT;
-          }
-          response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
-          setContentType(response, query);
-          if (numFiles === 1) {
-            getFile(response, query);
-          } else {
-            mergeFiles(response, query);
-          }
-        };
-
-        var badluck = function(username, message) {
-          errorResponse(response, 401, util.format(
-            "Authorisation failed for user '%s': %s", username, message));
-        };
-
+        query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
         if (opt.options.skipauth) {
-          whatnot();
+          setupPipeline(response, query);
         } else {
-          authorise(user, files, whatnot, badluck);
+          var da = new DataAccess(db, files);
+          da.on('authorised', (username) => {
+            console.log(`User ${username} is given access`);
+            setupPipeline(response, query);
+          });
+          da.on('failed', (username, message) => {
+            errorResponse(response, 401,
+              `Authorisation failed for user '${username}': ${message}`);
+          });
+          da.authorise(user.username);
         }
       }
     }
@@ -283,7 +261,7 @@ function getUser(request) {
   return user;
 }
 
-function handleRequest(request, response) {
+function handleRequest(request, response, db) {
 
   var user = getUser(request);
   if (!user.username && !opt.options.skipauth) {
@@ -301,7 +279,7 @@ function handleRequest(request, response) {
         errorResponse(response, 400,
           'Invalid request: file name should be given');
       } else {
-        getData(response, q, user);
+        getData(response, db, q, user);
       }
       break;
     }
@@ -310,7 +288,7 @@ function handleRequest(request, response) {
         errorResponse(response, 400,
           'Invalid request: sample accession number should be given');
       } else {
-        getData(response, q, user);
+        getData(response, db, q, user);
       }
       break;
     }
@@ -337,56 +315,71 @@ function createTempDataDir() {
   }
 }
 
-// Create a server
-var server = http.createServer(handleRequest);
+/*
+ * Main server script. Create the server object, establish database,
+ * connection, setup server callbacks, start listening for incoming
+ * requests.
+ */
 
-var mongo_options = {
-  db: {
-    numberOfRetries: 5
-  },
-  server: {
-    auto_reconnect: true,
-    poolSize: 40,
-    socketOptions: {
-      connectTimeoutMS: 5000
+const server = http.createServer();
+
+process.on('SIGTERM', () => {
+  server.close( () => {process.exit(0);} );
+});
+process.on('SIGINT', () => {
+  server.close( () => {process.exit(0);} );
+});
+
+MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
+
+  assert.equal(err, null, `Failed to connect to ${MONGO}: ${err}`);
+  console.log(`Connected to ${MONGO}`);
+
+  var dbClose = (dbConn) => {
+    if (dbConn) {
+      console.log('Database connection closing');
+      try {
+        dbConn.close();
+      } catch (err) {
+        console.log(`Error closing db connection: ${err}`);
+      }
     }
-  },
-  replSet: {},
-  mongos: {}
-};
+  };
 
-MongoClient.connect(MONGO, mongo_options, function(err, database) {
-
-  if (err) {
-    throw err;
-  }
-  db = database;
-  console.log('Connected to mongodb at ' + MONGO);
-
-  // Callback for a graceful exit
-  server.on('close', function() {
-    console.log('Database connection closing');
-    database.close();
-    console.log('Server closing');
+  // Exit gracefully on signal to quit.
+  server.on('close', () => {
+    console.log("\nServer closing");
+    dbClose(db);
   });
 
+  // Exit gracefully on error.
+  process.on('uncaughtException', (err) => {
+    console.log(`Caught exception: ${err}\n`);
+    dbClose(db);
+    try {
+      if (typeof PORT != 'number') {
+        // Throws an error if the assertion fails
+        fs.accessSync(PORT, fs.W_OK);
+        console.log(`Remove socket file ${PORT} that is left behind`);
+        fs.unlinkSync(PORT);
+      }
+    } catch (err) {
+      console.log(`Error removing socket file: ${err}`);
+    }
+    let code = 1;
+    console.log(`Exiting with code ${code}`);
+    process.exit(code);
+  });
+
+  // Pass db connection to each request handler.
+  server.on('request', (request, response) => {
+    handleRequest(request, response, db);
+  });
+
+  // Synchronously create directory for data, then start listening.
   createTempDataDir();
-
-  // Lets start our server
-  server.listen(PORT, function() {
-    // Callback triggered when server is successfully listening. Hurray!
-    console.log("Server listening on %s, %s", HOST, PORT);
+  server.listen(PORT, () => {
+    console.log(`Server listening on ${HOST}, ${PORT}`);
   });
 });
 
-process.on('SIGTERM', function() {
-  server.close(function() {
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', function() {
-  server.close(function() {
-    process.exit(0);
-  });
-});

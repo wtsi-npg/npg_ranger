@@ -32,9 +32,9 @@
     "bin/client.js"
   ],
   "dependencies": {
-    "node-getopt": "^0.2.3",
     "fs-extra": "^0.26.7",
-    "mongodb": "^2.1.7"
+    "mongodb": "^2.1.7",
+    "node-getopt": "^0.2.3"
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
@@ -45,6 +45,8 @@
     "grunt-jasmine-nodejs": "^1.5.2",
     "grunt-jscs": "*",
     "grunt-jsdoc": "^1.1.0",
-    "load-grunt-tasks": "*"
+    "grunt-jsonlint": "^1.0.7",
+    "load-grunt-tasks": "*",
+    "tmp": "0.0.28"
   }
 }
