@@ -93,5 +93,6 @@ module.exports = function(grunt) {
 
   grunt.registerTask('lint', ['jshint', 'jscs', 'jsonlint']);
   grunt.registerTask('test', ['lint', 'jasmine_nodejs']);
+  grunt.registerTask('doc', ['jsdoc']);
   grunt.registerTask('default', ['test']);
 };

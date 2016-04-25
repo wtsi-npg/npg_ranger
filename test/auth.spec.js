@@ -32,6 +32,52 @@ describe('Authorisation', function() {
     console.log(`Loaded data to MONGO DB: ${out}`);
   });
 
+  it('Input validation', function() {
+    expect( () => {new DataAccess()} ).toThrowError(ReferenceError,
+      'Database handle is required');
+    expect( () => {new DataAccess({})} ).toThrowError(Error,
+      'File info is not available');
+    expect( () => {new DataAccess({}, 2)} ).toThrowError(Error,
+      'File info is not available');
+    expect( () => {new DataAccess({}, [])} ).toThrowError(Error,
+      'File info is not available');
+    expect( () => {let da = new DataAccess({}, [1,2]); da.authorise();} )
+      .toThrowError(ReferenceError, 'Username is required');
+  });
+
+  it('Authorisation failed - access_control_group_id key is missing', function(done) {
+    var files = [
+        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
+          "access_control_group_id": "9"},
+        {"filepath_by_host" : {"*" : "irods:/seq/foo2"}}
+                  ];
+    var da = new DataAccess({}, files);
+    da.on('failed', (username, reason) => {
+      expect(username).toBe('alice');
+      expect(reason).toBe(
+        'Some of files do not have access group defined');
+      done();
+    });
+    da.authorise('alice');
+  });
+
+  it('Authorisation failed - access_control_group_id value is missing', function(done) {
+    var files = [
+        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
+          "access_control_group_id": "9"},
+        {"filepath_by_host" : {"*" : "irods:/seq/foo2"},
+          "access_control_group_id": ""}
+                  ];
+    var da = new DataAccess({}, files);
+    da.on('failed', (username, reason) => {
+      expect(username).toBe('alice');
+      expect(reason).toBe(
+        'Some of files do not have access group defined');
+      done();
+    });
+    da.authorise('alice');
+  });
+
   it('Authorised - files belong to the same auth group', function(done) {
     
     MongoClient.connect(url, function(err, db) {
@@ -79,7 +125,7 @@ describe('Authorisation', function() {
     });
   });
 
-  it('Authorisation failed - no auth for one of the files', function(done) {
+  it('Authorisation failed - no auth for some of the files', function(done) {
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       var files = [
