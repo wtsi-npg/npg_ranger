@@ -15,6 +15,7 @@ const GetOpt      = require('node-getopt');
 
 const pipeline    = require('../lib/pipeline.js');
 const DataAccess  = require('../lib/auth.js');
+const DataMapper  = require('../lib/mapper.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -201,58 +202,38 @@ function setupPipeline(response, query) {
 
 function getData(response, db, query, user) {
 
-  var a = query.accession;
-  var dbquery;
-  if (a) {
-    dbquery =  { $and: [{'avh.sample_accession_number': a},
-               {'avh.target':    "1"},
-               {'avh.manual_qc': "1"},
-               {'avh.alignment': "1"} ]};
-  } else if (query.name) {
-    dbquery =  {data_object: query.name};
-    if (query.directory) {
-      dbquery =  { $and: [ dbquery, {collection: query.directory} ]};
-    }
-  } else {
-    throw new Error('Sample accession number or file should be given');
-  }
-  console.log(dbquery);
-
-  var localkey = 'filepath_by_host.' + HOST;
-  var columns = {_id: 0, 'filepath_by_host.*': 1, access_control_group_id: 1};
-  columns[localkey] = 1;
-  var files   = [];
-
-  var cursor = db.collection('fileinfo').find(dbquery, columns);
-  cursor.each(function(err, doc) {
-    if (err) {
-      throw err;
-    }
-    if (doc != null) {
-      files.push(doc);
+  var dm = new DataMapper(db);
+  dm.on('error', (err) => {
+    dm = null;
+    errorResponse(response, 500, err);
+  });
+  dm.on('nodata', (message) => {
+    dm = null;
+    errorResponse(response, 404, message);
+  });
+  dm.on('data', (files) => {
+    query.files = files.map((f) => {
+      return f.filepath_by_host[HOST] || f.filepath_by_host["*"];
+    });
+    dm = null;
+    if (opt.options.skipauth) {
+      setupPipeline(response, query);
     } else {
-      cursor.close(); // Got all results, do not need the cursor any longer.
-      if (files.length === 0) {
-        errorResponse(response, 404, 'No files for ' + (a ? a : query.name));
-      } else {
-        query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
-        if (opt.options.skipauth) {
-          setupPipeline(response, query);
-        } else {
-          var da = new DataAccess(db, files);
-          da.on('authorised', (username) => {
-            console.log(`User ${username} is given access`);
-            setupPipeline(response, query);
-          });
-          da.on('failed', (username, message) => {
-            errorResponse(response, 401,
-              `Authorisation failed for user '${username}': ${message}`);
-          });
-          da.authorise(user.username);
-        }
-      }
+      var da = new DataAccess(db, files);
+      da.on('authorised', (username) => {
+        da = null;
+        console.log(`User ${username} is given access`);
+        setupPipeline(response, query);
+      });
+      da.on('failed', (username, message) => {
+        da = null;
+        errorResponse(response, 401,
+          `Authorisation failed for user '${username}': ${message}`);
+      });
+      da.authorise(user.username);
     }
   });
+  dm.getFileInfo(query, HOST);
 }
 
 function getUser(request) {
