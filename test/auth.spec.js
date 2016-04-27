@@ -35,67 +35,39 @@ describe('Authorisation', function() {
   it('Input validation', function() {
     expect( () => {new DataAccess()} ).toThrowError(ReferenceError,
       'Database handle is required');
-    expect( () => {new DataAccess({})} ).toThrowError(Error,
-      'File info is not available');
-    expect( () => {new DataAccess({}, 2)} ).toThrowError(Error,
-      'File info is not available');
-    expect( () => {new DataAccess({}, [])} ).toThrowError(Error,
-      'File info is not available');
-    expect( () => {let da = new DataAccess({}, [1,2]); da.authorise();} )
-      .toThrowError(ReferenceError, 'Username is required');
-  });
-
-  it('Authorisation failed - access_control_group_id key is missing', function(done) {
-    var files = [
-        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
-          "access_control_group_id": "9"},
-        {"filepath_by_host" : {"*" : "irods:/seq/foo2"}}
-                  ];
-    var da = new DataAccess({}, files);
-    da.on('failed', (username, reason) => {
-      expect(username).toBe('alice');
-      expect(reason).toBe(
-        'Some of files do not have access group defined');
-      done();
-    });
-    da.authorise('alice');
+    expect( () => {
+      let da = new DataAccess({});
+      da.authorise();
+    }).toThrowError(ReferenceError, 'Username is required');
+    expect( () => {
+      let da=new DataAccess({});
+      da.authorise('alice');
+    }).toThrowError(Error, 'Access groups array is not available');
+    expect( () => {
+      let da=new DataAccess({});
+      da.authorise('alice', 2);
+    }).toThrowError(Error, 'Access groups array is not available');
+    expect( () => {
+      let da=new DataAccess({});
+      da.authorise('alice', []);
+    }).toThrowError(Error, 'Access groups array is not available');
   });
 
   it('Authorisation failed - access_control_group_id value is missing', function(done) {
-    var files = [
-        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
-          "access_control_group_id": "9"},
-        {"filepath_by_host" : {"*" : "irods:/seq/foo2"},
-          "access_control_group_id": ""}
-                  ];
-    var da = new DataAccess({}, files);
+    var da = new DataAccess({});
     da.on('failed', (username, reason) => {
       expect(username).toBe('alice');
       expect(reason).toBe(
-        'Some of files do not have access group defined');
+        'Some access group ids are not defined');
       done();
     });
-    da.authorise('alice');
+    da.authorise('alice', ["9", "", "10"]);
   });
 
   it('Authorised - files belong to the same auth group', function(done) {
-    
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
-      var files = [
-         {"filepath_by_host" : {
-     		"irods-seq-i12" : "/irods-seq-i12-de/seq/foo",
-     		"irods-seq-sr02" : "/irods-seq-sr02-ddn-ra08-0-1-2/seq/foo",
-     		"*" : "irods:/seq/foo1"
-     	                      }, "access_control_group_id": "6"},
-     	{"filepath_by_host" : {
-     		"irods-seq-i12" : "/irods-seq-i12-de/seq/foo",
-     		"irods-seq-sr02" : "/irods-seq-sr02-ddn-ra08-0-1-2/seq/foo",
-     		"*" : "irods:/seq/foo2"
-     	                      }, "access_control_group_id": "6"}
-                  ];
-      
-      var da = new DataAccess(db, files);
+      var da = new DataAccess(db);
       da.on('authorised', (username) => {
          expect(username).toBe('alice');
          done();
@@ -103,63 +75,45 @@ describe('Authorisation', function() {
       // We are not interested in what happens on fail.
       // If 'authorised' event is not processed withing the set
       // time limit, the test will fail.
-      da.authorise('alice');
+      da.authorise('alice', ["6", "6"]);
     });
   });
 
   it('Authorised - files belong to different auth group', function(done) {
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
-      var files = [
-        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
-          "access_control_group_id": "6"},
-        {"filepath_by_host" : {"*" : "irods:/seq/foo2"},
-          "access_control_group_id": "7"}
-                  ];
-      var da = new DataAccess(db, files);
+      var da = new DataAccess(db);
       da.on('authorised', (username) => {
          expect(username).toBe('alice');
          done();
       });
-      da.authorise('alice');
+      da.authorise('alice', ["7", "6"]);
     });
   });
 
   it('Authorisation failed - no auth for some of the files', function(done) {
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
-      var files = [
-        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
-          "access_control_group_id": "6"},
-        {"filepath_by_host" : {"*" : "irods:/seq/foo2"},
-          "access_control_group_id": "8"}                  
-                  ];
-      var da = new DataAccess(db, files);
+      var da = new DataAccess(db);
       da.on('failed', (username, reason) => {
          expect(username).toBe('alice');
          expect(reason).toBe('Not authorised for some of the files');
          done();
       });
-      da.authorise('alice');
+      da.authorise('alice', ["8", "6"]);
     });
   });
 
   it('Authorisation failed - no auth for any of the files', function(done) {
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
-      var files = [
-        {"filepath_by_host" : {"*" : "irods:/seq/foo1"},
-          "access_control_group_id": "9"},
-        {"filepath_by_host" : {"*" : "irods:/seq/foo2"},
-          "access_control_group_id": "8"}
-                  ];
-      var da = new DataAccess(db, files);
+      var da = new DataAccess(db);
       da.on('failed', (username, reason) => {
          expect(username).toBe('alice');
          expect(reason).toBe('Not authorised for any of the files');
          done();
       });
-      da.authorise('alice');
+      da.authorise('alice', ["8", "9"]);
     });
   });
 

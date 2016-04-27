@@ -211,15 +211,13 @@ function getData(response, db, query, user) {
     dm = null;
     errorResponse(response, 404, message);
   });
-  dm.on('data', (files) => {
-    query.files = files.map((f) => {
-      return f.filepath_by_host[HOST] || f.filepath_by_host["*"];
-    });
+  dm.on('data', (data) => {
+    query.files = data.files;
     dm = null;
     if (opt.options.skipauth) {
       setupPipeline(response, query);
     } else {
-      var da = new DataAccess(db, files);
+      var da = new DataAccess(db);
       da.on('authorised', (username) => {
         da = null;
         console.log(`User ${username} is given access`);
@@ -230,7 +228,7 @@ function getData(response, db, query, user) {
         errorResponse(response, 401,
           `Authorisation failed for user '${username}': ${message}`);
       });
-      da.authorise(user.username);
+      da.authorise(user.username, data.accessGroups);
     }
   });
   dm.getFileInfo(query, HOST);
