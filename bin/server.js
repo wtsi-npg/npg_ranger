@@ -178,6 +178,7 @@ function mergeFiles(response, query) {
   markdup.title = BBB_MARKDUPS_COMMAND;
 
   delete query.region;
+  delete query.directory;
   const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
   view.title = 'samtools view (post-merge)';
 
