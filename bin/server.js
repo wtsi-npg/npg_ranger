@@ -9,7 +9,8 @@ const path    = require('path');
 const http    = require('http');
 const child   = require('child_process');
 const url     = require('url');
-const assert = require('assert');
+const assert  = require('assert');
+const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
 
@@ -23,6 +24,7 @@ var opt = new GetOpt([
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
     ['H','hostname=HOST'    ,'override hostname with HOST'],
     ['s','skipauth'         ,'skip authorisation steps'],
+    ['d','debug'            ,'debugging mode for this server'],
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
@@ -176,7 +178,6 @@ function mergeFiles(response, query) {
   markdup.title = BBB_MARKDUPS_COMMAND;
 
   delete query.region;
-  delete query.directory;
   const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
   view.title = 'samtools view (post-merge)';
 
@@ -204,27 +205,27 @@ function getData(response, db, query, user) {
 
   var dm = new DataMapper(db);
   dm.on('error', (err) => {
-    dm = null;
+    dm.removeAllListeners();
     errorResponse(response, 500, err);
   });
   dm.on('nodata', (message) => {
-    dm = null;
+    dm.removeAllListeners();
     errorResponse(response, 404, message);
   });
   dm.on('data', (data) => {
     query.files = data.files;
-    dm = null;
+    dm.removeAllListeners();
     if (opt.options.skipauth) {
       setupPipeline(response, query);
     } else {
       var da = new DataAccess(db);
       da.on('authorised', (username) => {
-        da = null;
+        da.removeAllListeners();
         console.log(`User ${username} is given access`);
         setupPipeline(response, query);
       });
       da.on('failed', (username, message) => {
-        da = null;
+        da.removeAllListeners();
         errorResponse(response, 401,
           `Authorisation failed for user '${username}': ${message}`);
       });
@@ -352,6 +353,9 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
   // Pass db connection to each request handler.
   server.on('request', (request, response) => {
+    if (opt.options.debug) {
+      console.log("\nMEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
+    }
     handleRequest(request, response, db);
   });
 
