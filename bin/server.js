@@ -205,32 +205,32 @@ function setupPipeline(response, query) {
 function getData(response, db, query, user) {
 
   var dm = new DataMapper(db);
-  dm.on('error', (err) => {
+  dm.once('error', (err) => {
     dm.removeAllListeners();
     errorResponse(response, 500, err);
   });
-  dm.on('nodata', (message) => {
+  dm.once('nodata', (message) => {
     dm.removeAllListeners();
     errorResponse(response, 404, message);
   });
-  dm.on('data', (data) => {
-    query.files = data.files;
+  dm.once('data', (data) => {
+    query.files = data.map( (d) => {return d.file;} );
     dm.removeAllListeners();
     if (opt.options.skipauth) {
       setupPipeline(response, query);
     } else {
       var da = new DataAccess(db);
-      da.on('authorised', (username) => {
+      da.once('authorised', (username) => {
         da.removeAllListeners();
         console.log(`User ${username} is given access`);
         setupPipeline(response, query);
       });
-      da.on('failed', (username, message) => {
+      da.once('failed', (username, message) => {
         da.removeAllListeners();
         errorResponse(response, 401,
           `Authorisation failed for user '${username}': ${message}`);
       });
-      da.authorise(user.username, data.accessGroups);
+      da.authorise(user.username, data.map( (d) => {return d.accessGroup;} ));
     }
   });
   dm.getFileInfo(query, HOST);
