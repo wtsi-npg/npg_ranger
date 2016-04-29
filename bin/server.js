@@ -9,12 +9,14 @@ const path    = require('path');
 const http    = require('http');
 const child   = require('child_process');
 const url     = require('url');
-const assert = require('assert');
+const assert  = require('assert');
+const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
 
 const pipeline    = require('../lib/pipeline.js');
 const DataAccess  = require('../lib/auth.js');
+const DataMapper  = require('../lib/mapper.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -22,6 +24,7 @@ var opt = new GetOpt([
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
     ['H','hostname=HOST'    ,'override hostname with HOST'],
     ['s','skipauth'         ,'skip authorisation steps'],
+    ['d','debug'            ,'debugging mode for this server'],
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
@@ -201,58 +204,36 @@ function setupPipeline(response, query) {
 
 function getData(response, db, query, user) {
 
-  var a = query.accession;
-  var dbquery;
-  if (a) {
-    dbquery =  { $and: [{'avh.sample_accession_number': a},
-               {'avh.target':    "1"},
-               {'avh.manual_qc': "1"},
-               {'avh.alignment': "1"} ]};
-  } else if (query.name) {
-    dbquery =  {data_object: query.name};
-    if (query.directory) {
-      dbquery =  { $and: [ dbquery, {collection: query.directory} ]};
-    }
-  } else {
-    throw new Error('Sample accession number or file should be given');
-  }
-  console.log(dbquery);
-
-  var localkey = 'filepath_by_host.' + HOST;
-  var columns = {_id: 0, 'filepath_by_host.*': 1, access_control_group_id: 1};
-  columns[localkey] = 1;
-  var files   = [];
-
-  var cursor = db.collection('fileinfo').find(dbquery, columns);
-  cursor.each(function(err, doc) {
-    if (err) {
-      throw err;
-    }
-    if (doc != null) {
-      files.push(doc);
+  var dm = new DataMapper(db);
+  dm.once('error', (err) => {
+    dm.removeAllListeners();
+    errorResponse(response, 500, err);
+  });
+  dm.once('nodata', (message) => {
+    dm.removeAllListeners();
+    errorResponse(response, 404, message);
+  });
+  dm.once('data', (data) => {
+    query.files = data.map( (d) => {return d.file;} );
+    dm.removeAllListeners();
+    if (opt.options.skipauth) {
+      setupPipeline(response, query);
     } else {
-      cursor.close(); // Got all results, do not need the cursor any longer.
-      if (files.length === 0) {
-        errorResponse(response, 404, 'No files for ' + (a ? a : query.name));
-      } else {
-        query.files = files.map(function(f) { return f.filepath_by_host[HOST] || f.filepath_by_host["*"]; });
-        if (opt.options.skipauth) {
-          setupPipeline(response, query);
-        } else {
-          var da = new DataAccess(db, files);
-          da.on('authorised', (username) => {
-            console.log(`User ${username} is given access`);
-            setupPipeline(response, query);
-          });
-          da.on('failed', (username, message) => {
-            errorResponse(response, 401,
-              `Authorisation failed for user '${username}': ${message}`);
-          });
-          da.authorise(user.username);
-        }
-      }
+      var da = new DataAccess(db);
+      da.once('authorised', (username) => {
+        da.removeAllListeners();
+        console.log(`User ${username} is given access`);
+        setupPipeline(response, query);
+      });
+      da.once('failed', (username, message) => {
+        da.removeAllListeners();
+        errorResponse(response, 401,
+          `Authorisation failed for user '${username}': ${message}`);
+      });
+      da.authorise(user.username, data.map( (d) => {return d.accessGroup;} ));
     }
   });
+  dm.getFileInfo(query, HOST);
 }
 
 function getUser(request) {
@@ -373,6 +354,9 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
   // Pass db connection to each request handler.
   server.on('request', (request, response) => {
+    if (opt.options.debug) {
+      console.log("\nMEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
+    }
     handleRequest(request, response, db);
   });
 

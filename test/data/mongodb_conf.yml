@@ -1,6 +1,6 @@
 net:
   bindIp: 127.0.0.1
-  maxIncomingConnections: 5
+  maxIncomingConnections: 50
 processManagement:
   fork: true
 storage:
