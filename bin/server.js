@@ -17,6 +17,7 @@ const GetOpt      = require('node-getopt');
 const pipeline    = require('../lib/pipeline.js');
 const DataAccess  = require('../lib/auth.js');
 const DataMapper  = require('../lib/mapper.js');
+const trailer     = require('../lib/http/trailer.js');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -36,7 +37,6 @@ const SAMTOOLS_COMMAND        = 'samtools';
 const BBB_MARKDUPS_COMMAND    = 'bamstreamingmarkduplicates';
 const TEMP_DATA_DIR_NAME      = 'npg_ranger_data';
 const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
-const DATA_TRUNCATION_TRAILER = 'data-truncated';
 const DEFAULT_FORMAT          = 'bam';
 
 const MONGO_OPTIONS = {
@@ -112,11 +112,9 @@ function bbbMarkDupsAttrs() {
   return attrs;
 }
 
-function endResponse(response, success) {
+function endResponse(response, truncated) {
   if (!response.finished) {
-    var header = {};
-    header[DATA_TRUNCATION_TRAILER] = success ? 'false' : 'true';
-    response.addTrailers(header);
+    trailer.setDataTruncation(response, truncated);
     response.end();
   }
 }
@@ -141,8 +139,8 @@ function getFile(response, query) {
   view.title = 'samtools view';
   pipeline(
     [view],
-    () => {endResponse(response,1);},
-    () => {endResponse(response,0);} )
+    () => {endResponse(response,false);},
+    () => {endResponse(response,true);} )
     .run(response);
 }
 
@@ -184,8 +182,8 @@ function mergeFiles(response, query) {
 
   pipeline(
     [merge,markdup,view],
-    () => {endResponse(response,1); cleanup();},
-    () => {endResponse(response,0); cleanup();} )
+    () => {endResponse(response,false); cleanup();},
+    () => {endResponse(response,true); cleanup();} )
     .run(response);
 }
 
@@ -193,7 +191,7 @@ function setupPipeline(response, query) {
   if (!query.format) {
     query.format = DEFAULT_FORMAT;
   }
-  response.setHeader('Trailer', DATA_TRUNCATION_TRAILER);
+  trailer.declare(response);
   setContentType(response, query);
   if (query.files.length === 1) {
     getFile(response, query);
