@@ -17,6 +17,7 @@ const GetOpt      = require('node-getopt');
 const pipeline    = require('../lib/pipeline.js');
 const DataAccess  = require('../lib/auth.js');
 const DataMapper  = require('../lib/mapper.js');
+const HttpError   = require('../lib/http/error.js');
 const trailer     = require('../lib/http/trailer.js');
 
 var opt = new GetOpt([
@@ -120,16 +121,10 @@ function endResponse(response, truncated) {
 }
 
 function errorResponse(response, code, m) {
-  if (!code) {
-    throw new ReferenceError('Error code required');
-  }
-  m = m || 'Unknown error';
-  console.log(`Server error ${code}: ${m}.`);
+  // Create eror object anyway, it will validate the input
+  let err = new HttpError(response, code, m, true);
   if (!response.finished) {
-    if (!response.headersSent) {
-      response.statusCode    = code;
-      response.statusMessage = m;
-    }
+    err.setErrorResponse();
     response.end();
   }
 }
@@ -225,7 +220,7 @@ function getData(response, db, query, user) {
       });
       da.once('failed', (username, message) => {
         da.removeAllListeners();
-        errorResponse(response, 401,
+        errorResponse(response, 403,
           `Authorisation failed for user '${username}': ${message}`);
       });
       da.authorise(user.username, data.map( (d) => {return d.accessGroup;} ));
@@ -244,7 +239,7 @@ function handleRequest(request, response, db) {
 
   var user = getUser(request);
   if (!user.username && !opt.options.skipauth) {
-    return errorResponse(response, 407, 'Proxy authentication required');
+    return errorResponse(response, 401, 'Proxy authentication required');
   }
 
   var url_obj = url.parse(request.url, true);
@@ -255,7 +250,7 @@ function handleRequest(request, response, db) {
   switch (path) {
     case '/file': {
       if (!q.name) {
-        errorResponse(response, 400,
+        errorResponse(response, 422,
           'Invalid request: file name should be given');
       } else {
         getData(response, db, q, user);
@@ -264,7 +259,7 @@ function handleRequest(request, response, db) {
     }
     case '/sample': {
       if (!q.accession) {
-        errorResponse(response, 400,
+        errorResponse(response, 422,
           'Invalid request: sample accession number should be given');
       } else {
         getData(response, db, q, user);
@@ -272,7 +267,7 @@ function handleRequest(request, response, db) {
       break;
     }
     default: {
-      errorResponse(response, 400, 'URL not available: ' + path);
+      errorResponse(response, 422, 'URL not available: ' + path);
     }
   }
 }
