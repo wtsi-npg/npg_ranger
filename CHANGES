@@ -1,6 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
-release 0.0.1
+release 0.1
   - Initial version:
     a node.js server running on a socket or on a port serving 
       either individual files or merging all available files
