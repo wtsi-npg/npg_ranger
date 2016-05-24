@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - HTTP errors compliant with xGA4GH API.
+
 release 0.1
   - Initial version:
     a node.js server running on a socket or on a port serving 
