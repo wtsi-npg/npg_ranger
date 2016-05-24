@@ -12,7 +12,7 @@ release 0.0.1
       should have X-Remote-User header set), so this server
       should be run behind a reverse proxy that will perform
       authentication and set the header,
-    'data_truncated' trailer header is set to 'true' if the data
+    'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
-      error in the pipeline it is set to 'false'. 
+      error in the pipeline it is set to 'true'. 
     
