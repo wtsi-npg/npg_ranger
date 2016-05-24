@@ -60,11 +60,7 @@ It is expected that the incoming request has X-Remote-User header set. The data 
 
 ====TODO LIST
 
-Client disconnects - any action on the server side?
-
 Compute md5 and send it in a trailer.
-
-Get rid of doing merge inside db callbacks.
 
 Nodejs client to pipe through; in - url, out - stream, log all urls and errors, including trailer headers.
 

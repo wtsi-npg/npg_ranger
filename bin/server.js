@@ -355,6 +355,11 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
     if (opt.options.debug) {
       console.log("\nMEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
     }
+
+    request.on('close', () => {
+      console.log('CLIENT DISCONNECTED ');
+      response.end();
+    });
     handleRequest(request, response, db);
   });
 
