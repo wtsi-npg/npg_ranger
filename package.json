@@ -42,7 +42,7 @@
     "grunt-cli": "*",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
-    "grunt-jasmine-nodejs": "^1.5.2",
+    "grunt-jasmine-nodejs": "^1.5.3",
     "grunt-jscs": "*",
     "grunt-jsdoc": "^1.1.0",
     "grunt-jsonlint": "^1.0.7",
