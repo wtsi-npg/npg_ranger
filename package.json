@@ -3,15 +3,15 @@
   "title": "npg_ranger",
   "version": "0.0.1",
   "description": "Streaming service for bioinformatics data.",
-  "homepage": "https://github.com/mgcam/wtsi_ranger",
+  "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/mgcam/wtsi_ranger"
+    "url": "https://github.com/wtsi-npg/wtsi_ranger"
   },
   "bugs": {
-    "url": "https://github.com/mgcam/wtsi_ranger/issues",
+    "url": "https://github.com/wtsi-npg/wtsi_ranger/issues",
     "email": "npg@sanger.ac.uk"
   },
   "contributors": [
@@ -32,7 +32,21 @@
     "bin/client.js"
   ],
   "dependencies": {
-    "mongodb": "^2.1.7"
+    "fs-extra": "^0.26.7",
+    "mongodb": "^2.1.7",
+    "node-getopt": "^0.2.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "dev-null": "^0.1.1",
+    "grunt": "1.0.1",
+    "grunt-cli": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-jasmine-nodejs": "^1.5.3",
+    "grunt-jscs": "*",
+    "grunt-jsdoc": "^1.1.0",
+    "grunt-jsonlint": "^1.0.7",
+    "load-grunt-tasks": "*",
+    "tmp": "0.0.28"
+  }
 }

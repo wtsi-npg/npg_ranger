@@ -1,0 +1,19 @@
+{
+  "preset": "node-style-guide",
+  "disallowTrailingComma": false,
+  "disallowSpacesInsideParentheses": false,
+  "requireTrailingComma": false,
+  "maximumLineLength": {
+    "value": 120,
+    "tabSize": 2,
+    "allExcept": ["urlComments", "regex"]
+  },
+  "requireCamelCaseOrUpperCaseIdentifiers": false,
+  "requireSpacesInsideArrayBrackets": false,
+  "requireSpacesInsideBrackets": false,
+  "requireSpacesInsideParentheses": false,
+  "validateQuoteMarks": false,
+  "requirePaddingNewLinesBeforeLineComments": false,
+  "disallowCapitalizedComments": false,
+  "requireCapitalizedComments": false
+}
