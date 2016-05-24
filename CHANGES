@@ -1,6 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
-  - HTTP errors compliant with xGA4GH API.
+  - HTTP errors compliant with GA4GH API.
 
 release 0.1
   - Initial version:
