@@ -89,7 +89,7 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
   // Exit gracefully on error, close the database
   // connection and remove the socket file.
   process.on('uncaughtException', (err) => {
-    console.log(`Caught exception: ${err}\n`);
+    console.log(`Caught exception: ${err.stack}\n`);
     dbClose(db);
     try {
       if (typeof PORT != 'number') {
