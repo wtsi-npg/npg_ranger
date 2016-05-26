@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - application model and controller as separate modules
   - HTTP errors compliant with GA4GH API.
 
 release 0.1
