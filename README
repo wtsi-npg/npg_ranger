@@ -11,8 +11,11 @@ grunt jsdoc
 
 ====TEST
 
-grunt test - runs all tests
-grunt jasmine_nodejs
+grunt lint    - runs lint test
+grunt jasmine - runs jasmine tests
+grunt jasmine -v - runs jasmine tests verbosely, outputs info about individual tests
+grunt jasmine --filter=some - runs jasmine tests for test specs matching 'some'
+grunt test    - runs all tests
 
 ====RUN
 
