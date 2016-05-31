@@ -28,11 +28,24 @@ describe('Processing request', function() {
   it('Input validation', function() {
     expect( () => {m.process();} ).toThrowError(assert.AssertionError,
       'Query object is required');
-    expect( () => {m.process({});} ).toThrowError(assert.AssertionError,
+    expect( () => {m.process(1);} ).toThrowError(assert.AssertionError,
+      'Query should be an object');
+    expect( () => {m.process({one: 1});} ).toThrowError(assert.AssertionError,
+      "Query should have a 'files' object inside");
+    expect( () => {m.process({one: 1, files: 3});} )
+      .toThrowError(assert.AssertionError,
+      "Query should have a 'files' object inside");
+    expect( () => {m.process({one: 1, files: {}});} )
+      .toThrowError(assert.AssertionError,
+      "Files object should have numeric 'length' property");
+    expect( () => {m.process({one: 1, files: []});} )
+      .toThrowError(assert.AssertionError,
+      'Files should be given');
+    expect( () => {m.process({files: ['file1', 'file2']});} ).toThrowError(assert.AssertionError,
       'Destination stream is required');
-    expect( () => {m.process({}, {});} ).toThrowError(assert.AssertionError,
+    expect( () => {m.process({files: ['file1', 'file2']}, {});} ).toThrowError(assert.AssertionError,
       'End callback is required');
-    expect( () => {m.process({}, {}, {});} ).toThrowError(assert.AssertionError,
+    expect( () => {m.process({files: ['file1', 'file2']}, {}, {});} ).toThrowError(assert.AssertionError,
       'End callback is required');
   });  
 });
