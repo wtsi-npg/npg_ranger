@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+release 0.1.1
+  - HTTP errors compliant with GA4GH API.
+
 release 0.1
   - Initial version:
     a node.js server running on a socket or on a port serving 

@@ -24,7 +24,7 @@ describe('Input validation', function() {
   });
 });
 
-describe('declare and set a trailer', function() {
+describe('declaring, setting and removing a trailer', function() {
   // Create server HTTP server object.
   const server = http.createServer();
   // Generate synchronously a temporary file name.
@@ -88,10 +88,30 @@ describe('declare and set a trailer', function() {
 
   });
 
-  it('Error setting a trailer that has not been declared', function(done) {
+  it('Declare and remove a trailer', function(done) {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
+      trailer.declare(response);
+      expect(response.getHeader('Trailer')).toBe('data-truncated');
+      expect( () => {trailer.removeDeclaration(response)} ).not.toThrow();
+      expect(response.getHeader('Trailer')).toBe(undefined);
+      response.end();
+      done()
+    });
+
+    http.get({socketPath: socket}, function(response) {
+      response.on('data', function() {});
+      response.on('end', function() {});
+    });
+
+  });
+
+  it('Trailer has not been declared: no error removing declaration, error setting', function(done) {
+
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect( () => {trailer.removeDeclaration(response)} ).not.toThrow();
       response.write('useful payload');
       expect( () => {trailer.setDataTruncation(response, true)} )
         .toThrowError(Error,
