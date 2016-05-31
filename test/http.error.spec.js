@@ -1,3 +1,5 @@
+/* globals describe, it, expect, beforeAll, afterAll*/
+
 "use strict";
 
 const http    = require('http');
@@ -8,15 +10,15 @@ const HttpError = require('../lib/http/error.js');
 
 describe('Constructor input validation', function() {
   it('response object is not given - error', function() {
-    expect( () => {new HttpError()} ).toThrowError(ReferenceError,
+    expect( () => {new HttpError();} ).toThrowError(ReferenceError,
     'HTTP response object is required');
   });
   it('response code is not given - error', function() {
-    expect( () => {new HttpError({})} ).toThrowError(
+    expect( () => {new HttpError({});} ).toThrowError(
     ReferenceError, 'HTTP error code is required');
   });
   it('response code is not valid - error', function() {
-    expect( () => {new HttpError({}, 999)} ).toThrowError(
+    expect( () => {new HttpError({}, 999);} ).toThrowError(
     RangeError, 'Invalid HTTP error code: 999');
   });
 });
@@ -101,7 +103,7 @@ describe('set error response', function() {
         expect(headers['content-type']).toBe('application/json');
         expect(headers['content-length']).toBe(body.length + '');
         expect(headers['transfer-encoding']).toBe(undefined);
-        expect(headers['trailer']).toBe(undefined);
+        expect(headers.trailer).toBe(undefined);
         expect(response.rawTrailers).toEqual([]);
         done();
       });

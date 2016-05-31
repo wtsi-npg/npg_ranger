@@ -1,3 +1,5 @@
+/* globals describe, it, expect, beforeAll, afterAll */
+
 "use strict";
 
 const assert      = require('assert');
@@ -7,8 +9,6 @@ const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
 const DataMapper  = require('../lib/mapper.js');
-
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
 
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
@@ -58,7 +58,7 @@ describe('Data info retrieval', function() {
   });
 
   it('Input validation', function() {
-    expect( () => {new DataMapper()} ).toThrowError(ReferenceError,
+    expect( () => {new DataMapper();} ).toThrowError(ReferenceError,
       'Database handle is required');
     expect( () => {
       let dm = new DataMapper({});
@@ -248,6 +248,6 @@ describe('Data info retrieval', function() {
   afterAll(() => {
     let out = child.execSync(`mongod --shutdown --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid`);
     console.log(`\nMONGODB server has been shut down: ${out}`);
-    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`)}});
+    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
   });
 });
