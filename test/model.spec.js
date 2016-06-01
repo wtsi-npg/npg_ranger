@@ -6,6 +6,22 @@ const assert  = require('assert');
 const os      = require('os');
 const RangerModel = require('../lib/model.js');
 
+describe('Class methods', function() {
+  it('default format', function() {
+    expect(RangerModel.defaultFormat()).toBe('bam');
+  });
+  it('supported formats', function() {
+    expect(RangerModel.supportedFormats()).toEqual(['bam', 'cram', 'sam']);
+  });
+  it('is the format supported?', function() {
+    expect( () => {RangerModel.supportsFormat();} )
+      .toThrowError(assert.AssertionError,
+      'Non-empty format string should be given');
+    expect(RangerModel.supportsFormat('cram')).toBe(true);
+    expect(RangerModel.supportsFormat('bed')).toBe(false);
+  });
+});
+
 describe('Creating object instance', function() {
   it('temp directory attr is optional', function() {
     let m;
