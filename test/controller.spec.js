@@ -330,8 +330,8 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `/sample?accession=${id}`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        let url = `/sample?accession=${id}&format=bam`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
@@ -349,7 +349,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `/sample?accession=${id}&format=cram`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [url]});
         done();
       });
     });
@@ -367,8 +367,8 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `/sample?accession=${id}&region=chr1`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        let url = `/sample?accession=${id}&format=bam&region=chr1`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
@@ -385,8 +385,8 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `/sample?accession=${id}&region=chr1%3A4`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        let url = `/sample?accession=${id}&format=bam&region=chr1%3A4`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
@@ -403,8 +403,8 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `/sample?accession=${id}&region=chr1%3A1-5`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        let url = `/sample?accession=${id}&format=bam&region=chr1%3A1-5`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
@@ -421,8 +421,8 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `/sample?accession=${id}&region=chr1%3A5-401`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        let url = `/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
@@ -440,7 +440,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toBe(
           'OK, see redirection instructions in the body of the message');
         let url = `/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
-        expect(JSON.parse(body)).toEqual({urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
