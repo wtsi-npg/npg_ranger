@@ -4,21 +4,14 @@
 
 const os      = require('os');
 const fs      = require('fs');
-const fse     = require('fs-extra');
 const path    = require('path');
 const http    = require('http');
-const child   = require('child_process');
-const url     = require('url');
 const assert  = require('assert');
 const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
 
-const pipeline    = require('../lib/pipeline.js');
-const DataAccess  = require('../lib/auth.js');
-const DataMapper  = require('../lib/mapper.js');
-const HttpError   = require('../lib/http/error.js');
-const trailer     = require('../lib/http/trailer.js');
+const RangerController = require('../lib/controller');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -30,15 +23,12 @@ var opt = new GetOpt([
     ['h','help'             ,'display this help']
 ]).bindHelp().parseSystem();
 
-const PORT                    = opt.options.port || opt.argv[0]
-                                || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
-const HOST                    = opt.options.hostname || os.hostname() || 'localhost';
-const MONGO                   = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
-const SAMTOOLS_COMMAND        = 'samtools';
-const BBB_MARKDUPS_COMMAND    = 'bamstreamingmarkduplicates';
-const TEMP_DATA_DIR_NAME      = 'npg_ranger_data';
-const TEMP_DATA_DIR           = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
-const DEFAULT_FORMAT          = 'bam';
+const PORT               = opt.options.port || opt.argv[0]
+                           || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
+const HOST               = opt.options.hostname || os.hostname() || 'localhost';
+const MONGO              = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
+const TEMP_DATA_DIR_NAME = 'npg_ranger_data';
+const TEMP_DATA_DIR      = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
 
 const MONGO_OPTIONS = {
   db: {
@@ -55,248 +45,16 @@ const MONGO_OPTIONS = {
   mongos: {}
 };
 
-function setContentType(response, query) {
-  if (query.format && (query.format === 'bam' || query.format === 'cram')) {
-    response.setHeader("Content-Type", 'application/octet-stream');
-  }
-}
-
-function stViewAttrs(query) {
-  var attrs = ['view', '-h'];
-
-  if (query.format && (query.format === 'bam' || query.format === 'cram')) {
-    attrs.push(query.format === 'bam' ? '-b' : '-C');
-  }
-  attrs.push(query.files.shift() || "-");
-  if (query.region) {
-    attrs = attrs.concat(query.region);
-  }
-  console.log('view attrs: ' + attrs);
-  return attrs;
-}
-
-function stMergeAttrs(query) {
-  var attrs = ['merge', "-u"];
-  if (query.region) {
-    var regions = query.region;
-    if (typeof regions != 'object') {
-      regions = [regions];
-    }
-    regions.map(function(r) {
-      attrs.push('-R');
-      attrs.push(r);
-    });
-  }
-  attrs.push('-');
-
-  var files = query.files;
-  var re_bam  = /\.bam$/;
-  var re_cram = /\.cram$/;
-  var some_bam  = files.some(function(f) { return re_bam.test(f.data_object); });
-  var some_cram = files.some(function(f) { return re_cram.test(f.data_object); });
-  if (some_bam && some_cram) {
-    throw new Error(
-      'Inconsistent format, all files should be either bam or cram');
-  }
-
-  attrs = attrs.concat(files );
-  query.files.length = 0;
-
-  console.log('merge attrs: ' + attrs);
-  return attrs;
-}
-
-function bbbMarkDupsAttrs() {
-  var attrs = ['level=0','verbose=0','resetdupflag=1'];
-  attrs.push('tmpfile=' + tempFilePath());
-  attrs.push('M=/dev/null');
-  return attrs;
-}
-
-function endResponse(response, truncated) {
-  if (!response.finished) {
-    trailer.setDataTruncation(response, truncated);
-    response.end();
-  }
-}
-
-function errorResponse(response, code, m) {
-  // Create eror object anyway, it will validate the input
-  let err = new HttpError(response, code, m, true);
-  if (!response.finished) {
-    err.setErrorResponse();
-    response.end();
-  }
-}
-
-function getFile(response, query) {
-  const view = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
-  view.title = 'samtools view';
-  pipeline(
-    [view],
-    () => {endResponse(response,false);},
-    () => {endResponse(response,true);} )
-    .run(response);
-}
-
-function mergeFiles(response, query) {
-
-  var dir = tempFilePath();
-  fs.mkdirSync(dir);
-
-  const cleanup = function() {
-    fse.remove(dir, function(err) {
-      if (err) {
-        console.log(`Failed to remove ${dir}: ${err}`);
-      }
-    });
-  };
-
-  var attrs;
-  try {
-    attrs = stMergeAttrs(query);
-  } catch (ex) {
-    errorResponse(response, 500, ex);
-  }
-  if (!attrs) {
-    return;
-  }
-
-  const merge = child.spawn(SAMTOOLS_COMMAND,
-                attrs,
-                {cwd: dir});
-  merge.title = 'samtools merge';
-
-  const markdup = child.spawn(BBB_MARKDUPS_COMMAND, bbbMarkDupsAttrs());
-  markdup.title = BBB_MARKDUPS_COMMAND;
-
-  delete query.region;
-  delete query.directory;
-  const view  = child.spawn(SAMTOOLS_COMMAND, stViewAttrs(query));
-  view.title = 'samtools view (post-merge)';
-
-  pipeline(
-    [merge,markdup,view],
-    () => {endResponse(response,false); cleanup();},
-    () => {endResponse(response,true); cleanup();} )
-    .run(response);
-}
-
-function setupPipeline(response, query) {
-  if (!query.format) {
-    query.format = DEFAULT_FORMAT;
-  }
-  trailer.declare(response);
-  setContentType(response, query);
-  if (query.files.length === 1) {
-    getFile(response, query);
-  } else {
-    mergeFiles(response, query);
-  }
-}
-
-function getData(response, db, query, user) {
-
-  var dm = new DataMapper(db);
-  dm.once('error', (err) => {
-    dm.removeAllListeners();
-    errorResponse(response, 500, err);
-  });
-  dm.once('nodata', (message) => {
-    dm.removeAllListeners();
-    errorResponse(response, 404, message);
-  });
-  dm.once('data', (data) => {
-    query.files = data.map( (d) => {return d.file;} );
-    dm.removeAllListeners();
-    if (opt.options.skipauth) {
-      setupPipeline(response, query);
-    } else {
-      var da = new DataAccess(db);
-      da.once('authorised', (username) => {
-        da.removeAllListeners();
-        console.log(`User ${username} is given access`);
-        setupPipeline(response, query);
-      });
-      da.once('failed', (username, message) => {
-        da.removeAllListeners();
-        errorResponse(response, 403,
-          `Authorisation failed for user '${username}': ${message}`);
-      });
-      da.authorise(user.username, data.map( (d) => {return d.accessGroup;} ));
-    }
-  });
-  dm.getFileInfo(query, HOST);
-}
-
-function getUser(request) {
-  var user = {};
-  user.username   = request.headers['x-remote-user'] || null;
-  return user;
-}
-
-function handleRequest(request, response, db) {
-
-  var user = getUser(request);
-  if (!user.username && !opt.options.skipauth) {
-    return errorResponse(response, 401, 'Proxy authentication required');
-  }
-
-  var url_obj = url.parse(request.url, true);
-  var path = url_obj.pathname;
-  path = path ? path : '';
-  var q = url_obj.query;
-
-  switch (path) {
-    case '/file': {
-      if (!q.name) {
-        errorResponse(response, 422,
-          'Invalid request: file name should be given');
-      } else {
-        getData(response, db, q, user);
-      }
-      break;
-    }
-    case '/sample': {
-      if (!q.accession) {
-        errorResponse(response, 422,
-          'Invalid request: sample accession number should be given');
-      } else {
-        getData(response, db, q, user);
-      }
-      break;
-    }
-    default: {
-      errorResponse(response, 422, 'URL not available: ' + path);
-    }
-  }
-}
-
-function tempFilePath() {
-  return path.join(TEMP_DATA_DIR, Math.random().toString().substr(2));
-}
-
-function createTempDataDir() {
-  if (!fs.existsSync(TEMP_DATA_DIR)) {
-    var dir = path.join(os.tmpdir(), process.env.USER);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
-    fs.mkdirSync(TEMP_DATA_DIR);
-    console.log('Created temp data directory ' + TEMP_DATA_DIR);
-  } else {
-    console.log('Found temp data directory ' + TEMP_DATA_DIR);
-  }
-}
-
 /*
  * Main server script. Create the server object, establish database,
  * connection, setup server callbacks, start listening for incoming
  * requests.
  */
 
+assert(process.env.USER, 'User environment variable is not defined');
 const server = http.createServer();
 
+// Exit gracefully on a signal to quit
 process.on('SIGTERM', () => {
   server.close( () => {process.exit(0);} );
 });
@@ -304,6 +62,8 @@ process.on('SIGINT', () => {
   server.close( () => {process.exit(0);} );
 });
 
+// Connect to the database and, if successful, define
+// callbacks for the server.
 MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
   assert.equal(err, null, `Failed to connect to ${MONGO}: ${err}`);
@@ -320,15 +80,16 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
     }
   };
 
-  // Exit gracefully on signal to quit.
+  // Close database connection on server closing.
   server.on('close', () => {
     console.log("\nServer closing");
     dbClose(db);
   });
 
-  // Exit gracefully on error.
+  // Exit gracefully on error, close the database
+  // connection and remove the socket file.
   process.on('uncaughtException', (err) => {
-    console.log(`Caught exception: ${err}\n`);
+    console.log(`Caught exception: ${err.stack}\n`);
     dbClose(db);
     try {
       if (typeof PORT != 'number') {
@@ -345,21 +106,42 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
     process.exit(code);
   });
 
-  // Pass db connection to each request handler.
+  // Set up a callback for requests.
   server.on('request', (request, response) => {
     if (opt.options.debug) {
       console.log("\nMEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
     }
 
+    // Ensure the processes initiated by request stops if the client disconnects.
+    // Closing the response forces an error in the pipeline and allows for a
+    // prompt closing of a socket established for this request.
     request.on('close', () => {
       console.log('CLIENT DISCONNECTED ');
       response.end();
     });
-    handleRequest(request, response, db);
+
+    // Create an instance of an application controller and let it
+    // handle the request.
+    let controller = new RangerController(
+      request, response, db, TEMP_DATA_DIR, opt.options.skipauth);
+    controller.handleRequest(HOST);
   });
 
-  // Synchronously create directory for data, then start listening.
-  createTempDataDir();
+  var createTempDataDir = (tmpDir) => {
+    if (!fs.existsSync(tmpDir)) {
+      let dir = path.join(os.tmpdir(), process.env.USER);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+      }
+      fs.mkdirSync(tmpDir);
+      console.log(`Created temp data directory ${tmpDir}`);
+    } else {
+      console.log(`Found temp data directory ${tmpDir}`);
+    }
+  };
+
+  // Synchronously create directory for temporary data, then start listening.
+  createTempDataDir(TEMP_DATA_DIR);
   server.listen(PORT, () => {
     console.log(`Server listening on ${HOST}, ${PORT}`);
   });

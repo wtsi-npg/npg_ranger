@@ -30,7 +30,8 @@ module.exports = function(grunt) {
       all: [
         'Gruntfile.js',
         'bin/*.js',
-        'lib/**/*.js'
+        'lib/**/*.js',
+        'test/*.js',
       ],
       options: {
         jshintrc: '.jshintrc'
@@ -91,8 +92,9 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('lint', ['jshint', 'jscs', 'jsonlint']);
-  grunt.registerTask('test', ['lint', 'jasmine_nodejs']);
-  grunt.registerTask('doc', ['jsdoc']);
+  grunt.registerTask('lint',    ['jshint', 'jscs', 'jsonlint']);
+  grunt.registerTask('jasmine', ['jasmine_nodejs']);
+  grunt.registerTask('test',    ['lint', 'jasmine']);
+  grunt.registerTask('doc',     ['jsdoc']);
   grunt.registerTask('default', ['test']);
 };
