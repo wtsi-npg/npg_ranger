@@ -446,4 +446,113 @@ describe('Redirection in json response', function() {
     });
   });
 
+  it('redirection error, range is given, reference is missing', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?start=4&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toBe(
+          "'referenceName' attribute requered if 'start' or 'end' attribute is given");
+        done();
+      });
+    });
+  });
+
+  it('redirection error, range start is not an integer', function(done) {
+    http.get(
+     {socketPath: socket,
+      path: server_path + '?referenceName=chr1&start=5.5&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          "'5.5' is not an integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range start is a negative integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=-44&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range end is not an integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=foo'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'foo' is not an integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range end is a negative integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=-400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
+        done();
+      });
+    });
+  });
+
+  it('redirection error, range start is bigger than range end', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=400&end=4'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          'Range end should be bigger that start');
+        done();
+      });
+    });
+  });
+
+  it('redirection error, unknown format requested', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?format=fa'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(409);
+        expect(response.statusMessage).toEqual(
+          "Format 'fa' is not supported, supported formats: bam, cram, sam");
+        done();
+      });
+    });
+  });
+
 });
