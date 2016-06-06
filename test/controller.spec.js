@@ -577,9 +577,9 @@ describe('content type', function() {
       expect( () => {c.contentType();} )
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
-      expect(c.contentType('sam')).toBe('text/sam');
-      expect(c.contentType('bam')).toBe('application/bam');
-      expect(c.contentType('cram')).toBe('application/cram');
+      expect(c.contentType('sam')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('bam')).toBe('application/vnd.ga4gh.bam');
+      expect(c.contentType('cram')).toBe('application/vnd.ga4gh.cram');
       done();
     });
 
