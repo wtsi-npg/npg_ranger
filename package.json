@@ -43,7 +43,7 @@
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
     "grunt-jasmine-nodejs": "^1.5.3",
-    "grunt-jscs": "*",
+    "grunt-jscs": "3.0.0",
     "grunt-jsdoc": "^1.1.0",
     "grunt-jsonlint": "^1.0.7",
     "load-grunt-tasks": "*",
