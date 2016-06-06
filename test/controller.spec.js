@@ -556,3 +556,36 @@ describe('Redirection in json response', function() {
   });
 
 });
+
+describe('content type', function() {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+
+  beforeAll(function() {
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+    });
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+  });
+
+  it('data format driven content type', function(done) {
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true);
+      expect( () => {c.contentType();} )
+        .toThrowError(assert.AssertionError,
+        'Non-empty format string should be given');
+      expect(c.contentType('sam')).toBe('text/sam');
+      expect(c.contentType('bam')).toBe('application/bam');
+      expect(c.contentType('cram')).toBe('application/cram');
+      done();
+    });
+
+    http.get({socketPath: socket, path: '/file'}, function(response) {
+      let body = '';
+      response.on('data', function(d) { body += d;});
+    });
+  });
+});

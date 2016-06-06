@@ -20,6 +20,17 @@ describe('Class methods', function() {
     expect(RangerModel.supportsFormat('cram')).toBe(true);
     expect(RangerModel.supportsFormat('bed')).toBe(false);
   });
+  it('textual formats', function() {
+    expect(RangerModel.textualFormats()).toEqual(['sam']);
+  });
+  it('is the format textual?', function() {
+    expect( () => {RangerModel.isTextualFormat();} )
+      .toThrowError(assert.AssertionError,
+      'Non-empty format string should be given');
+    expect(RangerModel.isTextualFormat('cram')).toBe(false);
+    expect(RangerModel.isTextualFormat('bed')).toBe(false);
+    expect(RangerModel.isTextualFormat('sam')).toBe(true);
+  });
 });
 
 describe('Creating object instance', function() {
