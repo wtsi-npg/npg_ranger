@@ -33,6 +33,7 @@
   ],
   "dependencies": {
     "winston":  "2.2.0",
+    "moment" : "2.13.0",
     "fs-extra": "^0.26.7",
     "mongodb": "^2.1.7",
     "node-getopt": "^0.2.3"
