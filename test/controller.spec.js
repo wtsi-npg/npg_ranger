@@ -1,3 +1,5 @@
+
+
 /* globals describe, it, expect, beforeAll, afterAll*/
 
 "use strict";
@@ -262,7 +264,7 @@ describe('Redirection in json response', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
   let id          = 'EGA45678';
-  let server_path_basic = '/api/ga4gh/v.0.1/get/sample';
+  let server_path_basic = '/ga4gh/v.0.1/get/sample';
   let server_path = server_path_basic + '/' + id;
   beforeAll(function() {
     server.listen(socket, () => {
