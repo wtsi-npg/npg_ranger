@@ -67,13 +67,6 @@ Compute md5 and send it in a trailer.
 
 Nodejs client to pipe through; in - url, out - stream, log all urls and errors, including trailer headers.
 
-following from GA4GH teleconf on 22.04.2016
--------------------------------------------
-prefix/suffix for head-less url, do generically to allow for further prefixes/suffuxes
-use query params from the spec
-syncronise error codes with the spec
-
-
 ====APACHE REVERSE PROXY
 
 Setting up the server
@@ -114,8 +107,3 @@ Reverse proxy config
   # To a local URL
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
-
-
-
-
-

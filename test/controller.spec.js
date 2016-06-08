@@ -257,3 +257,335 @@ describe('Handling requests - error responses', function() {
     });
   });
 });
+
+describe('Redirection in json response', function() {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+  let id          = 'EGA45678';
+  let server_path_basic = '/api/ga4gh/v.0.1/get/sample';
+  let server_path = server_path_basic + '/' + id;
+  beforeAll(function() {
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+    });
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {}, null, true);
+      c.handleRequest('localhost');
+    });
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+  });
+
+  it('invalid url - no id - error response', function(done) {
+    http.get({socketPath: socket, path: server_path_basic}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(404);
+        expect(response.statusMessage).toEqual('URL not found : ' + server_path_basic);
+        done();
+      });
+    });
+  });
+
+  it('invalid url - no id - error response', function(done) {
+    let path = server_path_basic + '/';
+    http.get({socketPath: socket, path: path}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(404);
+        expect(response.statusMessage).toEqual('URL not found : ' + path);
+        done();
+      });
+    });
+  });
+
+  it('invalid sample id - error response', function(done) {
+    let path = server_path_basic + 'ERS-4556';
+    http.get({socketPath: socket, path: path}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(404);
+        expect(response.statusMessage).toEqual('URL not found : ' + path);
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, no query params', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, format given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?format=cram'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=cram`;
+        expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, chromosome given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1'}, function(response) {
+        //path: server_path}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, range start given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=3'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A4`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, range end given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&end=4'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A1-5`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, range start and end given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, query with all possible params', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=400&format=bam'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toBe(200);
+        expect(response.statusMessage).toBe(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        done();
+      });
+    });
+  });
+
+  it('redirection error, range is given, reference is missing', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?start=4&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toBe(
+          "'referenceName' attribute requered if 'start' or 'end' attribute is given");
+        done();
+      });
+    });
+  });
+
+  it('redirection error, range start is not an integer', function(done) {
+    http.get(
+     {socketPath: socket,
+      path: server_path + '?referenceName=chr1&start=5.5&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          "'5.5' is not an integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range start is a negative integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=-44&end=400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range end is not an integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=foo'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'foo' is not an integer");
+        done();
+      });
+    });
+  });
+
+ it('redirection error, range end is a negative integer', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=4&end=-400'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
+        done();
+      });
+    });
+  });
+
+  it('redirection error, range start is bigger than range end', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr1&start=400&end=4'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          'Range end should be bigger that start');
+        done();
+      });
+    });
+  });
+
+  it('redirection error, unknown format requested', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?format=fa'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(409);
+        expect(response.statusMessage).toEqual(
+          "Format 'fa' is not supported, supported formats: bam, cram, sam");
+        done();
+      });
+    });
+  });
+
+});
+
+describe('content type', function() {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+
+  beforeAll(function() {
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+    });
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+  });
+
+  it('data format driven content type', function(done) {
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true);
+      expect( () => {c.contentType();} )
+        .toThrowError(assert.AssertionError,
+        'Non-empty format string should be given');
+      expect(c.contentType('sam')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('bam')).toBe('application/vnd.ga4gh.bam');
+      expect(c.contentType('cram')).toBe('application/vnd.ga4gh.cram');
+      done();
+    });
+
+    http.get({socketPath: socket, path: '/file'}, function(response) {
+      let body = '';
+      response.on('data', function(d) { body += d;});
+    });
+  });
+});
