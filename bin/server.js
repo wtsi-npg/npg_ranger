@@ -10,6 +10,7 @@ const assert  = require('assert');
 const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
+const LOGGER      = require('../lib/logsetup.js');
 
 const RangerController = require('../lib/controller');
 
@@ -45,6 +46,8 @@ const MONGO_OPTIONS = {
   mongos: {}
 };
 
+LOGGER.info(opt.options);
+
 /*
  * Main server script. Create the server object, establish database,
  * connection, setup server callbacks, start listening for incoming
@@ -67,56 +70,56 @@ process.on('SIGINT', () => {
 MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
   assert.equal(err, null, `Failed to connect to ${MONGO}: ${err}`);
-  console.log(`Connected to ${MONGO}`);
+  LOGGER.info(`Connected to ${MONGO}`);
 
   var dbClose = (dbConn) => {
     if (dbConn) {
-      console.log('Database connection closing');
+      LOGGER.info('Database connection closing');
       try {
         dbConn.close();
       } catch (err) {
-        console.log(`Error closing db connection: ${err}`);
+        LOGGER.error(`Error closing db connection: ${err}`);
       }
     }
   };
 
   // Close database connection on server closing.
   server.on('close', () => {
-    console.log("\nServer closing");
+    LOGGER.info("\nServer closing");
     dbClose(db);
   });
 
   // Exit gracefully on error, close the database
   // connection and remove the socket file.
   process.on('uncaughtException', (err) => {
-    console.log(`Caught exception: ${err.stack}\n`);
+    LOGGER.error(`Caught exception: ${err}\n`);
     dbClose(db);
     try {
       if (typeof PORT != 'number') {
         // Throws an error if the assertion fails
         fs.accessSync(PORT, fs.W_OK);
-        console.log(`Remove socket file ${PORT} that is left behind`);
+        LOGGER.info(`Remove socket file ${PORT} that is left behind`);
         fs.unlinkSync(PORT);
       }
     } catch (err) {
-      console.log(`Error removing socket file: ${err}`);
+      LOGGER.error(`Error removing socket file: ${err}`);
     }
     let code = 1;
-    console.log(`Exiting with code ${code}`);
+    LOGGER.info(`Exiting with code ${code}`);
     process.exit(code);
   });
 
   // Set up a callback for requests.
   server.on('request', (request, response) => {
     if (opt.options.debug) {
-      console.log("\nMEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
+      LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
     }
 
     // Ensure the processes initiated by request stops if the client disconnects.
     // Closing the response forces an error in the pipeline and allows for a
     // prompt closing of a socket established for this request.
     request.on('close', () => {
-      console.log('CLIENT DISCONNECTED ');
+      LOGGER.info('CLIENT DISCONNECTED ');
       response.end();
     });
 
@@ -134,16 +137,16 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
         fs.mkdirSync(dir);
       }
       fs.mkdirSync(tmpDir);
-      console.log(`Created temp data directory ${tmpDir}`);
+      LOGGER.debug(`Created temp data directory ${tmpDir}`);
     } else {
-      console.log(`Found temp data directory ${tmpDir}`);
+      LOGGER.debug(`Found temp data directory ${tmpDir}`);
     }
   };
 
   // Synchronously create directory for temporary data, then start listening.
   createTempDataDir(TEMP_DATA_DIR);
   server.listen(PORT, () => {
-    console.log(`Server listening on ${HOST}, ${PORT}`);
+    LOGGER.info(`Server listening on ${HOST}, ${PORT}`);
   });
 });
 
