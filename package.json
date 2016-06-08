@@ -1,7 +1,7 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "Streaming service for bioinformatics data.",
   "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
   "license": "SEE LICENSE IN LICENSE",
@@ -17,7 +17,7 @@
   "contributors": [
     "Marina Gourtovaia",
     "David Jackson",
-    "Jaime Corona Tovar"
+    "Jaime Tovar Corona"
   ],
   "keywords": [
     "data streaming",
@@ -25,17 +25,23 @@
     "chromosome ranges"
   ],
   "files": [
-    "CHANGELOG",
+    "package.json",
+    "CHANGES",
     "LICENSE",
     "README",
-    "bin/server.js",
-    "bin/client.js"
+    "bin",
+    "lib",
+    "lib/http",
+    "test",
+    "test/data",
+    "test/data/fixtures",
+    "test/data/pipeline"
   ],
   "dependencies": {
-    "winston":  "2.2.0",
-    "moment" : "2.13.0",
-    "fs-extra": "^0.26.7",
-    "mongodb": "^2.1.7",
+    "winston":     "2.2.0",
+    "moment" :     "2.13.0",
+    "fs-extra":    "^0.26.7",
+    "mongodb":     "^2.1.7",
     "node-getopt": "^0.2.3"
   },
   "devDependencies": {
