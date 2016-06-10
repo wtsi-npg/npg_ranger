@@ -11,8 +11,11 @@ grunt jsdoc
 
 ====TEST
 
-grunt test - runs all tests
-grunt jasmine_nodejs
+grunt lint    - runs lint test
+grunt jasmine - runs jasmine tests
+grunt jasmine -v - runs jasmine tests verbosely, outputs info about individual tests
+grunt jasmine --filter=some - runs jasmine tests for test specs matching 'some'
+grunt test    - runs all tests
 
 ====RUN
 
@@ -61,15 +64,9 @@ It is expected that the incoming request has X-Remote-User header set. The data 
 ====TODO LIST
 
 Compute md5 and send it in a trailer.
-
+Option to run a cluster of servers.
+Post merge, do not pipe through samtools view if required format is the same as input format.
 Nodejs client to pipe through; in - url, out - stream, log all urls and errors, including trailer headers.
-
-following from GA4GH teleconf on 22.04.2016
--------------------------------------------
-prefix/suffix for head-less url, do generically to allow for further prefixes/suffuxes
-use query params from the spec
-syncronise error codes with the spec
-
 
 ====APACHE REVERSE PROXY
 
@@ -112,7 +109,29 @@ Reverse proxy config
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
 
+  # Additional headers to forward
+  RewriteEngine On
+  RewriteCond "%{HTTPS}" =off
+  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:http]
+  RewriteCond "%{HTTPS}" =on
+  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:https]
+  RequestHeader set X-Forwarded-Proto  %{XPROTOCOL}e
+  RequestHeader set X-Forwarded-Host-Suffix '/npg_ranger'
+
+CORS headers
+------------
+
+Header set Access-Control-Allow-Origin "SOME_SERVER_URL"
+Header set Access-Control-Allow-Methods "GET"
+Header set Access-Control-Allow-Credentials "true"
+
+or, if no authentication is necessary,
+
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET"
 
 
+Serving gemone reference for Apache hdocs directory
+---------------------------------------------------
 
-
+Content type is not set by Apache!

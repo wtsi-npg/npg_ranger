@@ -1,3 +1,5 @@
+/* globals describe, it, expect, beforeAll, afterAll */
+
 "use strict";
 
 const assert      = require('assert');
@@ -7,8 +9,6 @@ const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
 const DataAccess  = require('../lib/auth.js');
-
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
 
 const BASE_PORT  = 1100;
 const PORT_RANGE = 200;
@@ -33,7 +33,7 @@ describe('Authorisation', function() {
   });
 
   it('Input validation', function() {
-    expect( () => {new DataAccess()} ).toThrowError(ReferenceError,
+    expect( () => {new DataAccess();} ).toThrowError(ReferenceError,
       'Database handle is required');
     expect( () => {
       let da = new DataAccess({});
@@ -120,7 +120,7 @@ describe('Authorisation', function() {
   afterAll(() => {
     let out = child.execSync(`mongod --shutdown --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid`);
     console.log(`\nMONGODB server has been shut down: ${out}`);
-    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`)}});
+    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
   });
 });
 

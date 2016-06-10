@@ -1,3 +1,5 @@
+/* globals describe, it, expect, beforeAll, afterAll*/
+
 "use strict";
 
 const http    = require('http');
@@ -7,19 +9,19 @@ const trailer = require('../lib/http/trailer.js');
 
 describe('Input validation', function() {
   it('declare - response object is not given - error', function() {
-    expect( () => {trailer.declare()} ).toThrowError(ReferenceError,
+    expect( () => {trailer.declare();} ).toThrowError(ReferenceError,
     'HTTP response object is required');
   });
   it('setDataTruncation - response object is not given - error', function() {
-    expect( () => {trailer.setDataTruncation()} ).toThrowError(
+    expect( () => {trailer.setDataTruncation();} ).toThrowError(
     ReferenceError, 'HTTP response object is required');
   });
   it('setDataTruncation - response object is not given - error', function() {
-    expect( () => {trailer.setDataTruncation({})} ).toThrowError(
+    expect( () => {trailer.setDataTruncation({});} ).toThrowError(
     ReferenceError, 'boolean flag indicating data truncation is required');
   });
   it('setDataTruncation - response object is not given - error', function() {
-    expect( () => {trailer.setDataTruncation({}, 4)} ).toThrowError(
+    expect( () => {trailer.setDataTruncation({}, 4);} ).toThrowError(
     ReferenceError, 'boolean flag indicating data truncation is required');
   });
 });
@@ -94,10 +96,10 @@ describe('declaring, setting and removing a trailer', function() {
     server.on('request', (request, response) => {
       trailer.declare(response);
       expect(response.getHeader('Trailer')).toBe('data-truncated');
-      expect( () => {trailer.removeDeclaration(response)} ).not.toThrow();
+      expect( () => {trailer.removeDeclaration(response);} ).not.toThrow();
       expect(response.getHeader('Trailer')).toBe(undefined);
       response.end();
-      done()
+      done();
     });
 
     http.get({socketPath: socket}, function(response) {
@@ -111,9 +113,9 @@ describe('declaring, setting and removing a trailer', function() {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      expect( () => {trailer.removeDeclaration(response)} ).not.toThrow();
+      expect( () => {trailer.removeDeclaration(response);} ).not.toThrow();
       response.write('useful payload');
-      expect( () => {trailer.setDataTruncation(response, true)} )
+      expect( () => {trailer.setDataTruncation(response, true);} )
         .toThrowError(Error,
         'Cannot set data truncation trailer because it has not been declared');
       response.end();
@@ -157,7 +159,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       response.write('payload');
-      expect( () => {trailer.declare(response)} ).toThrowError(Error,
+      expect( () => {trailer.declare(response);} ).toThrowError(Error,
         "Can't set headers after they are sent.");
       expect(response.getHeader('Trailer')).toBe(undefined);
       response.end();
