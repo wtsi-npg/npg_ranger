@@ -8,28 +8,29 @@ const RangerModel = require('../lib/model.js');
 
 describe('Class methods', function() {
   it('default format', function() {
-    expect(RangerModel.defaultFormat()).toBe('bam');
+    expect(RangerModel.defaultFormat()).toBe('BAM');
   });
   it('supported formats', function() {
-    expect(RangerModel.supportedFormats()).toEqual(['bam', 'cram', 'sam']);
+    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM']);
   });
   it('is the format supported?', function() {
     expect( () => {RangerModel.supportsFormat();} )
       .toThrowError(assert.AssertionError,
       'Non-empty format string should be given');
-    expect(RangerModel.supportsFormat('cram')).toBe(true);
+    expect(RangerModel.supportsFormat('CRAM')).toBe(true);
     expect(RangerModel.supportsFormat('bed')).toBe(false);
+    expect(RangerModel.supportsFormat('BED')).toBe(false);
   });
   it('textual formats', function() {
-    expect(RangerModel.textualFormats()).toEqual(['sam']);
+    expect(RangerModel.textualFormats()).toEqual(['SAM']);
   });
   it('is the format textual?', function() {
     expect( () => {RangerModel.isTextualFormat();} )
       .toThrowError(assert.AssertionError,
       'Non-empty format string should be given');
-    expect(RangerModel.isTextualFormat('cram')).toBe(false);
-    expect(RangerModel.isTextualFormat('bed')).toBe(false);
-    expect(RangerModel.isTextualFormat('sam')).toBe(true);
+    expect(RangerModel.isTextualFormat('CRAM')).toBe(false);
+    expect(RangerModel.isTextualFormat('BED')).toBe(false);
+    expect(RangerModel.isTextualFormat('SAM')).toBe(true);
   });
 });
 
@@ -39,7 +40,7 @@ describe('Creating object instance', function() {
     expect( () => {m = new RangerModel();} ).not.toThrow();
     expect(m.tmpDir).toBe(os.tmpdir());
   });
-  
+
   it('Temporary directory should exist', function() {
     expect( () => {new RangerModel('/some/dir');} )
       .toThrowError(assert.AssertionError,
@@ -74,5 +75,5 @@ describe('Processing request', function() {
       'End callback is required');
     expect( () => {m.process({files: ['file1', 'file2']}, {}, {});} ).toThrowError(assert.AssertionError,
       'End callback is required');
-  });  
+  });
 });
