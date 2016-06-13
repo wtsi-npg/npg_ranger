@@ -430,20 +430,22 @@ describe('Redirection in json response', function() {
     });
   });
 
-  it('successful redirection, query with all possible params', function(done) {
-    http.get(
-      { socketPath: socket,
-        path: server_path + '?referenceName=chr1&start=4&end=400&format=BAM'}, function(response) {
-      var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toBe(200);
-        expect(response.statusMessage).toBe(
-          'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
-        done();
+  ['bam', 'BAM'].forEach( ( value ) => {
+    it('successful redirection, query with all possible params', function(done) {
+      http.get(
+        { socketPath: socket,
+          path: server_path + `?referenceName=chr1&start=4&end=400&format=${value}`}, function(response) {
+        var body = '';
+        response.on('data', function(d) { body += d;});
+        response.on('end', function() {
+          expect(response.headers['content-type']).toEqual('application/json');
+          expect(response.statusCode).toBe(200);
+          expect(response.statusMessage).toBe(
+            'OK, see redirection instructions in the body of the message');
+          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
+          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [url]});
+          done();
+        });
       });
     });
   });
