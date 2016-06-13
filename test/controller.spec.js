@@ -332,7 +332,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
@@ -342,7 +342,7 @@ describe('Redirection in json response', function() {
   it('successful redirection, format given', function(done) {
     http.get(
       { socketPath: socket,
-        path: server_path + '?format=cram'}, function(response) {
+        path: server_path + '?format=CRAM'}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
@@ -350,7 +350,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=cram`;
+        let url = `http://localhost/sample?accession=${id}&format=CRAM`;
         expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [url]});
         done();
       });
@@ -369,7 +369,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
@@ -387,7 +387,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A4`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A4`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
@@ -405,7 +405,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A1-5`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-5`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
@@ -423,27 +423,29 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
         done();
       });
     });
   });
 
-  it('successful redirection, query with all possible params', function(done) {
-    http.get(
-      { socketPath: socket,
-        path: server_path + '?referenceName=chr1&start=4&end=400&format=bam'}, function(response) {
-      var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toBe(200);
-        expect(response.statusMessage).toBe(
-          'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=bam&region=chr1%3A5-401`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
-        done();
+  ['bam', 'BAM'].forEach( ( value ) => {
+    it('successful redirection, query with all possible params', function(done) {
+      http.get(
+        { socketPath: socket,
+          path: server_path + `?referenceName=chr1&start=4&end=400&format=${value}`}, function(response) {
+        var body = '';
+        response.on('data', function(d) { body += d;});
+        response.on('end', function() {
+          expect(response.headers['content-type']).toEqual('application/json');
+          expect(response.statusCode).toBe(200);
+          expect(response.statusMessage).toBe(
+            'OK, see redirection instructions in the body of the message');
+          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
+          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [url]});
+          done();
+        });
       });
     });
   });
@@ -551,7 +553,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(409);
         expect(response.statusMessage).toEqual(
-          "Format 'fa' is not supported, supported formats: bam, cram, sam");
+          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM");
         done();
       });
     });
@@ -579,9 +581,9 @@ describe('content type', function() {
       expect( () => {c.contentType();} )
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
-      expect(c.contentType('sam')).toBe('text/vnd.ga4gh.sam');
-      expect(c.contentType('bam')).toBe('application/vnd.ga4gh.bam');
-      expect(c.contentType('cram')).toBe('application/vnd.ga4gh.cram');
+      expect(c.contentType('SAM')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('BAM')).toBe('application/vnd.ga4gh.bam');
+      expect(c.contentType('CRAM')).toBe('application/vnd.ga4gh.cram');
       done();
     });
 
