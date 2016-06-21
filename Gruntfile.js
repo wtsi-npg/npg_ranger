@@ -19,7 +19,7 @@ module.exports = function(grunt) {
 
     jscs: {
       main: [ 'bin/*.js',
-              'lib/**/*.js'
+              'lib/**/*.js',
       ],
       options: {
         config: '.jscsrc'
@@ -77,6 +77,19 @@ module.exports = function(grunt) {
       }
     },
 
+    browserify: {
+      client:{
+        src: ['lib/client/rangerRequest.js'],
+        dest: 'client_br.js',
+        options: {
+          require: ['./lib/client/rangerRequest.js:MyEmitter'],
+          browserifyOptions: {
+            debug: true
+          }
+        },
+      }
+    },
+
     watch: {
       js: {
         files: [
@@ -84,9 +97,10 @@ module.exports = function(grunt) {
           '.jshintrc',
           '.jscsrc',
           'bin/**/*.js',
+          'lib/**/*.js'
         ],
         tasks: [
-          'test'
+          'lint', 'browserify', 'test'
         ]
       }
     }

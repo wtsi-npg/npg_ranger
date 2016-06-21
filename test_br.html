@@ -1,0 +1,32 @@
+<html>
+<head>
+<script src='client_br.js'></script>
+</head>
+<body>
+<div id="d"></div>
+<script>
+  var emitter    = require('MyEmitter');
+  var myEmitter2 = new emitter;
+  // var url = 'http://sf2-farm-srv2.internal.sanger.ac.uk:35700/sample?region=1:77970-77980&accession=ERS1060068&format=SAM';
+
+  var url = 'http://sf2-farm-srv2.internal.sanger.ac.uk:35700/ga4gh/v.0.1/get/sample/EGAN00001287065';
+
+  myEmitter2.open('GET', url);
+
+  myEmitter2.onreadystatechange = () => {
+  	if ( myEmitter2.readyState === 4 ) {
+  		var p = document.createElement("p");
+    	p.appendChild(document.createTextNode(new Date() + ' ' + myEmitter2.response));
+    	document.getElementById("d").appendChild(p);
+  	}
+  };
+
+  var p = document.createElement("p");
+  p.appendChild(document.createTextNode(new Date() + ' - Outside emitter.'));
+  document.getElementById("d").appendChild(p);
+  myEmitter2.send();
+
+
+</script>
+</body>
+</html>
