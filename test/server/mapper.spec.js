@@ -8,12 +8,12 @@ const MongoClient = require('mongodb').MongoClient;
 const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
-const DataMapper  = require('../lib/mapper.js');
+const DataMapper  = require('../../lib/server/mapper.js');
 
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
 const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/data/fixtures/fileinfo.json';
+const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
 
 /* ***************************************************************************
  * Test cases (sample accession number, file path, details)
@@ -48,7 +48,7 @@ describe('Data info retrieval', function() {
   };
 
   beforeAll( () => {
-    let command = `mongod -f test/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
+    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
     console.log(`\nCommand to start MONGO DB daemon: ${command}`);
     let out = child.execSync(command);
     console.log(`Started MONGO DB daemon: ${out}`);

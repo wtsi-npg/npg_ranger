@@ -4,7 +4,7 @@
 
 const assert  = require('assert');
 const os      = require('os');
-const RangerModel = require('../lib/model.js');
+const RangerModel = require('../../lib/server/model.js');
 
 describe('Class methods', function() {
   it('default format', function() {
