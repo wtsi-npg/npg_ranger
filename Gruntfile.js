@@ -13,7 +13,7 @@ module.exports = function(grunt) {
 
     jsonlint: {
       pkg: {
-        src: ['package.json', 'test/data/fixtures/*.json']
+        src: ['package.json', 'test/server/data/fixtures/*.json']
       }
     },
 
@@ -31,7 +31,7 @@ module.exports = function(grunt) {
         'Gruntfile.js',
         'bin/*.js',
         'lib/**/*.js',
-        'test/*.js',
+        'test/**/*.js',
       ],
       options: {
         jshintrc: '.jshintrc'
@@ -69,7 +69,7 @@ module.exports = function(grunt) {
         //},
         // spec files
         specs: [
-          "test/**"
+          "test/server/**"
         ]
         //helpers: [
         //    "test/helpers/**"

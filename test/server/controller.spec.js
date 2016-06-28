@@ -9,7 +9,7 @@ const http    = require('http');
 const fs      = require('fs');
 const os      = require('os');
 const tmp     = require('tmp');
-const RangerController = require('../lib/controller.js');
+const RangerController = require('../../lib/server/controller.js');
 
 describe('Creating object instance - synch', function() {
   it('request object is not given - error', function() {

@@ -31,11 +31,12 @@
     "README",
     "bin",
     "lib",
-    "lib/http",
+    "lib/server",
+    "lib/server/http",
     "test",
-    "test/data",
-    "test/data/fixtures",
-    "test/data/pipeline"
+    "test/server/data",
+    "test/server/data/fixtures",
+    "test/server/data/pipeline"
   ],
   "dependencies": {
     "winston":     "2.2.0",
