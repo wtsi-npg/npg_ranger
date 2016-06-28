@@ -119,7 +119,7 @@ describe('Valid one-process pipeline', function() {
 
 describe('Valid two-process pipeline, invalid input', function() {
   beforeEach(function(done) {
-    setup(done, 'cat', 'test/data/pipeline/test.txt', 'wc');
+    setup(done, 'cat', 'test/server/data/pipeline/test.txt', 'wc');
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
@@ -129,7 +129,7 @@ describe('Valid two-process pipeline, invalid input', function() {
 
 describe('Valid one-process pipeline, invalid input', function() {
   beforeEach(function(done) {
-    setup(done, 'cat', 'test/data/pipeline/test.txt');
+    setup(done, 'cat', 'test/server/data/pipeline/test.txt');
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
