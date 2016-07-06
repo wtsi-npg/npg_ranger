@@ -33,11 +33,17 @@
     "lib",
     "lib/server",
     "lib/server/http",
+    "lib/client",
     "test",
     "test/server/data",
     "test/server/data/fixtures",
     "test/server/data/pipeline"
   ],
+  "bin": {
+    "npg_ranger_server": "bin/server.js",
+    "npg_ranger_client": "bin/client.js"
+  },
+  "main": "./lib/main.js",
   "dependencies": {
     "winston":     "2.2.0",
     "moment" :     "2.14.1",
