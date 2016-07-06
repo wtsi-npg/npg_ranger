@@ -82,7 +82,7 @@ module.exports = function(grunt) {
         src: ['lib/client/rangerRequest.js'],
         dest: 'client_br.js',
         options: {
-          require: ['./lib/client/rangerRequest.js:MyEmitter'],
+          require: ['./lib/client/rangerRequest.js:RangerRequest'],
           browserifyOptions: {
             debug: true
           }
