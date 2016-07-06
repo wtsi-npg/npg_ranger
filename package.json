@@ -1,7 +1,7 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Streaming service for bioinformatics data.",
   "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
   "license": "SEE LICENSE IN LICENSE",
