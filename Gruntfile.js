@@ -13,13 +13,17 @@ module.exports = function(grunt) {
 
     jsonlint: {
       pkg: {
-        src: ['package.json', 'test/server/data/fixtures/*.json']
+        src: [
+          'package.json',
+          'test/server/data/fixtures/*.json'
+        ]
       }
     },
 
     jscs: {
-      main: [ 'bin/*.js',
-              'lib/**/*.js',
+      main: [
+        'bin/*.js',
+        'lib/**/*.js'
       ],
       options: {
         config: '.jscsrc'
@@ -74,12 +78,15 @@ module.exports = function(grunt) {
         //helpers: [
         //    "test/helpers/**"
         //]
+      },
+      'client_tests': {
+        specs: [ "test/client/*.js" ]
       }
     },
 
     browserify: {
       client:{
-        src: ['lib/client/rangerRequest.js'],
+        src: [ 'lib/client/rangerRequest.js' ],
         dest: 'client_br.js',
         options: {
           require: ['./lib/client/rangerRequest.js:RangerRequest'],
@@ -97,10 +104,11 @@ module.exports = function(grunt) {
           '.jshintrc',
           '.jscsrc',
           'bin/**/*.js',
-          'lib/**/*.js'
+          'lib/**/*.js',
+          'test/client/*.js'
         ],
         tasks: [
-          'lint', 'browserify', 'test'
+          'lint', 'test'
         ]
       }
     }
