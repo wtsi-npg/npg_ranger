@@ -2,6 +2,10 @@ LIST OF CHANGES for npg_ranger project
 
   - compliance with the GA4GH API: redirection urls as objects
   - restructure documentation
+  - upgrading moment to 2.14.1 from 2.13.0
+  - upgrading grunt-jscs to 3.0.1 from 3.0.0
+  - new client code to comply with GA4GH API
+  - client code fit to use with browserify
 
 release 0.2.1
   - compliance with the GA4GH API: use upper case for format
