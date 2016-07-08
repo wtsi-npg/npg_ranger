@@ -1,7 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
   - compliance with the GA4GH API: redirection urls as objects
-  
+  - restructure documentation
+
 release 0.2.1
   - compliance with the GA4GH API: use upper case for format
 
