@@ -6,10 +6,11 @@ Introduction
 ============
 
 This project is a contribution towards developent of the streaming API and servers under the
-`GA4GH http://ga4gh.org`_ initiative (GA4GH Directory API and Streaming). The server
-conforms to as yet unpublished at the time of writing GA4GH API. The client
+`GA4GH http://ga4gh.org`_ initiative (GA4GH Directory API and Streaming). The project has
+both a server and a compatible http client.
 
-http://ga4gh.org/#/documentation
+The server conforms to as yet unpublished at the time of writing GA4GH API. It uses
+the http transfer encoding protocol to stream sequencing data.
 
 Package structure
 =================
@@ -22,12 +23,3 @@ docs/api - generated API (run "grunt doc" to generate)
 package.json - npm package definition
 Gruntfile.js - grunt runner specification
 
-Manuals
-=======
-Server_
-
-.. _docs/server.rst
-
-Client_
-
-.. _docs/client.rst

@@ -94,7 +94,9 @@ ${HOME}/apache_build/bin/httpd -k start
 
 LDAP authorisation config
 -------------------------
+
 ::
+
  <Location / >
 	AuthType Basic
 	AuthBasicProvider ldap 
@@ -109,7 +111,9 @@ LDAP authorisation config
 
 Reverse proxy configuration
 ---------------------------
+
 ::
+
   ProxyPreserveHost On
   # to a local server listening on a unix socket, requires Apache v 2.4.7 at least
   ProxyPass /        unix:/path_to/my.socket|http://localhost/
@@ -129,7 +133,9 @@ Reverse proxy configuration
 
 CORS headers
 ------------
+
 ::
+
  Header set Access-Control-Allow-Origin "SOME_SERVER_URL"
  Header set Access-Control-Allow-Methods "GET"
  Header set Access-Control-Allow-Credentials "true"
@@ -137,6 +143,7 @@ CORS headers
 Or, if no authentication is necessary,
 
 ::
+
  Header set Access-Control-Allow-Origin "*"
  Header set Access-Control-Allow-Methods "GET"
 
