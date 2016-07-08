@@ -95,17 +95,19 @@ APACHE REVERSE PROXY
 Setting up the server
 ---------------------
 
-wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.18.tar.gz
-tar -xzvf httpd-2.4.18.tar.gz
-cd httpd-2.4.18
-./configure --enable-load-all-modules --prefix=${HOME}/apache_build
-make 
-make install
-cd ${HOME}/apache_build
-vi conf/httpd.conf # edit the file
+::
 
-From anywhere
-${HOME}/apache_build/bin/httpd -k start
+ wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.18.tar.gz
+ tar -xzvf httpd-2.4.18.tar.gz
+ cd httpd-2.4.18
+ ./configure --enable-load-all-modules --prefix=${HOME}/apache_build
+ make 
+ make install
+ cd ${HOME}/apache_build
+ vi conf/httpd.conf # edit the file
+
+ #from anywhere
+ ${HOME}/apache_build/bin/httpd -k start
 
 LDAP authorisation config
 -------------------------
