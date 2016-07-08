@@ -5,55 +5,70 @@ Server Manual
 Building, testing, installing
 =============================
 
-# Install dependencies
+Install dependencies
 
-npm install
+::
 
-# Generate documentation
+  npm install
 
-grunt jsdoc
+Generate documentation
 
-# Test
+::
 
-grunt lint    - runs lint test
-grunt jasmine - runs jasmine tests
-grunt jasmine -v - runs jasmine tests verbosely, outputs info about individual tests
-grunt jasmine --filter=some - runs jasmine tests for test specs matching 'some'
-grunt test    - runs all tests
+  grunt jsdoc
+
+Test
+
+::
+
+  grunt lint    - runs lint test
+  grunt jasmine - runs jasmine tests
+  grunt jasmine -v - runs jasmine tests verbosely, outputs info about individual tests
+  grunt jasmine --filter=some - runs jasmine tests for test specs matching 'some'
+  grunt test    - runs all tests
+
 
 Running
 =======
 
-# Connect to iRODs if not already connected
+1. Connect to iRODs if not already connected
 
-# Ensure that samtools v1.3 or higher is on your path
+2. Ensure that samtools v1.3 or higher is on your path
 
-# Run server
+3. Run server
 
-on the default socket /tmp/${USER}/npg_ranger.sock
-bin/server.js
+::
 
-on a custom socket
-bin/server.js /tmp/my.sock
+ #on the default socket /tmp/${USER}/npg_ranger.sock
+ bin/server.js
 
-on a custom port 9447
-bin/server.js 9447
+ #on a custom socket
+ bin/server.js /tmp/my.sock
 
-on a custom port and skip authentication
-bin/server.js -p PORT -s
+ #on a custom port 9447
+ bin/server.js 9447
+
+ #on a custom port and skip authentication
+ bin/server.js -p PORT -s
 
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
 
 curl
 ====
-curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
-  no files found - an empty reply
-  one file found - an outcome of samtools view
-  multiple files found - an outcome of samtools merge
 
-curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
-curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
+::
+
+ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/sample?region=Zv9_scaffold3541&accession=ERS1023809'
+
+no files found - an empty reply
+one file found - an outcome of samtools view
+multiple files found - an outcome of samtools merge
+
+::
+
+ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
+ curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
 The default output format is bam. Use 'format' option with value either 'SAM' or 'BAM' or 'CRAM' to change the output format.
 
