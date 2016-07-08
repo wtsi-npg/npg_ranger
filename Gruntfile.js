@@ -7,7 +7,7 @@ module.exports = function(grunt) {
     jsdoc: {
       src: ['lib/**/*.js'],
       options: {
-        destination: 'doc'
+        destination: 'docs/api'
       }
     },
 
