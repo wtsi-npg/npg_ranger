@@ -55,7 +55,7 @@ describe('Testing high level', () => {
     req.send('');
   }, 5000);
 
-  it('Not sucess with wrong path', ( done ) => {
+  it('Not success with wrong path', ( done ) => {
     var req = new RangerRequest();
     // Google
     var url = 'http://104.196.18.135/readgroupset/CMvnhpKTFhD04eLE-q2yxnU?referenceName=1&start=167856&end=173507&format=BAM';
@@ -64,7 +64,26 @@ describe('Testing high level', () => {
 
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.status === 200 || req.status === 206).not.toBe(true);
+        expect(req.status).toBe(404, 'Correct status code');
+        done();
+      }
+    };
+
+    req.send('');
+  }, 5000);
+
+  it('Not success with wrong server', ( done ) => {
+    var req = new RangerRequest();
+    // Google
+    var url = 'http://127.0.0./someData';
+
+    req.open('GET', url);
+
+    req.onreadystatechange = () => {
+      if ( req.readyState === 4 ) {
+        expect(req.status).toBe(424, 'Correct status code for server address error');
+        expect(req.statusMessage).toMatch(/ENOTFOUND/, 'Error message includes statusMessage');
+        expect(req.statusMessage).toMatch(/127\.0\.0\./, 'Error message includes the url requested');
         done();
       }
     };
