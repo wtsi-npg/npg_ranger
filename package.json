@@ -50,6 +50,7 @@
     "fs-extra":    "^0.30.0",
     "mongodb":     "^2.1.7",
     "node-getopt": "^0.2.3",
+    "commander":   "2.9.0",
     "js-md5" :     "0.4.1"
   },
   "devDependencies": {
