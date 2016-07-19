@@ -46,6 +46,9 @@ const MONGO_OPTIONS = {
   mongos: {}
 };
 
+if ( opt.options.debug ) {
+  LOGGER.level = 'debug';
+}
 LOGGER.info(opt.options);
 
 /*
