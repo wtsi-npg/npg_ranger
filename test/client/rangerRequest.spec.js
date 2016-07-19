@@ -61,7 +61,7 @@ describe('Testing RangerRequest requests', () => {
     p1.then( ( srv ) => {
       expect(srv.address.port).not.toBe(0);
 
-      let url = 'http://localhost:' + srv.address().port + '/someData';
+      let url = 'http://127.0.0.1:' + srv.address().port + '/someData';
       let req = new RangerRequest();
       req.open('GET', url);
 
