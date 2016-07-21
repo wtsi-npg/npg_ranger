@@ -7,6 +7,29 @@ const cline = require('commander');
 const LOGGER        = require('../lib/logsetup.js');
 const RangerRequest = require('../lib/client/rangerRequest');
 
+/**
+ * @external fs
+ * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/fs.html|fs}
+ */
+
+/**
+ * @external commander
+ * @see      {@link https://www.npmjs.com/package/commander|commander}
+ */
+
+
+/**
+ * Command line client
+ * @module client
+ *
+ * @requires {@link external:fs|fs}
+ * @requires {@link external:commander|commander}
+ * @requires module:logsetup
+ *
+ * @author Jaime Tovar
+ * @copyright Genome Research Limited 2016
+ */
+
 cline
   .version('0.2.2')
   .description('Command line client for GA4GH data streaming')
@@ -65,6 +88,10 @@ req.onreadystatechange = () => {
       }
     }
   }
+};
+
+req.onerror = ( error ) => {
+  LOGGER.error('' + error);
 };
 
 function sendRequest() {

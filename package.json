@@ -58,6 +58,7 @@
     "dev-null": "^0.1.1",
     "grunt": "1.0.1",
     "grunt-cli": "*",
+    "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
     "grunt-jasmine-nodejs": "^1.5.3",

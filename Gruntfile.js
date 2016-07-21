@@ -4,8 +4,12 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
 
+    clean: {
+      api_docs: [ 'docs/api/**' ]
+    },
+
     jsdoc: {
-      src: ['lib/**/*.js'],
+      src: ['lib/**/*.js', 'bin/*.js'],
       options: {
         destination: 'docs/api'
       }
@@ -84,19 +88,6 @@ module.exports = function(grunt) {
       }
     },
 
-    browserify: {
-      client:{
-        src: [ 'lib/client/rangerRequest.js' ],
-        dest: 'client_br.js',
-        options: {
-          require: ['./lib/client/rangerRequest.js:RangerRequest'],
-          browserifyOptions: {
-            debug: true
-          }
-        },
-      }
-    },
-
     watch: {
       js: {
         files: [
@@ -117,6 +108,6 @@ module.exports = function(grunt) {
   grunt.registerTask('lint',    ['jshint', 'jscs', 'jsonlint']);
   grunt.registerTask('jasmine', ['jasmine_nodejs']);
   grunt.registerTask('test',    ['lint', 'jasmine']);
-  grunt.registerTask('doc',     ['jsdoc']);
+  grunt.registerTask('doc',     ['clean:api_docs', 'jsdoc']);
   grunt.registerTask('default', ['test']);
 };
