@@ -5,7 +5,8 @@ module.exports = function(grunt) {
   grunt.initConfig({
 
     clean: {
-      api_docs: [ 'docs/api/**' ]
+      api_docs: [ 'docs/api/**' ],
+      dist: [ 'dist/' ]
     },
 
     jsdoc: {
@@ -85,6 +86,20 @@ module.exports = function(grunt) {
       },
       'client_tests': {
         specs: [ "test/client/*.js" ]
+      }
+    },
+
+    browserify: {
+      dist: {
+        files : {
+          'dist/npg_ranger_browser.js': [
+            'lib/main.js'
+          ]
+        },
+        options: {
+          debug: true,
+          require: [ ['./lib/main.js', {expose: 'RangerRequest'} ] ]
+        }
       }
     },
 
