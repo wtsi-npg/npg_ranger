@@ -36,6 +36,7 @@
     "lib/server/http",
     "lib/client",
     "test",
+    "test/client",
     "test/server/data",
     "test/server/data/fixtures",
     "test/server/data/pipeline"
@@ -68,6 +69,6 @@
     "grunt-browserify": "5.0.0",
     "load-grunt-tasks": "*",
     "tmp": "0.0.28",
-    "browserify": "13.0.1"
+    "browserify": "13.1.0"
   }
 }
