@@ -85,7 +85,7 @@ describe('Testing high level', () => {
     var url = 'http://htsnexus.rnd.dnanex.us/v1/reads/platinum/NA12891?referenceName=chr22&start=16100000&end=16105000&format=BAM';
 
     var expected = {
-      bytes: 279561,
+      bytes: 543655,
       md5: 'd7924c94113ca4e76d64d321f04e6766'
     };
 
