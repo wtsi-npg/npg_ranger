@@ -55,6 +55,54 @@ describe('Testing high level', () => {
     req.send('');
   }, 5000);
 
+  it('Success with DNANexus - 1k genomes', ( done ) => {
+    var req = new RangerRequest();
+    // DNANexus
+    var url = 'http://htsnexus.rnd.dnanex.us/v1/reads/1000genomes_low_coverage/NA20276?referenceName=22&start=16100000&end=16105000&format=BAM';
+
+    var expected = {
+      bytes: 279561,
+      md5: 'd7924c94113ca4e76d64d321f04e6766'
+    };
+
+    req.open('GET', url);
+
+    req.onreadystatechange = () => {
+      if ( req.readyState === 4 ) {
+        expect(req.status === 200 || req.status === 206).toBe(true);
+        expect(req.response.byteLength).toBe(expected.bytes, 'Got correct number of bytes');
+        expect(md5(new Uint8Array(req.response))).toBe(expected.md5, 'Data hash matches expected');
+        done();
+      }
+    };
+
+    req.send('');
+  }, 5000);
+
+  it('Success with DNANexus - platinum', ( done ) => {
+    var req = new RangerRequest();
+    // DNANexus
+    var url = 'http://htsnexus.rnd.dnanex.us/v1/reads/platinum/NA12891?referenceName=chr22&start=16100000&end=16105000&format=BAM';
+
+    var expected = {
+      bytes: 279561,
+      md5: 'd7924c94113ca4e76d64d321f04e6766'
+    };
+
+    req.open('GET', url);
+
+    req.onreadystatechange = () => {
+      if ( req.readyState === 4 ) {
+        expect(req.status === 200 || req.status === 206).toBe(true);
+        expect(req.response.byteLength).toBe(expected.bytes, 'Got correct number of bytes');
+        expect(md5(new Uint8Array(req.response))).toBe(expected.md5, 'Data hash matches expected');
+        done();
+      }
+    };
+
+    req.send('');
+  }, 20000);
+
   it('Not success with wrong path', ( done ) => {
     var req = new RangerRequest();
     // Google
