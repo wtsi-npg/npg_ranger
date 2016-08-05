@@ -17,7 +17,6 @@ const RangerRequest = require('../lib/client/rangerRequest');
  * @see      {@link https://www.npmjs.com/package/commander|commander}
  */
 
-
 /**
  * Command line client
  * @module client
@@ -25,6 +24,11 @@ const RangerRequest = require('../lib/client/rangerRequest');
  * @requires {@link external:fs|fs}
  * @requires {@link external:commander|commander}
  * @requires module:logsetup
+ *
+ * Provides a command line client for data retrieval base on GA4GH data sharing
+ * API. Is implemented with parallel, asynchronous requests.
+ *
+ * $ client.js "http://192.168.0.1:5050/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" AA0011.bam
  *
  * @author Jaime Tovar
  * @copyright Genome Research Limited 2016
@@ -84,14 +88,14 @@ req.onreadystatechange = () => {
       try {
         LOGGER.debug('request: ' + JSON.stringify(req));
       } finally {
-        LOGGER.error(req.status);
+        LOGGER.error(req.status + ' ' + req.statusMessage);
       }
     }
   }
 };
 
 req.onerror = ( error ) => {
-  LOGGER.error('' + error);
+  LOGGER.error('onerror: ' + error);
 };
 
 function sendRequest() {
