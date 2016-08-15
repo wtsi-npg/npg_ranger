@@ -11,7 +11,7 @@ var user = process.env.USER;
 http.get(
   {
     socketPath: '/tmp/' + user + '/npg_ranger.sock',
-    path: '/sample?region=1:77970-77980&accession=ERS1060068&format=sam',
+    path: '/sample?region=1:77970-77980&accession=ERS1060068&format=vcf',
     headers: {'X-Remote-User': user}
   },
   function(response) {
