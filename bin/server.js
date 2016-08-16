@@ -19,6 +19,7 @@ var opt = new GetOpt([
     ['m','mongourl=URI'     ,'URI to contact mongodb'],
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
     ['H','hostname=HOST'    ,'override hostname with HOST'],
+    ['S','strictmode'       ,'run in strict mode'],
     ['s','skipauth'         ,'skip authorisation steps'],
     ['d','debug'            ,'debugging mode for this server'],
     ['h','help'             ,'display this help']
@@ -129,7 +130,8 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
     // Create an instance of an application controller and let it
     // handle the request.
     let controller = new RangerController(
-      request, response, db, TEMP_DATA_DIR, opt.options.skipauth);
+      request, response, db, TEMP_DATA_DIR, opt.options.skipauth,
+      opt.options.strict);
     controller.handleRequest(HOST);
   });
 

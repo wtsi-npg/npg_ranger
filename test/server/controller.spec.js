@@ -582,6 +582,7 @@ describe('content type', function() {
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
       expect(c.contentType('SAM')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('VCF')).toBe('text/vnd.ga4gh.vcf');
       expect(c.contentType('BAM')).toBe('application/vnd.ga4gh.bam');
       expect(c.contentType('CRAM')).toBe('application/vnd.ga4gh.cram');
       done();
