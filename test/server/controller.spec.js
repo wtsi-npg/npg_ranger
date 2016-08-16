@@ -553,7 +553,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(409);
         expect(response.statusMessage).toEqual(
-          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM");
+          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
       });
     });

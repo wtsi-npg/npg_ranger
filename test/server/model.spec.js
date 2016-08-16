@@ -11,7 +11,7 @@ describe('Class methods', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
   });
   it('supported formats', function() {
-    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM']);
+    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM', 'VCF']);
   });
   it('is the format supported?', function() {
     expect( () => {RangerModel.supportsFormat();} )
@@ -22,7 +22,7 @@ describe('Class methods', function() {
     expect(RangerModel.supportsFormat('BED')).toBe(false);
   });
   it('textual formats', function() {
-    expect(RangerModel.textualFormats()).toEqual(['SAM']);
+    expect(RangerModel.textualFormats()).toEqual(['SAM', 'VCF']);
   });
   it('is the format textual?', function() {
     expect( () => {RangerModel.isTextualFormat();} )
