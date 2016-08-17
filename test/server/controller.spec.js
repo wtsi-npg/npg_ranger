@@ -89,12 +89,22 @@ describe('set error response', function() {
       expect(c.db).toEqual({one: "two"});
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(false);
+      expect( () => {c = new RangerController(request, response, {}, '', false, true);} ).not.toThrow();
+      expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(true);
+      expect( () => {c = new RangerController(request, response, {}, '', true, true);} ).not.toThrow();
+      expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(true);
+
       response.end();
       done();
     });

@@ -18,6 +18,7 @@ describe('Class methods', function() {
       .toThrowError(assert.AssertionError,
       'Non-empty format string should be given');
     expect(RangerModel.supportsFormat('CRAM')).toBe(true);
+    expect(RangerModel.supportsFormat('VCF')).toBe(true);
     expect(RangerModel.supportsFormat('bed')).toBe(false);
     expect(RangerModel.supportsFormat('BED')).toBe(false);
   });
@@ -30,6 +31,7 @@ describe('Class methods', function() {
       'Non-empty format string should be given');
     expect(RangerModel.isTextualFormat('CRAM')).toBe(false);
     expect(RangerModel.isTextualFormat('BED')).toBe(false);
+    expect(RangerModel.isTextualFormat('VCF')).toBe(true);
     expect(RangerModel.isTextualFormat('SAM')).toBe(true);
   });
 });
