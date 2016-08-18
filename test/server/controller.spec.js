@@ -221,6 +221,7 @@ describe('Handling requests - error responses', function() {
     });
   });
 
+
   it('Invalid input error for a sample url', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -268,6 +269,32 @@ describe('Handling requests - error responses', function() {
       });
     });
   });
+
+  it('Invalid input error for a vcf file when strict mode disabled', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true, true);
+      expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(true);
+      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+    });
+
+    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        let m = 'Invalid request: cannot produce VCF files while server is not in strict mode';
+        expect(response.statusMessage).toEqual(m);
+        expect(JSON.parse(body)).toEqual(
+          {error: {type:    "InvalidInput",
+                   message: m}});
+        done();
+      });
+    });
+  });
+
 });
 
 describe('Redirection in json response', function() {

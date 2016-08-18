@@ -19,7 +19,7 @@ var opt = new GetOpt([
     ['m','mongourl=URI'     ,'URI to contact mongodb'],
     ['t','tempdir=PATH'     ,'PATH of temporary directory'],
     ['H','hostname=HOST'    ,'override hostname with HOST'],
-    ['' ,'no-strict'        ,'disable strict mode'],
+    ['' ,'no-strict'        ,'disable strict mode. Disables VCF output'],
     ['s','skipauth'         ,'skip authorisation steps'],
     ['d','debug'            ,'debugging mode for this server'],
     ['h','help'             ,'display this help']
