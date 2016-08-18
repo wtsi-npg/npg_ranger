@@ -467,7 +467,7 @@ describe('Redirection in json response', function() {
     });
   });
 
-  ['bam', 'BAM'].forEach( ( value ) => {
+  ['bam', 'BAM', 'sam', 'SAM', 'cram', 'CRAM', 'vcf', 'VCF'].forEach( ( value ) => {
     it('successful redirection, query with all possible params', function(done) {
       http.get(
         { socketPath: socket,
@@ -477,10 +477,11 @@ describe('Redirection in json response', function() {
         response.on('end', function() {
           expect(response.headers['content-type']).toEqual('application/json');
           expect(response.statusCode).toBe(200);
+          let formatUpperCase = value.toUpperCase();
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
+          let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-401`;
+          expect(JSON.parse(body)).toEqual({format: `${formatUpperCase}`, urls: [{'url': url}]});
           done();
         });
       });

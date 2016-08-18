@@ -129,6 +129,8 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
     // Create an instance of an application controller and let it
     // handle the request.
+    // Invert no-strict to pass 'strict' to RangerController and
+    // avoid double negatives.
     let controller = new RangerController(
       request, response, db, TEMP_DATA_DIR, opt.options.skipauth,
       opt.options['no-strict']);
