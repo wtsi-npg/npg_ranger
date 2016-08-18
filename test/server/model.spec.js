@@ -77,5 +77,7 @@ describe('Processing request', function() {
       'End callback is required');
     expect( () => {m.process({files: ['file1', 'file2']}, {}, {});} ).toThrowError(assert.AssertionError,
       'End callback is required');
+    expect( () => {m.process({files: ['file1'], format: 'VCF'}, {}, () => {return;});} ).toThrowError(ReferenceError,
+      'database does not hold location of reference .fa file');
   });
 });
