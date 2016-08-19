@@ -4,8 +4,13 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
 
+    clean: {
+      api_docs: [ 'docs/api/**' ],
+      dist: [ 'dist/' ]
+    },
+
     jsdoc: {
-      src: ['lib/**/*.js'],
+      src: ['lib/**/*.js', 'bin/*.js'],
       options: {
         destination: 'docs/api'
       }
@@ -13,13 +18,17 @@ module.exports = function(grunt) {
 
     jsonlint: {
       pkg: {
-        src: ['package.json', 'test/server/data/fixtures/*.json']
+        src: [
+          'package.json',
+          'test/server/data/fixtures/*.json'
+        ]
       }
     },
 
     jscs: {
-      main: [ 'bin/*.js',
-              'lib/**/*.js'
+      main: [
+        'bin/*.js',
+        'lib/**/*.js'
       ],
       options: {
         config: '.jscsrc'
@@ -74,6 +83,23 @@ module.exports = function(grunt) {
         //helpers: [
         //    "test/helpers/**"
         //]
+      },
+      'client_tests': {
+        specs: [ "test/client/*.js" ]
+      }
+    },
+
+    browserify: {
+      dist: {
+        files : {
+          'dist/npg_ranger_browser.js': [
+            'lib/main.js'
+          ]
+        },
+        options: {
+          debug: true,
+          require: [ ['./lib/main.js', {expose: 'RangerRequest'} ] ]
+        }
       }
     },
 
@@ -84,9 +110,11 @@ module.exports = function(grunt) {
           '.jshintrc',
           '.jscsrc',
           'bin/**/*.js',
+          'lib/**/*.js',
+          'test/client/*.js'
         ],
         tasks: [
-          'test'
+          'lint', 'test'
         ]
       }
     }
@@ -95,6 +123,6 @@ module.exports = function(grunt) {
   grunt.registerTask('lint',    ['jshint', 'jscs', 'jsonlint']);
   grunt.registerTask('jasmine', ['jasmine_nodejs']);
   grunt.registerTask('test',    ['lint', 'jasmine']);
-  grunt.registerTask('doc',     ['jsdoc']);
+  grunt.registerTask('doc',     ['clean:api_docs', 'jsdoc']);
   grunt.registerTask('default', ['test']);
 };

@@ -10,7 +10,7 @@ const assert  = require('assert');
 const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
-const LOGGER      = require('../lib/server/logsetup.js');
+const LOGGER      = require('../lib/logsetup.js');
 
 const RangerController = require('../lib/server/controller');
 
@@ -46,6 +46,9 @@ const MONGO_OPTIONS = {
   mongos: {}
 };
 
+if ( opt.options.debug ) {
+  LOGGER.level = 'debug';
+}
 LOGGER.info(opt.options);
 
 /*
