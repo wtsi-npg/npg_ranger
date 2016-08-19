@@ -30,7 +30,17 @@ describe('Creating object instance - synch', function() {
   });
   it('response is not an http.ServerResponse type object - error', function() {
     expect( () => {new RangerController({}, []);} ).toThrowError(
-    assert.AssertionError, 'Server response object is required');
+    assert.AssertionError, 'DB handle object is required');
+  });
+  it('process timeout grace is not a number', function() {
+    expect( () => {new RangerController({}, {}, {}, os.tmpdir(), false, false, 'five seconds');} )
+    .toThrowError(
+        assert.AssertionError, 'Process\' grace period must be a number');
+  });
+  it('process grace period must be within range', function() {
+    expect( () => {new RangerController({}, {}, {}, os.tmpdir(), false, false, -5000);} )
+    .toThrowError(assert.AssertionError,
+      'Process\' grace period must be between 0 and 2147483647');
   });
 });
 

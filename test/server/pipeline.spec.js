@@ -43,6 +43,11 @@ describe('Run function input validation', function() {
     'Destination stream is not defined');
   });
 
+  it('Grace period is not given - error', function() {
+    expect( () => {pipeline([cat], fun, fun).run(devnull());} ).toThrowError(ReferenceError,
+    'Grace period for process timeout is not defined');
+  });
+
 
   it('Array of processes should be defined', function() {
     expect( () => {pipeline().run(devnull(), 1000);} ).toThrowError(

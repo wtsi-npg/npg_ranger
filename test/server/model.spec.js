@@ -43,6 +43,12 @@ describe('Creating object instance', function() {
     expect(m.tmpDir).toBe(os.tmpdir());
   });
 
+  it('process grace period is required', function() {
+    let m;
+    expect( () => {m = new RangerModel();} ).toThrowError(ReferenceError,
+      'Grace period for process timeout is not defined');
+  });
+
   it('Temporary directory should exist', function() {
     expect( () => {new RangerModel(2000, '/some/dir');} )
       .toThrowError(assert.AssertionError,
