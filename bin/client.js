@@ -28,6 +28,12 @@ const RangerRequest = require('../lib/client/rangerRequest');
  * Provides a command line client for data retrieval base on GA4GH data sharing
  * API. Is implemented with parallel, asynchronous requests.
  *
+ * Data is written to stdout
+ *
+ * $ client.js "http://192.168.0.1:5050/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" > data.bam
+ *
+ * Or writen to output file if filename is provided as second parameter
+ *
  * $ client.js "http://192.168.0.1:5050/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" AA0011.bam
  *
  * @author Jaime Tovar
@@ -37,7 +43,7 @@ const RangerRequest = require('../lib/client/rangerRequest');
 cline
   .version('0.2.2')
   .description('Command line client for GA4GH data streaming')
-  .arguments('<url> <output>')
+  .arguments('<url> [output]')
   .option('--debug', 'Show debug output')
   .parse(process.argv);
 
@@ -45,12 +51,16 @@ cline.on('--help', () => {
   console.log('  Examples:');
   console.log('');
   console.log('    $ client.js "http://192.168.0.1:5050/' +
+              'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"');
+  console.log('');
+  console.log('    $ client.js "http://192.168.0.1:5050/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
 });
 
-if ( !cline.args.length || cline.args.length != 2 ) { cline.help(); }
+if ( !cline.args.length ||
+     ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
 if ( !cline.debug ) {
   LOGGER.level = 'warn';
@@ -59,7 +69,7 @@ if ( !cline.debug ) {
 }
 
 var url    = cline.args[0];
-var output = cline.args[1];
+var output = cline.args.length == 2 ? cline.args[1] : undefined;
 var req    = new RangerRequest();
 
 LOGGER.debug('Preparing call');
@@ -71,22 +81,34 @@ req.onreadystatechange = () => {
     LOGGER.info('Request done with status ' + req.status);
     if ( req.status == 200 || req.status == 206 ) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
-      LOGGER.debug('Will write to ' + output);
-      fs.open(output, 'w', (err, fd) => {
-        if ( err ) {
-          LOGGER.error(err);
-        }
-        fs.write(fd, req.response, 0, req.response.byteLength, (err, written) => { // (err, written, buffer)
+      if ( output ) {
+        LOGGER.debug('Will write to ' + output);
+        fs.open(output, 'w', (err, fd) => {
           if ( err ) {
             LOGGER.error(err);
-          } else {
-            LOGGER.debug('Wrote: ' + written + ' bytes to file.');
-            fs.close(fd, (err) => {
-              LOGGER.error('Error while closing output file ' + err);
-            });
           }
+          fs.write(fd, req.response, 0, req.response.byteLength, (err, written) => { // (err, written, buffer)
+            if ( err ) {
+              LOGGER.error(err);
+            } else {
+              LOGGER.debug('Wrote: ' + written + ' bytes to file.');
+              fs.close(fd, (err) => {
+                LOGGER.error('Error while closing output file ' + err);
+              });
+            }
+          });
         });
-      });
+      } else {
+        LOGGER.debug('Will write to stdout');
+        let writeComplete = process.stdout.write(req.response, () => {
+          LOGGER.info('Finished writing operation');
+        });
+        if ( writeComplete ) {
+          LOGGER.info('Data was handled completely');
+        } else {
+          LOGGER.info('Data was not handled completely');
+        }
+      }
     } else {
       try {
         LOGGER.debug('request: ' + JSON.stringify(req));
