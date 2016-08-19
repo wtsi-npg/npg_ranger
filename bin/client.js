@@ -81,6 +81,9 @@ req.onreadystatechange = () => {
             LOGGER.error(err);
           } else {
             LOGGER.debug('Wrote: ' + written + ' bytes to file.');
+            fs.close(fd, (err) => {
+              LOGGER.error('Error while closing output file ' + err);
+            });
           }
         });
       });
