@@ -118,7 +118,7 @@ describe('set error response', function() {
         .toThrowError(assert.AssertionError,
         "Temp data directory '/some/dir' does not exist");
       let c;
-      expect( () => {c = new RangerController(request, response, {}, 'test', 0);} ).not.toThrow();
+      expect( () => {c = new RangerController(request, response, {}, 'test', 0, false, 2000);} ).not.toThrow();
       expect(c.tmpDir).toBe('test');
       done();
     });

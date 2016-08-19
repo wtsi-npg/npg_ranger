@@ -30,7 +30,7 @@ var setup = function(done, cat_command, f, wc_command, wc_options) {
   var failure = function() {isSuccess = false; done();};
 
   var pline = pipeline(prs, success, failure);
-  pline.run(devnull());
+  pline.run(devnull(), 1000);
 };
 
 describe('Run function input validation', function() {
@@ -45,53 +45,53 @@ describe('Run function input validation', function() {
 
 
   it('Array of processes should be defined', function() {
-    expect( () => {pipeline().run(devnull());} ).toThrowError(
+    expect( () => {pipeline().run(devnull(), 1000);} ).toThrowError(
       ReferenceError, 'Array of processes should be defined'
     );
   });
   it('Array of processes cannot be null', function() {
-    expect( () => {pipeline(null, fun, fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline(null, fun, fun).run(devnull(), 1000);} ).toThrowError(
       ReferenceError, 'Array of processes should be defined'
     );
   });
   it('Processes should be an array', function() {
-    expect( () => {pipeline(fun, fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline(fun, fun).run(devnull(), 1000);} ).toThrowError(
       TypeError, 'processes should be an array'
     );
   });
   it('Processes array cannot be empty', function() {
-    expect( () => {pipeline([], fun, fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline([], fun, fun).run(devnull(), 1000);} ).toThrowError(
       RangeError, 'processes array cannot be empty'
     );
   });
   it('All process array members have to be defined', function() {
-    expect( () => {pipeline([cat, null, cat], fun, fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat, null, cat], fun, fun).run(devnull(), 1000);} ).toThrowError(
       ReferenceError, 'Undefined process at index 1'
     );
   });
   it('Process shoudl be an instance of EventEmitter', function() {
-    expect( () => {pipeline([cat, 'dog', cat], fun, fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat, 'dog', cat], fun, fun).run(devnull(), 1000);} ).toThrowError(
       TypeError, 'Not an event emitter at index 1'
     );
   });
 
   it('Success callback should be defined', function() {
-    expect( () => {pipeline([cat]).run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat]).run(devnull(), 1000);} ).toThrowError(
       ReferenceError, 'Success callback should be defined'
     );
   });
   it('Success callback should be a function', function() {
-    expect( () => {pipeline([cat], 'callback').run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat], 'callback').run(devnull(), 1000);} ).toThrowError(
       TypeError, 'Success callback should be a function'
     );
   });
   it('Failure callback should be defined', function() {
-    expect( () => {pipeline([cat], fun).run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat], fun).run(devnull(), 1000);} ).toThrowError(
       ReferenceError, 'Failure callback should be defined'
     );
   });
   it('Failure callback should be a function', function() {
-    expect( () => {pipeline([cat], fun, 'callback').run(devnull());} ).toThrowError(
+    expect( () => {pipeline([cat], fun, 'callback').run(devnull(), 1000);} ).toThrowError(
       TypeError, 'Failure callback should be a function'
     );
   });
