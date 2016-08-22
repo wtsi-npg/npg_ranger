@@ -1,11 +1,11 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.2.1",
+  "version": "0.3.0-alpha.4",
   "description": "Streaming service for bioinformatics data.",
   "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
   "license": "SEE LICENSE IN LICENSE",
-  "private": true,
+  "private": false,
   "engines": { "node" : ">=4.4.2" },
   "repository": {
     "type": "git",
