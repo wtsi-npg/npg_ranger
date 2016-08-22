@@ -10,8 +10,6 @@ before_install:
   - tar xfz "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
   - PATH="$(pwd)/mongodb-linux-x86_64-${MONGODB_VERSION}/bin:$PATH"
   - npm install -g grunt-cli
-  - ln -s /bin/true "$(pwd)/bin/samtools"
-  - ln -s /bin/true "$(pwd)/bin/bamstreamingmarkduplicates"
   - PATH="$(pwd)/bin:$PATH"
   - export PATH
 script:
