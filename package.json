@@ -29,7 +29,7 @@
     "package.json",
     "CHANGES",
     "LICENSE",
-    "README",
+    "README.md",
     "bin",
     "lib",
     "lib/server",
