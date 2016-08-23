@@ -74,7 +74,7 @@ describe('Run function input validation', function() {
       ReferenceError, 'Undefined process at index 1'
     );
   });
-  it('Process shoudl be an instance of EventEmitter', function() {
+  it('Process should be an instance of EventEmitter', function() {
     expect( () => {pipeline([cat, 'dog', cat], fun, fun).run(devnull(), 1000);} ).toThrowError(
       TypeError, 'Not an event emitter at index 1'
     );
@@ -171,3 +171,33 @@ describe('Invalid pipeline, second command option is invalid', function() {
     done();
   });
 });
+
+
+describe('Correctly scheduling process to be killed', function() {
+  beforeEach(function(done) {
+    const cat = spawn('cat', [path]);
+    cat.title = 'cat';
+    var prs = [cat];
+
+    const sleep = spawn('sleep', ['100']);
+    sleep.title = 'sleep';
+    prs.push(sleep);
+
+    const wc  = spawn('wc', ['-l']);
+    wc.title = 'wc';
+    prs.push(wc);
+
+    // The following two functions will be called asynchronously
+    isSuccess = null;
+    var success = function() {isSuccess = true;  done();};
+    var failure = function() {isSuccess = false; done();};
+
+    var pline = pipeline(prs, success, failure);
+    pline.run(devnull(), 1000);
+  });
+  it('dummy', function (done) {
+    expect(isSuccess).toBe(false);
+    done();
+  });
+});
+
