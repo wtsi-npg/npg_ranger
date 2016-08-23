@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - fix wrongly reporting error while closing fd in client
   - compliance with the GA4GH API: redirection urls as objects
   - restructure documentation
   - upgrading moment to 2.14.1 from 2.13.0
