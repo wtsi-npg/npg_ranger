@@ -5,7 +5,7 @@ npg_ranger project
 Introduction
 ============
 
-This project is a contribution towards developent of the streaming API and servers under the
+This project is a contribution towards development of the streaming API and servers under the
 GA4GH http://ga4gh.org initiative (GA4GH Directory API and Streaming). The project has
 both a server and a compatible http client.
 
