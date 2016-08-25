@@ -1,12 +1,22 @@
-/* globals describe, it, expect */
+/* globals describe, it, expect, beforeAll, afterAll */
 
 "use strict";
+
+const config = require('../../lib/config.js');
+var dummy = function() { return {}; };
+config.build(dummy);
 
 const assert  = require('assert');
 const os      = require('os');
 const RangerModel = require('../../lib/server/model.js');
 
 describe('Class methods', function() {
+  beforeAll(function() {
+    config.build(dummy);
+  });
+  afterAll(function() {
+    config.flush();
+  });
   it('default format', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
   });
@@ -35,6 +45,12 @@ describe('Class methods', function() {
 });
 
 describe('Creating object instance', function() {
+  beforeAll(function() {
+    config.build(dummy);
+  });
+  afterAll(function() {
+    config.flush();
+  });
   it('temp directory attr is optional', function() {
     let m;
     expect( () => {m = new RangerModel();} ).not.toThrow();
@@ -52,6 +68,12 @@ describe('Creating object instance', function() {
 });
 
 describe('Processing request', function() {
+   beforeAll(function() {
+    config.build(dummy);
+  });
+  afterAll(function() {
+    config.flush();
+  });
   let m = new RangerModel();
   it('Input validation', function() {
     expect( () => {m.process();} ).toThrowError(assert.AssertionError,

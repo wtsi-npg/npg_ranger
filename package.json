@@ -20,7 +20,8 @@
   "contributors": [
     "Marina Gourtovaia",
     "David Jackson",
-    "Jaime Tovar Corona"
+    "Jaime Tovar Corona",
+    "Andrew Nowak"
   ],
   "keywords": [
     "data streaming",
@@ -33,6 +34,7 @@
     "LICENSE",
     "README",
     "bin",
+    "config",
     "lib",
     "lib/server",
     "lib/server/http",
@@ -50,7 +52,7 @@
   "main": "./lib/main.js",
   "dependencies": {
     "commander": "2.9.0",
-    "config-chain": "^1.1.10",
+    "config-chain": "1.1.10",
     "fs-extra": "^0.30.0",
     "js-md5": "0.4.1",
     "moment": "2.14.1",

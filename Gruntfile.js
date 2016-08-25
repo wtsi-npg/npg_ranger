@@ -41,6 +41,7 @@ module.exports = function(grunt) {
         'bin/*.js',
         'lib/**/*.js',
         'test/**/*.js',
+        'test/*.js',
       ],
       options: {
         jshintrc: '.jshintrc'
@@ -71,6 +72,9 @@ module.exports = function(grunt) {
         // add custom Jasmine reporter(s)
         customReporters: []
       },
+      'config_tests': {
+        specs: [ "test/config.spec.js" ]
+      },
       'server_tests': {
         // target specific options
         //options: {
@@ -86,7 +90,7 @@ module.exports = function(grunt) {
       },
       'client_tests': {
         specs: [ "test/client/*.js" ]
-      }
+      },
     },
 
     browserify: {
