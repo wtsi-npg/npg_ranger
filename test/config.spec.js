@@ -2,6 +2,7 @@
 
 "use strict";
 const assert  = require('assert');
+const path    = require('path');
 const config  = require('../lib/config.js');
 
 describe('Building options', function() {
@@ -29,5 +30,22 @@ describe('Building options', function() {
     config.flush();
     expect( () => {options = config.build( () => {return {tempdir: '/anothertmp'};} );} ).not.toThrow();
     expect( options.get('tempdir') === '/anothertmp' ).toBe(true);
+  });
+  it('Configs can be passed from a json file', function() {
+    let options;
+    expect( () => {options = config.build( () => {
+      return { configfile: path.resolve(__dirname, 'testConfig.json') };
+    });} ).not.toThrow();
+    expect( options.get('testConfig') ).toBe(true);
+  });
+  it('Configs from function will overwrite those from json file', function() {
+    let options;
+    expect( () => {options = config.build( () => {
+      return {
+        configfile: path.resolve(__dirname, 'testConfig.json'),
+        testConfig: false
+      };
+    });}).not.toThrow();
+    expect( options.get('testConfig') ).toBe(false);
   });
 });
