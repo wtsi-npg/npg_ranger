@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll */
+/* globals describe, it, expect, beforeAll */
 
 "use strict";
 
@@ -13,9 +13,6 @@ const RangerModel = require('../../lib/server/model.js');
 describe('Class methods', function() {
   beforeAll(function() {
     config.build(dummy);
-  });
-  afterAll(function() {
-    config.flush();
   });
   it('default format', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
@@ -48,9 +45,6 @@ describe('Creating object instance', function() {
   beforeAll(function() {
     config.build(dummy);
   });
-  afterAll(function() {
-    config.flush();
-  });
   it('temp directory attr is optional', function() {
     let m;
     expect( () => {m = new RangerModel();} ).not.toThrow();
@@ -70,9 +64,6 @@ describe('Creating object instance', function() {
 describe('Processing request', function() {
    beforeAll(function() {
     config.build(dummy);
-  });
-  afterAll(function() {
-    config.flush();
   });
   let m = new RangerModel();
   it('Input validation', function() {

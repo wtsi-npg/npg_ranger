@@ -18,9 +18,6 @@ describe('Creating object instance - synch', function() {
   beforeAll(function() {
     options = config.build(dummy);
   });
-  afterAll(function() {
-    config.flush();
-  });
 
   it('request object is not given - error', function() {
     expect( () => {new RangerController();} ).toThrowError(assert.AssertionError,
@@ -50,7 +47,6 @@ describe('Creating object instance - synch', function() {
     expect(c.skipAuth).toBe(false);
   });
   it('passing configs to build overwrites defaults', function() {
-    config.flush();
     let temporaryDir = tmp.dirSync({ template: path.join(os.tmpdir(), 'tmp-XXXXXX') });
     options = config.build( () => {
       return {tempdir: temporaryDir.name, skipauth: true};
@@ -91,7 +87,6 @@ describe('set error response', function() {
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
-    config.flush();
   });
 
   it('db object is not given or is not an object - error', function(done) {
@@ -168,7 +163,6 @@ describe('Handling requests - error responses', function() {
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
-    config.flush();
   });
 
   it('Data host name argument is required', function(done) {
@@ -321,7 +315,6 @@ describe('Redirection in json response', function() {
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
-    config.flush();
   });
 
   it('invalid url - no id - error response', function(done) {
@@ -618,7 +611,6 @@ describe('content type', function() {
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
-    config.flush();
   });
 
   it('data format driven content type', function(done) {
