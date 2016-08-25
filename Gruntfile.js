@@ -40,8 +40,7 @@ module.exports = function(grunt) {
         'Gruntfile.js',
         'bin/*.js',
         'lib/**/*.js',
-        'test/**/*.js',
-        'test/*.js',
+        'test/**/*.js'
       ],
       options: {
         jshintrc: '.jshintrc'

@@ -38,6 +38,7 @@ describe('Creating object instance - synch', function() {
     expect( () => {new RangerController({}, 1);} ).toThrowError(assert.AssertionError,
     'Server response object is required');
   });
+  // TODO: fix this or remove
   // it('response is not an http.ServerResponse type object - error', function() {
   //   expect( () => {new RangerController({}, []);} ).toThrowError(
   //   assert.AssertionError, 'Server response object is required');

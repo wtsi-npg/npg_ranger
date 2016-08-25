@@ -42,8 +42,6 @@ process.on('SIGINT', () => {
 
 // Connect to the database and, if successful, define
 // callbacks for the server.
-console.log('mongourl is ' + options.get('mongourl'));
-console.log('hostname is ' + options.get('hostname'));
 MongoClient.connect(options.get('mongourl'), options.get('mongoopt'), function(err, db) {
 
   assert.equal(err, null, `Failed to connect to ${options.get('mongourl')}: ${err}`);
@@ -72,11 +70,12 @@ MongoClient.connect(options.get('mongourl'), options.get('mongoopt'), function(e
     LOGGER.error(`Caught exception: ${err}\n`);
     dbClose(db);
     try {
-      if (typeof options.get('port') != 'number') {
+      let port = options.get('port');
+      if (typeof port != 'number') {
         // Throws an error if the assertion fails
-        fs.accessSync(options.get('port'), fs.W_OK);
-        LOGGER.info(`Remove socket file ${options.get('port')} that is left behind`);
-        fs.unlinkSync(options.get('port'));
+        fs.accessSync(port, fs.W_OK);
+        LOGGER.info(`Remove socket file ${port} that is left behind`);
+        fs.unlinkSync(port);
       }
     } catch (err) {
       LOGGER.error(`Error removing socket file: ${err}`);

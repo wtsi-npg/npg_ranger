@@ -31,7 +31,3 @@ describe('Building options', function() {
     expect( options.get('tempdir') === '/anothertmp' ).toBe(true);
   });
 });
-
-
-
-
