@@ -118,9 +118,8 @@ describe('Authorisation', function() {
   });
 
   afterAll(() => {
-    let out = child.execSync(`mongod --shutdown --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid`);
-    console.log(`\nMONGODB server has been shut down: ${out}`);
+    child.execSync('pkill mongod');
+    console.log('\nMONGODB server has been shut down');
     fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
   });
 });
-
