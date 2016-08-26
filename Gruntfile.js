@@ -20,7 +20,9 @@ module.exports = function(grunt) {
       pkg: {
         src: [
           'package.json',
-          'test/server/data/fixtures/*.json'
+          'test/server/data/fixtures/*.json',
+          'test/testConfig.json',
+          'config/config.json'
         ]
       }
     },
