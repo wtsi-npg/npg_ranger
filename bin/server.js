@@ -42,10 +42,11 @@ process.on('SIGINT', () => {
 
 // Connect to the database and, if successful, define
 // callbacks for the server.
-MongoClient.connect(options.get('mongourl'), options.get('mongoopt'), function(err, db) {
+var mongourl = options.get('mongourl');
+MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
 
-  assert.equal(err, null, `Failed to connect to ${options.get('mongourl')}: ${err}`);
-  LOGGER.info(`Connected to ${options.get('mongourl')}`);
+  assert.equal(err, null, `Failed to connect to ${mongourl}: ${err}`);
+  LOGGER.info(`Connected to ${mongourl}`);
 
   var dbClose = (dbConn) => {
     if (dbConn) {

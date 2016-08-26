@@ -1,0 +1,3 @@
+{
+  "mongourl": "mongodb://sf2-farm-srv1:27017/imetacache"
+}
