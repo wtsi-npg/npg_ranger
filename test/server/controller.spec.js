@@ -119,21 +119,21 @@ describe('set error response', function() {
       expect(c.db).toEqual({one: "two"});
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
-      expect(c.noStrict).toBe(false);
+      expect(c.unsafe).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
-      expect(c.noStrict).toBe(false);
+      expect(c.unsafe).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(true);
-      expect(c.noStrict).toBe(false);
+      expect(c.unsafe).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', false, true);} ).not.toThrow();
       expect(c.skipAuth).toBe(false);
-      expect(c.noStrict).toBe(true);
+      expect(c.unsafe).toBe(true);
       expect( () => {c = new RangerController(request, response, {}, '', true, true);} ).not.toThrow();
       expect(c.skipAuth).toBe(true);
-      expect(c.noStrict).toBe(true);
+      expect(c.unsafe).toBe(true);
 
       response.end();
       done();
@@ -301,12 +301,12 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a vcf file when strict mode disabled', function(done) {
+  it('Invalid input error for a vcf file when safe mode disabled', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"}, null, true, true);
       expect(c.skipAuth).toBe(true);
-      expect(c.noStrict).toBe(true);
+      expect(c.unsafe).toBe(true);
       expect( () => {c.handleRequest('localhost');} ).not.toThrow();
     });
 
@@ -316,7 +316,7 @@ describe('Handling requests - error responses', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
-        let m = 'Invalid request: cannot produce VCF files while server is not in strict mode';
+        let m = 'Invalid request: cannot produce VCF files while server is not in safe mode';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual(
           {error: {type:    "InvalidInput",
