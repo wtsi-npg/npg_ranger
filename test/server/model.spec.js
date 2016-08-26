@@ -41,6 +41,14 @@ describe('Class methods', function() {
     expect(RangerModel.isTextualFormat('VCF')).toBe(true);
     expect(RangerModel.isTextualFormat('SAM')).toBe(true);
   });
+  it('does the query have a reference?', function() {
+    expect( () => {RangerModel.hasReference();} )
+      .toThrowError(assert.AssertionError,
+      'Query must be given');
+    expect(RangerModel.hasReference({})).toBe(false);
+    expect(RangerModel.hasReference({reference: ''})).toBe(false);
+    expect(RangerModel.hasReference({reference: '/path/to/ref.fa'})).toBe(true);
+  });
 });
 
 describe('Creating object instance', function() {
@@ -90,7 +98,5 @@ describe('Processing request', function() {
       'End callback is required');
     expect( () => {m.process({files: ['file1', 'file2']}, {}, {});} ).toThrowError(assert.AssertionError,
       'End callback is required');
-    expect( () => {m.process({files: ['file1'], format: 'VCF'}, {}, () => {return;});} ).toThrowError(ReferenceError,
-      'database does not hold location of reference .fa file');
   });
 });
