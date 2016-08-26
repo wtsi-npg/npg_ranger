@@ -51,6 +51,9 @@ Running
  #on a custom port and skip authentication
  bin/server.js -p PORT -s
 
+ #providing a configuration file
+ bin/server.js -c config/config.json
+
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
 
@@ -101,7 +104,7 @@ Setting up the server
  tar -xzvf httpd-2.4.18.tar.gz
  cd httpd-2.4.18
  ./configure --enable-load-all-modules --prefix=${HOME}/apache_build
- make 
+ make
  make install
  cd ${HOME}/apache_build
  vi conf/httpd.conf # edit the file
@@ -116,7 +119,7 @@ LDAP authorisation config
 
  <Location / >
 	AuthType Basic
-	AuthBasicProvider ldap 
+	AuthBasicProvider ldap
 	AuthName "LDAP Login For NPG Streaming"
 	AuthLDAPURL "sanger ldap string"
 	Require valid-user
