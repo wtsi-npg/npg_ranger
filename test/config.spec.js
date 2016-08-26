@@ -7,40 +7,40 @@ const config  = require('../lib/config.js');
 
 describe('Building options', function() {
   it('Must define options before retrieval', function() {
-    expect( () => {config.build();} ).toThrowError(assert.AssertionError,
+    expect( () => {config.provide();} ).toThrowError(assert.AssertionError,
       'Options is undefined');
   });
   it('If there is a parameter, it must be a function', function() {
-    expect( () => {config.build( 1 );} ).toThrowError(assert.AssertionError,
+    expect( () => {config.provide( 1 );} ).toThrowError(assert.AssertionError,
       'parameter must be a function');
   });
   it('Function must return an object', function() {
-    expect( () => {config.build( () => {return 1;} );} ).toThrowError(assert.AssertionError,
+    expect( () => {config.provide( () => {return 1;} );} ).toThrowError(assert.AssertionError,
       'parameter must return an object');
-    expect( () => {config.build( () => {return {};} );} ).not.toThrow();
+    expect( () => {config.provide( () => {return {};} );} ).not.toThrow();
   });
   it('Can get options passed via function', function() {
     let options;
-    expect( () => {options = config.build( () => {return {test: 'pass'};} );} ).not.toThrow();
+    expect( () => {options = config.provide( () => {return {test: 'pass'};} );} ).not.toThrow();
     expect( options.get('test') === 'pass' ).toBe(true);
   });
   it('Options passed via function will overwrite defaults', function() {
     let options;
-    expect( () => {options = config.build( () => {return {};} );} ).not.toThrow();
+    expect( () => {options = config.provide( () => {return {};} );} ).not.toThrow();
     expect( options.get('tempdir') === '/tmp' ).toBe(true); // Provided in config.js
-    expect( () => {options = config.build( () => {return {tempdir: '/anothertmp'};} );} ).not.toThrow();
+    expect( () => {options = config.provide( () => {return {tempdir: '/anothertmp'};} );} ).not.toThrow();
     expect( options.get('tempdir') === '/anothertmp' ).toBe(true);
   });
   it('Configs can be passed from a json file', function() {
     let options;
-    expect( () => {options = config.build( () => {
+    expect( () => {options = config.provide( () => {
       return { configfile: path.resolve(__dirname, 'testConfig.json') };
     });} ).not.toThrow();
     expect( options.get('testConfig') ).toBe(true);
   });
   it('Configs from function will overwrite those from json file', function() {
     let options;
-    expect( () => {options = config.build( () => {
+    expect( () => {options = config.provide( () => {
       return {
         configfile: path.resolve(__dirname, 'testConfig.json'),
         testConfig: false

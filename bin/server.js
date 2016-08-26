@@ -5,7 +5,7 @@
 
 const config = require('../lib/config.js');
 
-const options = config.build(config.fromCommandLine);
+const options = config.provide(config.fromCommandLine);
 
 const os      = require('os');
 const fs      = require('fs');

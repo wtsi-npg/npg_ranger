@@ -16,7 +16,7 @@ const RangerController = require('../../lib/server/controller.js');
 
 describe('Creating object instance - synch', function() {
   beforeAll(function() {
-    options = config.build(dummy);
+    options = config.provide(dummy);
   });
 
   it('request object is not given - error', function() {
@@ -46,9 +46,9 @@ describe('Creating object instance - synch', function() {
     expect(c.tmpDir === options.get('tempdir')).toBe(true);
     expect(c.skipAuth).toBe(false);
   });
-  it('passing configs to build overwrites defaults', function() {
+  it('passing configs to provide overwrites defaults', function() {
     let temporaryDir = tmp.dirSync({ template: path.join(os.tmpdir(), 'tmp-XXXXXX') });
-    options = config.build( () => {
+    options = config.provide( () => {
       return {tempdir: temporaryDir.name, skipauth: true};
     });
     let c;
@@ -79,7 +79,7 @@ describe('set error response', function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
     });
-    options = config.build(dummy);
+    options = config.provide(dummy);
   });
 
   // This tidy-up callback is not called when the spec exits early
@@ -158,7 +158,7 @@ describe('Handling requests - error responses', function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
     });
-    options = config.build(dummy);
+    options = config.provide(dummy);
   });
   afterAll(function() {
     server.close();
@@ -310,7 +310,7 @@ describe('Redirection in json response', function() {
       let c = new RangerController(request, response, {}, null, true);
       c.handleRequest('localhost');
     });
-    options = config.build(dummy);
+    options = config.provide(dummy);
   });
   afterAll(function() {
     server.close();
@@ -606,7 +606,7 @@ describe('content type', function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
     });
-    options = config.build(dummy);
+    options = config.provide(dummy);
   });
   afterAll(function() {
     server.close();
