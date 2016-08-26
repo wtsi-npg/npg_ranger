@@ -27,6 +27,13 @@ LOGGER.info(options.list);
  * Main server script. Create the server object, establish database,
  * connection, setup server callbacks, start listening for incoming
  * requests.
+ *
+ * Providing config settings:
+ *  Settings are provided from 3 locations:
+ *  1. Command line - run with -h to see options.
+ *  2. Config json file can be read if it is provided on command line
+ *      by running with -c PATH or --configfile=PATH
+ *  3. There are some defaults, which can be found in lib/config.js
  */
 
 assert(process.env.USER, 'User environment variable is not defined');
