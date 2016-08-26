@@ -246,7 +246,7 @@ describe('Data info retrieval', function() {
   });
 
   afterAll(() => {
-    child.execSync('pkill mongod');
+    child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
     console.log('\nMONGODB server has been shut down');
     fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
   });
