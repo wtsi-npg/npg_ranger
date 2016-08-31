@@ -11,18 +11,19 @@ describe('Class methods', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
   });
   it('supported formats', function() {
-    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM']);
+    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM', 'VCF']);
   });
   it('is the format supported?', function() {
     expect( () => {RangerModel.supportsFormat();} )
       .toThrowError(assert.AssertionError,
       'Non-empty format string should be given');
     expect(RangerModel.supportsFormat('CRAM')).toBe(true);
+    expect(RangerModel.supportsFormat('VCF')).toBe(true);
     expect(RangerModel.supportsFormat('bed')).toBe(false);
     expect(RangerModel.supportsFormat('BED')).toBe(false);
   });
   it('textual formats', function() {
-    expect(RangerModel.textualFormats()).toEqual(['SAM']);
+    expect(RangerModel.textualFormats()).toEqual(['SAM', 'VCF']);
   });
   it('is the format textual?', function() {
     expect( () => {RangerModel.isTextualFormat();} )
@@ -30,29 +31,44 @@ describe('Class methods', function() {
       'Non-empty format string should be given');
     expect(RangerModel.isTextualFormat('CRAM')).toBe(false);
     expect(RangerModel.isTextualFormat('BED')).toBe(false);
+    expect(RangerModel.isTextualFormat('VCF')).toBe(true);
     expect(RangerModel.isTextualFormat('SAM')).toBe(true);
+  });
+  it('does the query have a reference?', function() {
+    expect( () => {RangerModel.hasReference();} )
+      .toThrowError(assert.AssertionError,
+      'Query must be given');
+    expect(RangerModel.hasReference({})).toBe(false);
+    expect(RangerModel.hasReference({reference: ''})).toBe(false);
+    expect(RangerModel.hasReference({reference: '/path/to/ref.fa'})).toBe(true);
   });
 });
 
 describe('Creating object instance', function() {
   it('temp directory attr is optional', function() {
     let m;
-    expect( () => {m = new RangerModel();} ).not.toThrow();
+    expect( () => {m = new RangerModel(1000);} ).not.toThrow();
     expect(m.tmpDir).toBe(os.tmpdir());
   });
 
+  it('process grace period is required', function() {
+    let m;
+    expect( () => {m = new RangerModel();} ).toThrowError(ReferenceError,
+      'Grace period for process timeout is not defined');
+  });
+
   it('Temporary directory should exist', function() {
-    expect( () => {new RangerModel('/some/dir');} )
+    expect( () => {new RangerModel(2000, '/some/dir');} )
       .toThrowError(assert.AssertionError,
       "Temp data directory '/some/dir' does not exist");
     let m;
-    expect( () => {m = new RangerModel('test');} ).not.toThrow();
+    expect( () => {m = new RangerModel(1000, 'test');} ).not.toThrow();
     expect(m.tmpDir).toBe('test');
   });
 });
 
 describe('Processing request', function() {
-  let m = new RangerModel();
+  let m = new RangerModel(1000);
   it('Input validation', function() {
     expect( () => {m.process();} ).toThrowError(assert.AssertionError,
       'Query object is required');

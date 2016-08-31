@@ -30,7 +30,17 @@ describe('Creating object instance - synch', function() {
   });
   it('response is not an http.ServerResponse type object - error', function() {
     expect( () => {new RangerController({}, []);} ).toThrowError(
-    assert.AssertionError, 'Server response object is required');
+    assert.AssertionError, 'DB handle object is required');
+  });
+  it('process timeout grace is not a number', function() {
+    expect( () => {new RangerController({}, {}, {}, os.tmpdir(), false, false, 'five seconds');} )
+    .toThrowError(
+        assert.AssertionError, 'Process\' grace period must be a number');
+  });
+  it('process grace period must be within range', function() {
+    expect( () => {new RangerController({}, {}, {}, os.tmpdir(), false, false, -5000);} )
+    .toThrowError(assert.AssertionError,
+      'Process\' grace period must be between 0 and 2147483647');
   });
 });
 
@@ -89,12 +99,22 @@ describe('set error response', function() {
       expect(c.db).toEqual({one: "two"});
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.tmpDir).toBe(os.tmpdir());
       expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(false);
+      expect( () => {c = new RangerController(request, response, {}, '', false, true);} ).not.toThrow();
+      expect(c.skipAuth).toBe(false);
+      expect(c.noStrict).toBe(true);
+      expect( () => {c = new RangerController(request, response, {}, '', true, true);} ).not.toThrow();
+      expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(true);
+
       response.end();
       done();
     });
@@ -108,7 +128,7 @@ describe('set error response', function() {
         .toThrowError(assert.AssertionError,
         "Temp data directory '/some/dir' does not exist");
       let c;
-      expect( () => {c = new RangerController(request, response, {}, 'test', 0);} ).not.toThrow();
+      expect( () => {c = new RangerController(request, response, {}, 'test', 0, false, 2000);} ).not.toThrow();
       expect(c.tmpDir).toBe('test');
       done();
     });
@@ -211,6 +231,7 @@ describe('Handling requests - error responses', function() {
     });
   });
 
+
   it('Invalid input error for a sample url', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -258,6 +279,32 @@ describe('Handling requests - error responses', function() {
       });
     });
   });
+
+  it('Invalid input error for a vcf file when strict mode disabled', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true, true);
+      expect(c.skipAuth).toBe(true);
+      expect(c.noStrict).toBe(true);
+      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+    });
+
+    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        let m = 'Invalid request: cannot produce VCF files while server is not in strict mode';
+        expect(response.statusMessage).toEqual(m);
+        expect(JSON.parse(body)).toEqual(
+          {error: {type:    "InvalidInput",
+                   message: m}});
+        done();
+      });
+    });
+  });
+
 });
 
 describe('Redirection in json response', function() {
@@ -430,7 +477,7 @@ describe('Redirection in json response', function() {
     });
   });
 
-  ['bam', 'BAM'].forEach( ( value ) => {
+  ['bam', 'BAM', 'sam', 'SAM', 'cram', 'CRAM', 'vcf', 'VCF'].forEach( ( value ) => {
     it('successful redirection, query with all possible params', function(done) {
       http.get(
         { socketPath: socket,
@@ -440,10 +487,11 @@ describe('Redirection in json response', function() {
         response.on('end', function() {
           expect(response.headers['content-type']).toEqual('application/json');
           expect(response.statusCode).toBe(200);
+          let formatUpperCase = value.toUpperCase();
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
+          let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-401`;
+          expect(JSON.parse(body)).toEqual({format: `${formatUpperCase}`, urls: [{'url': url}]});
           done();
         });
       });
@@ -553,7 +601,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(409);
         expect(response.statusMessage).toEqual(
-          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM");
+          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
       });
     });
@@ -582,6 +630,7 @@ describe('content type', function() {
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
       expect(c.contentType('SAM')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('VCF')).toBe('text/vnd.ga4gh.vcf');
       expect(c.contentType('BAM')).toBe('application/vnd.ga4gh.bam');
       expect(c.contentType('CRAM')).toBe('application/vnd.ga4gh.cram');
       done();
