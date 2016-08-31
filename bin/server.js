@@ -2,9 +2,7 @@
 
 "use strict";
 
-const os      = require('os');
 const fs      = require('fs');
-const path    = require('path');
 const http    = require('http');
 const assert  = require('assert');
 const util    = require('util');
@@ -113,12 +111,9 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
     controller.handleRequest(options.get('hostname'));
   });
 
-  var createTempDataDir = (tmpDir) => {
+  var createTempDataDir = () => {
+    let tmpDir = options.get('tempdir');
     if (!fs.existsSync(tmpDir)) {
-      let dir = path.join(os.tmpdir(), process.env.USER);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
       fs.mkdirSync(tmpDir);
       LOGGER.debug(`Created temp data directory ${tmpDir}`);
     } else {

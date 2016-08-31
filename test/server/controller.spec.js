@@ -11,7 +11,13 @@ const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
 const config  = require('../../lib/config.js');
 
-var dummy     = function() { return {}; };
+// Create temp dir here so it is available for all tests.
+// Use this dir as a default dir that will be available in all.
+var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir);
+}
+var dummy     = function() { return {tempdir: tmpDir}; };
 var options;
 
 describe('Creating object instance - synch', function() {
@@ -39,6 +45,7 @@ describe('Creating object instance - synch', function() {
     let c;
     expect( () => {c = new RangerController({}, {}, {});} ).not.toThrow();
     expect(c.tmpDir === options.get('tempdir')).toBe(true);
+    expect(fs.existsSync(c.tmpDir));
     expect(c.skipAuth).toBe(false);
   });
   it('passing configs to provide overwrites defaults', function() {
@@ -117,13 +124,13 @@ describe('set error response', function() {
       expect((c.request == request)).toBe(true);
       expect((c.response == response)).toBe(true);
       expect(c.db).toEqual({one: "two"});
-      expect(c.tmpDir).toBe(os.tmpdir());
+      expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
-      expect(c.tmpDir).toBe(os.tmpdir());
+      expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
-      expect(c.tmpDir).toBe(os.tmpdir());
+      expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(true);
       response.end();
       done();

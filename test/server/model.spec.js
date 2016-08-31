@@ -3,11 +3,17 @@
 "use strict";
 
 const assert  = require('assert');
-const os      = require('os');
+const fs      = require('fs');
 const RangerModel = require('../../lib/server/model.js');
 const config = require('../../lib/config.js');
 
-var dummy = function() { return {}; };
+// Create temp dir here so it is available for all tests.
+// Use this dir as a default dir that will be available in all.
+var tmpDir    = config.tempFilePath('npg_ranger_model_test_');
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir);
+}
+var dummy     = function() { return {tempdir: tmpDir}; };
 config.provide(dummy);
 
 describe('Class methods', function() {
@@ -48,7 +54,7 @@ describe('Creating object instance', function() {
   it('temp directory attr is optional', function() {
     let m;
     expect( () => {m = new RangerModel();} ).not.toThrow();
-    expect(m.tmpDir).toBe(os.tmpdir());
+    expect(m.tmpDir).toBe(tmpDir);
   });
 
   it('Temporary directory should exist', function() {

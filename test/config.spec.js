@@ -27,9 +27,9 @@ describe('Building options', function() {
   it('Options passed via function will overwrite defaults', function() {
     let options;
     expect( () => {options = config.provide( () => {return {};} );} ).not.toThrow();
-    expect( options.get('tempdir') === '/tmp' ).toBe(true); // Provided in config.js
-    expect( () => {options = config.provide( () => {return {tempdir: '/anothertmp'};} );} ).not.toThrow();
-    expect( options.get('tempdir') === '/anothertmp' ).toBe(true);
+    expect( options.get('mongourl') === 'mongodb://localhost:27017/imetacache' ).toBe(true); // Provided in config.js
+    expect( () => {options = config.provide( () => {return {mongourl: 'newmongourl'};} );} ).not.toThrow();
+    expect( options.get('mongourl') === 'newmongourl' ).toBe(true);
   });
   it('Configs can be passed from a json file', function() {
     let options;
