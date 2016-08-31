@@ -1,20 +1,18 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.2.1",
+  "version": "0.3.0-alpha.6",
   "description": "Streaming service for bioinformatics data.",
-  "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
+  "homepage": "https://github.com/wtsi-npg/npg_ranger",
   "license": "SEE LICENSE IN LICENSE",
-  "private": true,
-  "engines": {
-    "node": ">=4.4.2"
-  },
+  "private": false,
+  "engines": { "node" : ">=4.4.2" },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wtsi-npg/wtsi_ranger"
+    "url": "https://github.com/wtsi-npg/npg_ranger"
   },
   "bugs": {
-    "url": "https://github.com/wtsi-npg/wtsi_ranger/issues",
+    "url": "https://github.com/wtsi-npg/npg_ranger/issues",
     "email": "npg@sanger.ac.uk"
   },
   "contributors": [
@@ -32,7 +30,7 @@
     "package.json",
     "CHANGES",
     "LICENSE",
-    "README",
+    "README.md",
     "bin",
     "lib",
     "lib/server",
@@ -50,6 +48,7 @@
   },
   "main": "./lib/main.js",
   "dependencies": {
+<<<<<<< HEAD
     "winston":      "2.2.0",
     "moment":       "2.14.1",
     "fs-extra":     "^0.30.0",
@@ -58,6 +57,15 @@
     "config-chain": "1.1.10",
     "commander":    "2.9.0",
     "js-md5":       "0.4.1"
+=======
+    "winston":     "2.2.0",
+    "moment" :     "2.14.1",
+    "fs-extra":    "^0.30.0",
+    "mongodb":     "2.2.8",
+    "node-getopt": "^0.2.3",
+    "commander":   "2.9.0",
+    "js-md5" :     "0.4.1"
+>>>>>>> wtsi/devel
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
@@ -66,12 +74,12 @@
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
-    "grunt-jasmine-nodejs": "^1.5.3",
+    "grunt-jasmine-nodejs": "1.5.4",
     "grunt-jscs": "3.0.1",
     "grunt-jsdoc": "2.1.0",
     "grunt-jsonlint": "^1.0.7",
     "grunt-browserify": "5.0.0",
-    "load-grunt-tasks": "*",
+    "load-grunt-tasks": "3.5.2",
     "tmp": "0.0.28",
     "browserify": "13.1.0"
   }

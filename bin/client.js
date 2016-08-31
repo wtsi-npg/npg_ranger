@@ -41,7 +41,7 @@ const RangerRequest = require('../lib/client/rangerRequest');
  */
 
 cline
-  .version('0.2.2')
+  .version('0.3.0')
   .description('Command line client for GA4GH data streaming')
   .arguments('<url> [output]')
   .option('--debug', 'Show debug output')
@@ -93,7 +93,11 @@ req.onreadystatechange = () => {
             } else {
               LOGGER.debug('Wrote: ' + written + ' bytes to file.');
               fs.close(fd, (err) => {
-                LOGGER.error('Error while closing output file ' + err);
+                if ( err ) {
+                  LOGGER.error('Error while closing output file ' + err);
+                } else {
+                  LOGGER.debug('Closed output file');
+                }
               });
             }
           });

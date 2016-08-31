@@ -2,32 +2,6 @@
 Server Manual
 #############
 
-Building, testing, installing
-=============================
-
-Install dependencies
-
-::
-
-  npm install
-
-Generate documentation
-
-::
-
-  grunt jsdoc
-
-Test
-
-::
-
-  grunt lint    - runs lint test
-  grunt jasmine - runs jasmine tests
-  grunt jasmine -v - runs jasmine tests verbosely, outputs info about individual tests
-  grunt jasmine --filter=some - runs jasmine tests for test specs matching 'some'
-  grunt test    - runs all tests
-
-
 Running
 =======
 
@@ -36,6 +10,8 @@ Running
 2. Ensure that samtools v1.3 or higher is on your path
 
 3. Run server
+
+Installed from source
 
 ::
 
@@ -50,6 +26,41 @@ Running
 
  #on a custom port and skip authentication
  bin/server.js -p PORT -s
+
+Installed with npm
+
+If installed locally
+
+::
+
+ #on the default socket /tmp/${USER}/npg_ranger.sock
+ ./node_modules/.bin/npg_ranger_server
+
+ #on a custom socket
+ ./node_modules/.bin/npg_ranger_server /tmp/my.sock
+
+ #on a custom port 9447
+ ./node_modules/.bin/npg_ranger_server 9447
+
+ #on a custom port and skip authentication
+ ./node_modules/.bin/npg_ranger_server -p PORT -s
+
+If installed globally
+
+::
+
+ #on the default socket /tmp/${USER}/npg_ranger.sock
+ npg_ranger_server.js
+
+ #on a custom socket
+ npg_ranger_server.js /tmp/my.sock
+
+ #on a custom port 9447
+ npg_ranger_server.js 9447
+
+ #on a custom port and skip authentication
+ npg_ranger_server.js -p PORT -s
+
 
  #providing a configuration file
  bin/server.js -c config/config.json
@@ -84,8 +95,6 @@ Biodalliance
 ------------
 A custom npg_ranger track is added to the Biodalliance genome browser
 https://github.com/wtsi-npg/dalliance
-
-
 
 Authentication and authorisation
 ================================
