@@ -34,7 +34,7 @@ describe('Building options', function() {
   it('Configs can be passed from a json file', function() {
     let options;
     expect( () => {options = config.provide( () => {
-      return { configfile: path.resolve(__dirname, 'testConfig.json') };
+      return { configfile: path.resolve(__dirname, 'server', 'data', 'testConfig.json') };
     });} ).not.toThrow();
     expect( options.get('testConfig') ).toBe(true);
   });
@@ -42,7 +42,7 @@ describe('Building options', function() {
     let options;
     expect( () => {options = config.provide( () => {
       return {
-        configfile: path.resolve(__dirname, 'testConfig.json'),
+        configfile: path.resolve(__dirname, 'server', 'data', 'testConfig.json'),
         testConfig: false
       };
     });}).not.toThrow();

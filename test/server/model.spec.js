@@ -2,13 +2,13 @@
 
 "use strict";
 
-const config = require('../../lib/config.js');
-var dummy = function() { return {}; };
-config.provide(dummy);
-
 const assert  = require('assert');
 const os      = require('os');
 const RangerModel = require('../../lib/server/model.js');
+const config = require('../../lib/config.js');
+
+var dummy = function() { return {}; };
+config.provide(dummy);
 
 describe('Class methods', function() {
   beforeAll(function() {

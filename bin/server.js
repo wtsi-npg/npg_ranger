@@ -2,11 +2,6 @@
 
 "use strict";
 
-
-const config = require('../lib/config.js');
-
-const options = config.provide(config.fromCommandLine);
-
 const os      = require('os');
 const fs      = require('fs');
 const path    = require('path');
@@ -16,6 +11,11 @@ const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const LOGGER      = require('../lib/logsetup.js');
 
+const config = require('../lib/config.js');
+// Call to config.provide() must occur here before requiring controller
+// so that options object is built before it is provided to the
+// other modules.
+const options = config.provide(config.fromCommandLine);
 const RangerController = require('../lib/server/controller');
 
 if ( options.get('debug') ) {

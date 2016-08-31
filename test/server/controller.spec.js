@@ -2,10 +2,6 @@
 
 "use strict";
 
-const config  = require('../../lib/config.js');
-var dummy     = function() { return {}; };
-var options;
-
 const assert  = require('assert');
 const http    = require('http');
 const fs      = require('fs');
@@ -13,6 +9,10 @@ const os      = require('os');
 const path    = require('path');
 const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
+const config  = require('../../lib/config.js');
+
+var dummy     = function() { return {}; };
+var options;
 
 describe('Creating object instance - synch', function() {
   beforeAll(function() {
