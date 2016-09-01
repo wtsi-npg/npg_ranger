@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+release 0.3.0
   - publish as npm package
   - expand docs for installing and running client/server
   - upgrade mongodb from 2.2.4 to 2.2.8
