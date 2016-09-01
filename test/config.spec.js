@@ -56,7 +56,7 @@ describe('Building options', function() {
     });}).not.toThrow();
     expect( options.get('tempdir').startsWith(path.join(os.tmpdir(), 'npg_ranger_')) ).toBe(true);
     expect( options.get('port').startsWith(path.join(os.tmpdir(), 'npg_ranger_')) ).toBe(true);
-    expect( options.get('port').endsWith('npg_ranger_sock') ).toBe(true);
+    expect( options.get('port').endsWith('npg_ranger.sock') ).toBe(true);
   });
   it('tempdir specified, port default', function() {
     let options;
@@ -65,7 +65,7 @@ describe('Building options', function() {
     });}).not.toThrow();
     expect( options.get('tempdir').startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test')) ).toBe(true);
     expect( options.get('port').startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test'))).toBe(true);
-    expect( options.get('port').endsWith('npg_ranger_sock') ).toBe(true);
+    expect( options.get('port').endsWith('npg_ranger.sock') ).toBe(true);
   });
   it('tempdir default, port specified', function() {
     let options;
