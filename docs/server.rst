@@ -9,11 +9,37 @@ Running
 
 2. Ensure that samtools v1.3 or higher is on your path
 
-3. Run server
+3. Create a config.json file with url to running mongo db.
+   Alternatively, pass this url on the command line using option -m.
+
+4. Run server
+
+Providing mongo database URL
+----------------------------
+
+Example config.json
+
+::
+
+ {
+   "mongourl": "mongodb://<url of mongo server>:<port>/imetacache"
+ }
+
+::
+
+ #providing a configuration file
+ bin/server.js -c <...>/config.json
+
+ #providing url of mongo server
+ bin/server.js -m 'mongodb://<url>:<port>/imetacache'
+
+Other options
+-------------
 
 Installed from source
 
 ::
+
 
  #on the default socket /tmp/${USER}/npg_ranger.sock
  bin/server.js
@@ -62,8 +88,6 @@ If installed globally
  npg_ranger_server.js -p PORT -s
 
 
- #providing a configuration file
- bin/server.js -c config/config.json
 
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
