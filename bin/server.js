@@ -2,26 +2,25 @@
 
 "use strict";
 
-
-const config = require('../lib/config.js');
-
-const options = config.provide(config.fromCommandLine);
-
-const os      = require('os');
 const fs      = require('fs');
-const path    = require('path');
 const http    = require('http');
 const assert  = require('assert');
 const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
 const LOGGER      = require('../lib/logsetup.js');
 
+const config = require('../lib/config.js');
+// Call to config.provide() must occur here before requiring controller
+// so that options object is built before it is provided to the
+// other modules.
+const options = config.provide(config.fromCommandLine);
 const RangerController = require('../lib/server/controller');
 
 if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
-LOGGER.info(options.list);
+
+LOGGER.info(config.logOpts());
 
 /*
  * Main server script. Create the server object, establish database,
@@ -109,17 +108,13 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
 
     // Create an instance of an application controller and let it
     // handle the request.
-
     let controller = new RangerController(request, response, db);
     controller.handleRequest(options.get('hostname'));
   });
 
-  var createTempDataDir = (tmpDir) => {
+  var createTempDataDir = () => {
+    let tmpDir = options.get('tempdir');
     if (!fs.existsSync(tmpDir)) {
-      let dir = path.join(os.tmpdir(), process.env.USER);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
       fs.mkdirSync(tmpDir);
       LOGGER.debug(`Created temp data directory ${tmpDir}`);
     } else {
