@@ -1,12 +1,28 @@
-/* globals describe, it, expect */
+/* globals describe, it, expect, beforeAll, afterAll */
 
 "use strict";
 
 const assert  = require('assert');
-const os      = require('os');
+const fse     = require('fs-extra');
 const RangerModel = require('../../lib/server/model.js');
+const config = require('../../lib/config.js');
+
+// Create temp dir here so it is available for all tests.
+// Use this dir as a default dir that will be available in all.
+var tmpDir    = config.tempFilePath('npg_ranger_model_test_');
+var dummy     = function() { return {tempdir: tmpDir}; };
+config.provide(dummy);
 
 describe('Class methods', function() {
+  beforeAll(function() {
+    fse.ensureDirSync(tmpDir);
+    config.provide(dummy);
+  });
+
+  afterAll(function() {
+    fse.removeSync(tmpDir);
+  });
+
   it('default format', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
   });
@@ -35,10 +51,19 @@ describe('Class methods', function() {
 });
 
 describe('Creating object instance', function() {
+  beforeAll(function() {
+    fse.ensureDirSync(tmpDir);
+    config.provide(dummy);
+  });
+
+  afterAll(function() {
+    fse.removeSync(tmpDir);
+  });
+
   it('temp directory attr is optional', function() {
     let m;
     expect( () => {m = new RangerModel();} ).not.toThrow();
-    expect(m.tmpDir).toBe(os.tmpdir());
+    expect(m.tmpDir).toBe(tmpDir);
   });
 
   it('Temporary directory should exist', function() {
@@ -52,7 +77,17 @@ describe('Creating object instance', function() {
 });
 
 describe('Processing request', function() {
-  let m = new RangerModel();
+  let m;
+  beforeAll(function() {
+    fse.ensureDirSync(tmpDir);
+    config.provide(dummy);
+    m = new RangerModel();
+  });
+
+  afterAll(function() {
+    fse.removeSync(tmpDir);
+  });
+
   it('Input validation', function() {
     expect( () => {m.process();} ).toThrowError(assert.AssertionError,
       'Query object is required');
