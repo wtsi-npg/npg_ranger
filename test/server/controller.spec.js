@@ -142,12 +142,18 @@ describe('set error response', function() {
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(true);
       expect(c.unsafe).toBe(false);
-      expect( () => {c = new RangerController(request, response, {}, '', false, true);} ).not.toThrow();
+
+      // Set unsafe mode
+      config.provide(function() { return {tempdir: tmpDir, unsafe: true}; });
+      expect( () => {c = new RangerController(request, response, {}, '', false);} ).not.toThrow();
       expect(c.skipAuth).toBe(false);
       expect(c.unsafe).toBe(true);
-      expect( () => {c = new RangerController(request, response, {}, '', true, true);} ).not.toThrow();
+      expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.skipAuth).toBe(true);
       expect(c.unsafe).toBe(true);
+
+      // Reset safe mode
+      config.provide(dummy);
 
       response.end();
       done();
@@ -319,12 +325,19 @@ describe('Handling requests - error responses', function() {
   });
 
   it('Invalid input error for a vcf file when safe mode disabled', function(done) {
+
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true, true);
+      // Set unsafe mode
+      config.provide(function() { return {tempdir: tmpDir, unsafe: true}; });
+
+      let c = new RangerController(request, response, {one: "two"}, null, true);
       expect(c.skipAuth).toBe(true);
       expect(c.unsafe).toBe(true);
       expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+
+      // Reset safe mode
+      config.provide(dummy);
     });
 
     http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, function(response) {
@@ -342,7 +355,6 @@ describe('Handling requests - error responses', function() {
       });
     });
   });
-
 });
 
 describe('Redirection in json response', function() {
