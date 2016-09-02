@@ -12,7 +12,7 @@ const MongoClient = require('mongodb').MongoClient;
 const GetOpt      = require('node-getopt');
 const LOGGER      = require('../lib/logsetup.js');
 
-const RangerController = require('../lib/controller');
+const RangerController = require('../lib/server/controller');
 
 var opt = new GetOpt([
     ['p','port=PORT'        ,'PORT or socket which server listens on'],
@@ -46,6 +46,9 @@ const MONGO_OPTIONS = {
   mongos: {}
 };
 
+if ( opt.options.debug ) {
+  LOGGER.level = 'debug';
+}
 LOGGER.info(opt.options);
 
 /*

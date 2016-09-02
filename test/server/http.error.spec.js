@@ -5,8 +5,8 @@
 const http    = require('http');
 const fs      = require('fs');
 const tmp     = require('tmp');
-const trailer = require('../lib/http/trailer.js');
-const HttpError = require('../lib/http/error.js');
+const trailer = require('../../lib/server/http/trailer.js');
+const HttpError = require('../../lib/server/http/error.js');
 
 describe('Constructor input validation', function() {
   it('response object is not given - error', function() {

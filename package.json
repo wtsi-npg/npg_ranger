@@ -1,23 +1,25 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Streaming service for bioinformatics data.",
-  "homepage": "https://github.com/wtsi-npg/wtsi_ranger",
+  "homepage": "https://github.com/wtsi-npg/npg_ranger",
   "license": "SEE LICENSE IN LICENSE",
-  "private": true,
+  "private": false,
+  "engines": { "node" : ">=4.4.2" },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wtsi-npg/wtsi_ranger"
+    "url": "https://github.com/wtsi-npg/npg_ranger"
   },
   "bugs": {
-    "url": "https://github.com/wtsi-npg/wtsi_ranger/issues",
+    "url": "https://github.com/wtsi-npg/npg_ranger/issues",
     "email": "npg@sanger.ac.uk"
   },
   "contributors": [
     "Marina Gourtovaia",
     "David Jackson",
-    "Jaime Tovar Corona"
+    "Jaime Tovar Corona",
+    "Andrew Nowak"
   ],
   "keywords": [
     "data streaming",
@@ -28,33 +30,46 @@
     "package.json",
     "CHANGES",
     "LICENSE",
-    "README",
+    "README.md",
     "bin",
     "lib",
-    "lib/http",
+    "lib/server",
+    "lib/server/http",
+    "lib/client",
     "test",
-    "test/data",
-    "test/data/fixtures",
-    "test/data/pipeline"
+    "test/client",
+    "test/server/data",
+    "test/server/data/fixtures",
+    "test/server/data/pipeline"
   ],
+  "bin": {
+    "npg_ranger_server": "bin/server.js",
+    "npg_ranger_client": "bin/client.js"
+  },
+  "main": "./lib/main.js",
   "dependencies": {
     "winston":     "2.2.0",
-    "moment" :     "2.13.0",
+    "moment" :     "2.14.1",
     "fs-extra":    "^0.30.0",
-    "mongodb":     "^2.1.7",
-    "node-getopt": "^0.2.3"
+    "mongodb":     "2.2.8",
+    "node-getopt": "^0.2.3",
+    "commander":   "2.9.0",
+    "js-md5" :     "0.4.1"
   },
   "devDependencies": {
     "dev-null": "^0.1.1",
     "grunt": "1.0.1",
     "grunt-cli": "*",
+    "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
-    "grunt-jasmine-nodejs": "^1.5.3",
-    "grunt-jscs": "3.0.0",
+    "grunt-jasmine-nodejs": "1.5.4",
+    "grunt-jscs": "3.0.1",
     "grunt-jsdoc": "2.1.0",
     "grunt-jsonlint": "^1.0.7",
-    "load-grunt-tasks": "*",
-    "tmp": "0.0.28"
+    "grunt-browserify": "5.0.0",
+    "load-grunt-tasks": "3.5.2",
+    "tmp": "0.0.28",
+    "browserify": "13.1.0"
   }
 }

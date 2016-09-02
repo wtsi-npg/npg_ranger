@@ -4,9 +4,9 @@
 
 const spawn    = require('child_process').spawn;
 const devnull  = require('dev-null');
-const pipeline = require('../lib/pipeline.js');
+const pipeline = require('../../lib/server/pipeline.js');
 
-var path = 'test/data/pipeline/text.txt';
+var path = 'test/server/data/pipeline/text.txt';
 var isSuccess = null;
 
 var setup = function(done, cat_command, f, wc_command, wc_options) {
@@ -14,7 +14,7 @@ var setup = function(done, cat_command, f, wc_command, wc_options) {
   const cat = spawn(cat_command, [f]);
   cat.title = 'cat';
   var prs = [cat];
-  
+
   if (wc_command) {
     if (! wc_options) {
       wc_options = '-l';
@@ -37,13 +37,13 @@ describe('Run function input validation', function() {
 
   const cat = spawn('cat', [path]);
   var fun = function() {};
- 
+
   it('Destination is not given - error', function() {
     expect( () => {pipeline([cat], fun, fun).run();} ).toThrowError(ReferenceError,
     'Destination stream is not defined');
   });
 
-  
+
   it('Array of processes should be defined', function() {
     expect( () => {pipeline().run(devnull());} ).toThrowError(
       ReferenceError, 'Array of processes should be defined'
@@ -94,7 +94,7 @@ describe('Run function input validation', function() {
     expect( () => {pipeline([cat], fun, 'callback').run(devnull());} ).toThrowError(
       TypeError, 'Failure callback should be a function'
     );
-  });  
+  });
 });
 
 describe('Valid two-process pipeline', function() {
@@ -104,7 +104,7 @@ describe('Valid two-process pipeline', function() {
   it('Pipeline succeeds', function(done) {
     expect(isSuccess).toBe(true);
     done();
-  });    
+  });
 });
 
 describe('Valid one-process pipeline', function() {
@@ -114,27 +114,27 @@ describe('Valid one-process pipeline', function() {
   it('Pipeline succeeds', function(done) {
     expect(isSuccess).toBe(true);
     done();
-  });    
+  });
 });
 
 describe('Valid two-process pipeline, invalid input', function() {
   beforeEach(function(done) {
-    setup(done, 'cat', 'test/data/pipeline/test.txt', 'wc');
+    setup(done, 'cat', 'test/server/data/pipeline/test.txt', 'wc');
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
     done();
-  });    
+  });
 });
 
 describe('Valid one-process pipeline, invalid input', function() {
   beforeEach(function(done) {
-    setup(done, 'cat', 'test/data/pipeline/test.txt');
+    setup(done, 'cat', 'test/server/data/pipeline/test.txt');
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
     done();
-  });    
+  });
 });
 
 describe('Invalid pipeline, first command incorrect', function() {
@@ -144,7 +144,7 @@ describe('Invalid pipeline, first command incorrect', function() {
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
     done();
-  });    
+  });
 });
 
 describe('Invalid pipeline, second command incorrect', function() {
@@ -154,7 +154,7 @@ describe('Invalid pipeline, second command incorrect', function() {
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
     done();
-  });    
+  });
 });
 
 describe('Invalid pipeline, second command option is invalid', function() {

@@ -9,7 +9,7 @@ const http    = require('http');
 const fs      = require('fs');
 const os      = require('os');
 const tmp     = require('tmp');
-const RangerController = require('../lib/controller.js');
+const RangerController = require('../../lib/server/controller.js');
 
 describe('Creating object instance - synch', function() {
   it('request object is not given - error', function() {
@@ -333,7 +333,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -351,7 +351,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=CRAM`;
-        expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -370,7 +370,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -388,7 +388,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A4`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -406,7 +406,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-5`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -424,7 +424,7 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [url]});
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
@@ -443,7 +443,7 @@ describe('Redirection in json response', function() {
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
           let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [url]});
+          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
           done();
         });
       });

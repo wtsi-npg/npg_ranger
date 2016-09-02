@@ -8,12 +8,12 @@ const MongoClient = require('mongodb').MongoClient;
 const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
-const DataAccess  = require('../lib/auth.js');
+const DataAccess  = require('../../lib/server/auth.js');
 
 const BASE_PORT  = 1100;
 const PORT_RANGE = 200;
 const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/data/fixtures/access_control_group.json';
+const FIXTURES = 'test/server/data/fixtures/access_control_group.json';
 
 describe('Authorisation', function() {
   var tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
@@ -23,7 +23,7 @@ describe('Authorisation', function() {
   var url = `mongodb://localhost:${PORT}/${db_name}`;
 
   beforeAll( () => {
-    let command = `mongod -f test/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
+    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
     console.log(`\nCommand to start MONGO DB daemon: ${command}`);
     let out = child.execSync(command);
     console.log(`Started MONGO DB daemon: ${out}`);
@@ -118,9 +118,8 @@ describe('Authorisation', function() {
   });
 
   afterAll(() => {
-    let out = child.execSync(`mongod --shutdown --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid`);
-    console.log(`\nMONGODB server has been shut down: ${out}`);
+    child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
+    console.log('\nMONGODB server has been shut down');
     fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
   });
 });
-

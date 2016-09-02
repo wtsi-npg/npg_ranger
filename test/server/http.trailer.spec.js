@@ -5,7 +5,7 @@
 const http    = require('http');
 const fs      = require('fs');
 const tmp     = require('tmp');
-const trailer = require('../lib/http/trailer.js');
+const trailer = require('../../lib/server/http/trailer.js');
 
 describe('Input validation', function() {
   it('declare - response object is not given - error', function() {

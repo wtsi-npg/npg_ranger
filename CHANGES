@@ -1,5 +1,23 @@
 LIST OF CHANGES for npg_ranger project
 
+release 0.3.0
+  - publish as npm package
+  - expand docs for installing and running client/server
+  - upgrade mongodb from 2.2.4 to 2.2.8
+  - upgrade grunt-jasmine-nodejs from 1.5.3 to 1.5.4
+  - upgrade load-grunt-tasks from 'latest' to 3.5.2
+  - fix wrongly reporting error while closing fd in client
+  - compliance with the GA4GH API: redirection urls as objects
+  - restructure documentation
+  - upgrading moment to 2.14.1 from 2.13.0
+  - upgrading grunt-jscs to 3.0.1 from 3.0.0
+  - new client code to comply with GA4GH API
+  - client code fit to use with browserify
+
+release 0.2.1
+  - compliance with the GA4GH API: use upper case for format
+
+release 0.2.0
   - application model and controller as separate modules
   - GA4GH API url and redirection
   - logging with Winston
