@@ -14,10 +14,30 @@ Running
 
 4. Run server
 
+Parameters
+----------
+
+Paramters can be used to configure the server. You can use -h to list
+supported parameters.
+
+::
+
+  bin/server.js -h
+
+Parameters and extended configuration can be defined in a configuration
+file. An example configuration file can be found at docs/config.json.
+
+::
+
+  bin/server.js -c yourConfig.json
+
+
 Providing mongo database URL
 ----------------------------
 
-Example config.json
+A parameter which is essential is the mongo database url. You can set
+this parameter by creating a configuration file and passing it to the
+server.
 
 ::
 
@@ -25,10 +45,12 @@ Example config.json
    "mongourl": "mongodb://<url of mongo server>:<port>/imetacache"
  }
 
-::
+ # from  a configuration file
+ bin/server.js -c <...>/yourConfig.json
 
- #providing a configuration file
- bin/server.js -c <...>/config.json
+Or by passing the parameter when starting the server.
+
+::
 
  #providing url of mongo server
  bin/server.js -m 'mongodb://<url>:<port>/imetacache'

@@ -21,8 +21,8 @@ module.exports = function(grunt) {
         src: [
           'package.json',
           'test/server/data/fixtures/*.json',
-          'test/testConfig.json',
-          'config/config.json'
+          'test/server/data/testConfig.json',
+          'docs/config.json'
         ]
       }
     },
