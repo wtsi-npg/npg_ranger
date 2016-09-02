@@ -5,6 +5,7 @@
 const assert  = require('assert');
 const http    = require('http');
 const fs      = require('fs');
+const fse     = require('fs-extra');
 const os      = require('os');
 const path    = require('path');
 const tmp     = require('tmp');
@@ -14,15 +15,17 @@ const config  = require('../../lib/config.js');
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
 var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
-if (!fs.existsSync(tmpDir)) {
-  fs.mkdirSync(tmpDir);
-}
 var dummy     = function() { return {tempdir: tmpDir}; };
 var options;
 
 describe('Creating object instance - synch', function() {
   beforeAll(function() {
     options = config.provide(dummy);
+    fse.ensureDirSync(tmpDir);
+  });
+
+  afterAll(function() {
+    fse.removeSync(tmpDir);
   });
 
   it('request object is not given - error', function() {
@@ -57,6 +60,7 @@ describe('Creating object instance - synch', function() {
     expect( () => {c = new RangerController({}, {}, {});} ).not.toThrow();
     expect(c.tmpDir === temporaryDir.name).toBe(true);
     expect(c.skipAuth).toBe(true);
+    temporaryDir.removeCallback();
   });
   it('configs provided in constructor overwrite defaults', function() {
     let c;
@@ -67,6 +71,7 @@ describe('Creating object instance - synch', function() {
     expect( () => {c = new RangerController({}, {}, {}, temporaryDir.name, false);} ).not.toThrow();
     expect(c.tmpDir === temporaryDir.name).toBe(true);
     expect(c.skipAuth).toBe(false);
+    temporaryDir.removeCallback();
   });
 });
 
@@ -81,6 +86,7 @@ describe('set error response', function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
     });
+    fse.ensureDirSync(tmpDir);
     options = config.provide(dummy);
   });
 
@@ -89,6 +95,7 @@ describe('set error response', function() {
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('db object is not given or is not an object - error', function(done) {
@@ -161,10 +168,13 @@ describe('Handling requests - error responses', function() {
       console.log(`Server listening on socket ${socket}`);
     });
     options = config.provide(dummy);
+    fse.ensureDirSync(tmpDir);
   });
+
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('Data host name argument is required', function(done) {
@@ -304,6 +314,7 @@ describe('Redirection in json response', function() {
   let id          = 'EGA45678';
   let server_path_basic = '/ga4gh/v.0.1/get/sample';
   let server_path = server_path_basic + '/' + id;
+
   beforeAll(function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
@@ -312,11 +323,14 @@ describe('Redirection in json response', function() {
       let c = new RangerController(request, response, {}, null, true);
       c.handleRequest('localhost');
     });
+    fse.ensureDirSync(tmpDir);
     options = config.provide(dummy);
   });
+
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('invalid url - no id - error response', function(done) {
@@ -608,11 +622,13 @@ describe('content type', function() {
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
     });
+    fse.ensureDirSync(tmpDir);
     options = config.provide(dummy);
   });
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('data format driven content type', function(done) {
