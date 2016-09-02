@@ -19,7 +19,7 @@ const RangerController = require('../lib/server/controller');
 if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
-LOGGER.info(options.list);
+LOGGER.info(config.logOpts());
 
 /*
  * Main server script. Create the server object, establish database,
