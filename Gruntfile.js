@@ -22,7 +22,7 @@ module.exports = function(grunt) {
           'package.json',
           'test/server/data/fixtures/*.json',
           'test/server/data/testConfig.json',
-          'config/config.json'
+          'docs/config.json'
         ]
       }
     },
