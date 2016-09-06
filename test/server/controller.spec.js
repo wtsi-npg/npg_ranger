@@ -144,7 +144,7 @@ describe('set error response', function() {
       expect(c.unsafe).toBe(false);
 
       // Set unsafe mode
-      config.provide(function() { return {tempdir: tmpDir, unsafe: true}; });
+      config.provide( () => { return {tempdir: tmpDir, unsafe: true}; });
       expect( () => {c = new RangerController(request, response, {}, '', false);} ).not.toThrow();
       expect(c.skipAuth).toBe(false);
       expect(c.unsafe).toBe(true);
@@ -276,7 +276,7 @@ describe('Handling requests - error responses', function() {
   });
 
 
-  it('Invalid input error for a sample url', function(done) {
+  it('Invalid input error for a sample url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"}, null, true);
@@ -284,10 +284,10 @@ describe('Handling requests - error responses', function() {
       expect( () => {c.handleRequest('localhost');} ).not.toThrow();
     });
 
-    http.get({socketPath: socket, path: '/sample'}, function(response) {
+    http.get({socketPath: socket, path: '/sample'}, ( response ) => {
       var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
+      response.on('data', ( d ) => { body += d;});
+      response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: sample accession number should be given';
@@ -300,7 +300,7 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a file url', function(done) {
+  it('Invalid input error for a file url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"}, null, true);
