@@ -2,7 +2,7 @@
 
 "use strict";
 
-const fs      = require('fs');
+const fs      = require('fs-extra');
 const http    = require('http');
 const assert  = require('assert');
 const util    = require('util');
@@ -37,32 +37,42 @@ if ( options.get('debug') ) {
  *  3. There are some defaults, which can be found in lib/config.js
  */
 
-cluster.on('exit', (worker, code, signal) => {
-  LOGGER.debug('worker %d died (%s). Respawning...', worker.id, signal || code);
-  setTimeout(function() {
-    cluster.fork();
-  }, 3000);
-});
 assert(process.env.USER, 'User environment variable is not defined');
-if (cluster.isMaster && true) {
+if ( cluster.isMaster ) {
   LOGGER.info(config.logOpts());
   for (let i = 0; i < numWorkers; i++) {
     cluster.fork();
   }
+  let consec = 0;
+  cluster.on('exit', (worker, code, signal) => {
+    LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
+    let waitingConsec = 20;
+    let maxConsec = 15;
+    LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
+    if ( consec >= maxConsec ) {
+      LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
+      process.exit(1);
+    }
+    consec += 1;
+    cluster.fork();
+    setTimeout( () => {
+      consec -= 1;
+    }, waitingConsec * 1000 );
+  });
 } else {
-  if (options.get('debug') && cluster.isWorker) {
+  if ( cluster.isWorker ) {
     LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
   }
   const server = http.createServer();
 
   // Exit gracefully on a signal to quit
-  process.on('SIGTERM', () => {
-    server.close( () => {process.exit(0);} );
+  [ 'SIGTERM', 'SIGINT' ].forEach( ( sig ) => { // TODO check SIGHUP and SIGPIPE
+    process.on( sig, () => {
+      server.close( () => {
+        process.exit(0);
+      });
+    });
   });
-  process.on('SIGINT', () => {
-    server.close( () => {process.exit(0);} );
-  });
-
   // Connect to the database and, if successful, define
   // callbacks for the server.
   var mongourl = options.get('mongourl');
@@ -111,18 +121,16 @@ if (cluster.isMaster && true) {
 
     // Set up a callback for requests.
     server.on('request', (request, response) => {
-      if (options.get('debug')) {
-        LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
-        if (cluster.isWorker) {
-          LOGGER.debug("WORKER: served by " + cluster.worker.id);
-        }
+      LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
+      if (cluster.isWorker) {
+        LOGGER.debug("WORKER: served by " + cluster.worker.id);
       }
 
       // Ensure the processes initiated by request stops if the client disconnects.
       // Closing the response forces an error in the pipeline and allows for a
       // prompt closing of a socket established for this request.
       request.on('close', () => {
-        LOGGER.info('CLIENT DISCONNECTED ');
+        LOGGER.info('CLIENT DISCONNECTED');
         response.end();
       });
 
@@ -135,12 +143,17 @@ if (cluster.isMaster && true) {
 
     var createTempDataDir = () => {
       let tmpDir = options.get('tempdir');
+      /*
       if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir);
         LOGGER.debug(`Created temp data directory ${tmpDir}`);
       } else {
         LOGGER.debug(`Found temp data directory ${tmpDir}`);
       }
+      */
+      LOGGER.debug(`Using temp data directory ${tmpDir}`);
+      fs.ensureDirSync(tmpDir);
+
     };
 
     // Synchronously create directory for temporary data, then start listening.

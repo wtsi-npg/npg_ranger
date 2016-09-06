@@ -115,6 +115,7 @@ describe('Listing config options', function() {
                     'hostname=myhost',
                     'mongourl=mymongourl',
                     'multiref=undefined',
+                    'numworkers=1',
                     'port=9999',
                     'references=undefined',
                     'skipauth=undefined',
