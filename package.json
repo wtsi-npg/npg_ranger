@@ -51,7 +51,7 @@
     "winston":     "2.2.0",
     "moment" :     "2.14.1",
     "fs-extra":    "^0.30.0",
-    "mongodb":     "2.2.8",
+    "mongodb":     "2.2.9",
     "node-getopt": "^0.2.3",
     "config-chain": "1.1.10",
     "commander":   "2.9.0",
