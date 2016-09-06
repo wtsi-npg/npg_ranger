@@ -349,8 +349,12 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: cannot produce VCF files while server is not in safe mode';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual(
-          {error: {type:    "InvalidInput",
-                   message: m}});
+          {
+            error: {
+              type: "InvalidInput",
+              message: m
+            }
+          });
         done();
       });
     });
