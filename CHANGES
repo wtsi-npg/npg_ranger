@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - kill all processes after -g seconds after client disconnection
+
 release 0.3.0
   - publish as npm package
   - expand docs for installing and running client/server
