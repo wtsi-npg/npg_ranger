@@ -264,9 +264,9 @@ describe('Data info retrieval', function() {
     });
   });
 
-  it('Can provide alternate root path for references', function(done) {
+  it('Can provide alternate root path for references', (done) => {
     config.provide( () => {return {references: '/test/reference/root'};});
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, (err, db) => {
       assert.equal(err, null);
       let dm = new DataMapper(db);
       dm.on('data', (data) => {

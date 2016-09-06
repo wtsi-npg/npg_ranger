@@ -50,7 +50,7 @@ describe('Class methods', function() {
     expect(RangerModel.isTextualFormat('VCF')).toBe(true);
     expect(RangerModel.isTextualFormat('SAM')).toBe(true);
   });
-  it('does the query have a reference?', function() {
+  it('does the query have a reference?', () => {
     expect( () => {RangerModel.hasReference();} )
       .toThrowError(assert.AssertionError,
       'Query must be given');

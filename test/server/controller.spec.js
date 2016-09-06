@@ -324,12 +324,12 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a vcf file when safe mode disabled', function(done) {
+  it('Invalid input error for a vcf file when safe mode disabled', (done) => {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       // Set unsafe mode
-      config.provide(function() { return {tempdir: tmpDir, unsafe: true}; });
+      config.provide(() => { return {tempdir: tmpDir, unsafe: true}; });
 
       let c = new RangerController(request, response, {one: "two"}, null, true);
       expect(c.skipAuth).toBe(true);
@@ -340,10 +340,10 @@ describe('Handling requests - error responses', function() {
       config.provide(dummy);
     });
 
-    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, function(response) {
+    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, (response) => {
       var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
+      response.on('data', (d) => { body += d;});
+      response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: cannot produce VCF files while server is not in safe mode';
