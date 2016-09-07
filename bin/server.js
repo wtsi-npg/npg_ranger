@@ -66,7 +66,7 @@ if ( cluster.isMaster ) {
   const server = http.createServer();
 
   // Exit gracefully on a signal to quit
-  [ 'SIGTERM', 'SIGINT' ].forEach( ( sig ) => { // TODO check SIGHUP and SIGPIPE
+  [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
     process.on( sig, () => {
       server.close( () => {
         process.exit(0);
