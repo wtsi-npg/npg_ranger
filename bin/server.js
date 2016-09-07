@@ -46,8 +46,8 @@ if ( cluster.isMaster ) {
   let consec = 0;
   cluster.on('exit', (worker, code, signal) => {
     LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
-    let waitingConsec = 20;
-    let maxConsec = 15;
+    let waitingConsec = options.get('clustertimeout');
+    let maxConsec = options.get('clustermaxdeaths');
     LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
     if ( consec >= maxConsec ) {
       LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
