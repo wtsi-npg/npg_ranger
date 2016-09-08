@@ -8,7 +8,7 @@ const pipeline = require('../../lib/server/pipeline.js');
 
 var path = 'test/server/data/pipeline/text.txt';
 var isSuccess = null;
-
+var result;
 var setup = function(done, cat_command, f, wc_command, wc_options) {
 
   const cat = spawn(cat_command, [f]);
@@ -31,6 +31,7 @@ var setup = function(done, cat_command, f, wc_command, wc_options) {
 
   var pline = pipeline(prs, success, failure);
   pline.run(devnull());
+  result = pline.result;
 };
 
 describe('Run function input validation', function() {
@@ -103,6 +104,8 @@ describe('Valid two-process pipeline', function() {
   });
   it('Pipeline succeeds', function(done) {
     expect(isSuccess).toBe(true);
+    // Same md5 as `$ cat test/server/data/pipeline/text.txt | wc -l | md5sum -`
+    expect(result.checksum === '1dcca23355272056f04fe8bf20edfce0').toBe(true);
     done();
   });
 });
@@ -113,6 +116,8 @@ describe('Valid one-process pipeline', function() {
   });
   it('Pipeline succeeds', function(done) {
     expect(isSuccess).toBe(true);
+    // Same md5 as `$ cat test/server/data/pipeline/text.txt | md5sum -`
+    expect(result.checksum === '740dff5fac9135fd6d40c4aa4b6143b9').toBe(true);
     done();
   });
 });
@@ -123,6 +128,7 @@ describe('Valid two-process pipeline, invalid input', function() {
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
+    expect(result.checksum === null).toBe(true);
     done();
   });
 });
@@ -133,6 +139,7 @@ describe('Valid one-process pipeline, invalid input', function() {
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
+    expect(result.checksum === null).toBe(true);
     done();
   });
 });
@@ -143,6 +150,7 @@ describe('Invalid pipeline, first command incorrect', function() {
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
+    expect(result.checksum === null).toBe(true);
     done();
   });
 });
@@ -153,6 +161,7 @@ describe('Invalid pipeline, second command incorrect', function() {
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
+    expect(result.checksum === null).toBe(true);
     done();
   });
 });
@@ -163,6 +172,7 @@ describe('Invalid pipeline, second command option is invalid', function() {
   });
   it('Pipeline fails', function(done) {
     expect(isSuccess).toBe(false);
+    expect(result.checksum === null).toBe(true);
     done();
   });
 });
