@@ -74,7 +74,7 @@ describe('set error response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(body).toEqual('truncated payload');
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true' ]);
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true', 'checksum', 'undefined' ]);
         done();
       });
     });

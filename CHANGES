@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - add checksum trailer to response
   - add config-chain 1.1.10
   - add new module to handle config options
 
@@ -43,4 +44,3 @@ release 0.1
     'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
       error in the pipeline it is set to 'true'.
-
