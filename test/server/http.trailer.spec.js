@@ -5,6 +5,7 @@
 const http    = require('http');
 const fs      = require('fs');
 const tmp     = require('tmp');
+const md5     = require('js-md5');
 const trailer = require('../../lib/server/http/trailer.js');
 
 describe('Input validation', function() {
@@ -53,7 +54,7 @@ describe('declaring, setting and removing a trailer', function() {
       trailer.declare(response);
       expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       response.write('useful payload');
-      trailer.setDataTruncation(response, true);
+      trailer.setDataTruncation(response, true, null);
       response.end();
     });
 
@@ -63,7 +64,7 @@ describe('declaring, setting and removing a trailer', function() {
         // unless the data is processed
       });
       response.on('end', function() {
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true', 'checksum', 'undefined' ]);
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true', 'checksum', 'null' ]);
         done();
       });
     });
@@ -73,17 +74,18 @@ describe('declaring, setting and removing a trailer', function() {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
+      let replyContent = 'useful payload';
       trailer.declare(response);
       expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
-      response.write('useful payload');
-      trailer.setDataTruncation(response, false);
+      response.write(replyContent);
+      trailer.setDataTruncation(response, false, md5(replyContent));
       response.end();
     });
 
     http.get({socketPath: socket}, function(response) {
       response.on('data', function() {});
       response.on('end', function() {
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'false', 'checksum', 'undefined' ]);
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'false', 'checksum', '5a1ca5a77b7eb8af83bf55483715b1ba' ]);
         done();
       });
     });
@@ -115,7 +117,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.on('request', (request, response) => {
       expect( () => {trailer.removeDeclaration(response);} ).not.toThrow();
       response.write('useful payload');
-      expect( () => {trailer.setDataTruncation(response, true);} )
+      expect( () => {trailer.setDataTruncation(response, true, null);} )
         .toThrowError(Error,
         'Cannot set data truncation trailer because it has not been declared');
       response.end();
@@ -140,7 +142,7 @@ describe('declaring, setting and removing a trailer', function() {
       trailer.declare(response);
       expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       response.write('{"some": "property"}');
-      trailer.setDataTruncation(response, true);
+      trailer.setDataTruncation(response, true, null);
       response.end();
     });
 
