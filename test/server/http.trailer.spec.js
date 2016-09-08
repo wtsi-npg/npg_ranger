@@ -51,7 +51,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       trailer.declare(response);
-      expect(response.getHeader('Trailer')).toBe('data-truncated');
+      expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       response.write('useful payload');
       trailer.setDataTruncation(response, true);
       response.end();
@@ -63,7 +63,7 @@ describe('declaring, setting and removing a trailer', function() {
         // unless the data is processed
       });
       response.on('end', function() {
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true' ]);
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true', 'checksum', 'undefined' ]);
         done();
       });
     });
@@ -74,7 +74,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       trailer.declare(response);
-      expect(response.getHeader('Trailer')).toBe('data-truncated');
+      expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       response.write('useful payload');
       trailer.setDataTruncation(response, false);
       response.end();
@@ -83,7 +83,7 @@ describe('declaring, setting and removing a trailer', function() {
     http.get({socketPath: socket}, function(response) {
       response.on('data', function() {});
       response.on('end', function() {
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'false' ]);
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'false', 'checksum', 'undefined' ]);
         done();
       });
     });
@@ -95,7 +95,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       trailer.declare(response);
-      expect(response.getHeader('Trailer')).toBe('data-truncated');
+      expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       expect( () => {trailer.removeDeclaration(response);} ).not.toThrow();
       expect(response.getHeader('Trailer')).toBe(undefined);
       response.end();
@@ -138,7 +138,7 @@ describe('declaring, setting and removing a trailer', function() {
       response.removeHeader('Transfer-Encoding');
       response.setHeader('Content-Type', 'application/json');
       trailer.declare(response);
-      expect(response.getHeader('Trailer')).toBe('data-truncated');
+      expect(response.getHeader('Trailer')).toBe('data-truncated,checksum');
       response.write('{"some": "property"}');
       trailer.setDataTruncation(response, true);
       response.end();
