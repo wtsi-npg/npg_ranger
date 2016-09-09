@@ -3,6 +3,7 @@
 
 const fs    = require('fs');
 const cline = require('commander');
+const md5   = require('js-md5');
 
 const LOGGER        = require('../lib/logsetup.js');
 const RangerRequest = require('../lib/client/rangerRequest');
@@ -81,6 +82,22 @@ req.onreadystatechange = () => {
     LOGGER.info('Request done with status ' + req.status);
     if ( req.status == 200 || req.status == 206 ) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
+
+      LOGGER.debug('Trailers: ' + JSON.stringify(req.trailers));
+      let md5Recd = md5(req.response.toString());
+      if (req.trailers && req.trailers.checksum) {
+        let md5Sent = req.trailers.checksum;
+        if (md5Recd === md5Sent) {
+          LOGGER.info('md5 checksum of received file matches md5 sent by server');
+        }
+        else {
+          LOGGER.error('md5 checksum of received file does NOT match md5 sent by server');
+          LOGGER.error('md5 of sent file:     ' + md5Sent);
+          LOGGER.error('md5 of received file: ' + md5Recd);
+        }
+      } else {
+        LOGGER.info('md5 of received file: ' + md5Recd);
+      }
       if ( output ) {
         LOGGER.debug('Will write to ' + output);
         fs.open(output, 'w', (err, fd) => {
