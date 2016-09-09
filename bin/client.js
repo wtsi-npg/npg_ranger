@@ -83,7 +83,12 @@ req.onreadystatechange = () => {
     if ( req.status == 200 || req.status == 206 ) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
 
-      LOGGER.debug('Trailers: ' + JSON.stringify(req.trailers));
+      if (req.trailers) {
+        LOGGER.debug('Trailers: ' + JSON.stringify(req.trailers));
+        if (req.trailers['data-truncated'] === 'true') {
+          LOGGER.error('Warning: server marked received file as being truncated.');
+        }
+      }
       let md5Recd = md5(req.response.toString());
       if (req.trailers && req.trailers.checksum) {
         let md5Sent = req.trailers.checksum;
