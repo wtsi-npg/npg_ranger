@@ -2,8 +2,8 @@
 "use strict";
 
 const fs    = require('fs');
+const crypto = require('crypto');
 const cline = require('commander');
-const md5   = require('js-md5');
 
 const LOGGER        = require('../lib/logsetup.js');
 const RangerRequest = require('../lib/client/rangerRequest');
@@ -89,13 +89,12 @@ req.onreadystatechange = () => {
           LOGGER.error('Warning: server marked received file as being truncated.');
         }
       }
-      let md5Recd = md5(req.response.toString());
+      let md5Recd = crypto.createHash('md5').update(req.response.toString()).digest('hex');
       if (req.trailers && req.trailers.checksum) {
         let md5Sent = req.trailers.checksum;
         if (md5Recd === md5Sent) {
           LOGGER.info('md5 checksum of received file matches md5 sent by server');
-        }
-        else {
+        } else {
           LOGGER.error('md5 checksum of received file does NOT match md5 sent by server');
           LOGGER.error('md5 of sent file:     ' + md5Sent);
           LOGGER.error('md5 of received file: ' + md5Recd);
