@@ -2,6 +2,7 @@
 "use strict";
 
 const fs    = require('fs');
+const crypto = require('crypto');
 const cline = require('commander');
 
 const LOGGER        = require('../lib/logsetup.js');
@@ -81,6 +82,26 @@ req.onreadystatechange = () => {
     LOGGER.info('Request done with status ' + req.status);
     if ( req.status == 200 || req.status == 206 ) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
+
+      if (req.trailers) {
+        LOGGER.debug('Trailers: ' + JSON.stringify(req.trailers));
+        if (req.trailers['data-truncated'] === 'true') {
+          LOGGER.error('Warning: server marked received file as being truncated.');
+        }
+      }
+      let md5Recd = crypto.createHash('md5').update(req.response.toString()).digest('hex');
+      if (req.trailers && req.trailers.checksum) {
+        let md5Sent = req.trailers.checksum;
+        if (md5Recd === md5Sent) {
+          LOGGER.info('md5 checksum of received file matches md5 sent by server');
+        } else {
+          LOGGER.error('md5 checksum of received file does NOT match md5 sent by server');
+          LOGGER.error('md5 of sent file:     ' + md5Sent);
+          LOGGER.error('md5 of received file: ' + md5Recd);
+        }
+      } else {
+        LOGGER.info('md5 of received file: ' + md5Recd);
+      }
       if ( output ) {
         LOGGER.debug('Will write to ' + output);
         fs.open(output, 'w', (err, fd) => {
