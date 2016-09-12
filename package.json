@@ -49,7 +49,7 @@
   "main": "./lib/main.js",
   "dependencies": {
     "winston":     "2.2.0",
-    "moment" :     "2.14.1",
+    "moment" :     "2.15.0",
     "fs-extra":    "^0.30.0",
     "mongodb":     "2.2.9",
     "node-getopt": "^0.2.3",
