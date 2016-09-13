@@ -1,6 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
   - kill all processes after -g seconds after client disconnection
+  - upgrade moment from 2.14.1 to 2.15.0
+  - upgrade mongodb from 2.2.8 to 2.2.9
+  - add config-chain 1.1.10
+  - add new module to handle config options
 
 release 0.3.0
   - publish as npm package
@@ -15,8 +19,6 @@ release 0.3.0
   - upgrading grunt-jscs to 3.0.1 from 3.0.0
   - new client code to comply with GA4GH API
   - client code fit to use with browserify
-  - add config-chain 1.1.10
-  - add new module to handle config options
 
 release 0.2.1
   - compliance with the GA4GH API: use upper case for format

@@ -55,6 +55,10 @@ Or by passing the parameter when starting the server.
  #providing url of mongo server
  bin/server.js -m 'mongodb://<url>:<port>/imetacache'
 
+ #providing path to unix socket
+ bin/server.js -m 'mongodb:///tmp/mongodb-27017.sock/imetacache'
+
+
 Other options
 -------------
 
