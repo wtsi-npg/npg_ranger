@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade moment from 2.14.1 to 2.15.0
+  - upgrade mongodb from 2.2.8 to 2.2.9
   - add config-chain 1.1.10
   - add new module to handle config options
 
