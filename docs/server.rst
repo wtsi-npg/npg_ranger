@@ -17,7 +17,7 @@ Running
 Parameters
 ----------
 
-Paramters can be used to configure the server. You can use -h to list
+Parameters can be used to configure the server. You can use -h to list
 supported parameters.
 
 ::
@@ -79,6 +79,9 @@ Installed from source
  #on a custom port and skip authentication
  bin/server.js -p PORT -s
 
+ #changing time to wait before killing child processes
+ bin/server.js -g SECONDS
+
 Installed with npm
 
 If installed locally
@@ -97,6 +100,9 @@ If installed locally
  #on a custom port and skip authentication
  ./node_modules/.bin/npg_ranger_server -p PORT -s
 
+ #changing time to wait before killing child processes
+ ./node_modules/.bin/npg_ranger_server.js -g SECONDS
+
 If installed globally
 
 ::
@@ -112,6 +118,9 @@ If installed globally
 
  #on a custom port and skip authentication
  npg_ranger_server.js -p PORT -s
+
+ #changing time to wait before killing child processes
+ npg_ranger_server.js -g SECONDS
 
 
 
