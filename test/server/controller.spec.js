@@ -458,7 +458,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-5`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-4`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
@@ -476,7 +476,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
@@ -495,7 +495,7 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toBe(200);
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
+          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
           expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
           done();
         });
@@ -590,7 +590,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         expect(response.statusMessage).toEqual(
-          'Range end should be bigger that start');
+          'Range end should be bigger than start');
         done();
       });
     });
