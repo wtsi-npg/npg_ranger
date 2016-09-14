@@ -6,66 +6,16 @@ const fs      = require('fs-extra');
 const http    = require('http');
 const assert  = require('assert');
 const util    = require('util');
-const cluster = require('cluster');
-const MongoClient = require('mongodb').MongoClient;
-const LOGGER      = require('../lib/logsetup.js');
+const EventEmitter = require('events');
+const MongoClient  = require('mongodb').MongoClient;
+const LOGGER       = require('../lib/logsetup.js');
 
 const config = require('../lib/config.js');
 
-if ( require.main === module ) {
-  // Call to config.provide() must occur here before requiring controller
-  // so that options object is built before it is provided to the
-  // other modules.
-  const options = config.provide(config.fromCommandLine);
-
-  const RangerController = require('../lib/server/controller');
-
-  const numWorkers = options.get('numworkers');
-
-  if ( options.get('debug') ) {
-    LOGGER.level = 'debug';
-  }
-
-  /*
-   * Main server script. Create the server object, establish database,
-   * connection, setup server callbacks, start listening for incoming
-   * requests.
-   *
-   * Providing config settings:
-   *  Settings are provided from 3 locations:
-   *  1. Command line - run with -h to see options.
-   *  2. Config json file can be read if it is provided on command line
-   *      by running with -c PATH or --configfile=PATH
-   *  3. There are some defaults, which can be found in lib/config.js
-   */
-
-  assert(process.env.USER, 'User environment variable is not defined');
-  if ( cluster.isMaster ) {
-    LOGGER.info(config.logOpts());
-    for (let i = 0; i < numWorkers; i++) {
-      cluster.fork();
-    }
-    let consec = 0;
-    cluster.on('exit', (worker, code, signal) => {
-      LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
-      let waitingConsec = options.get('clustertimeout');
-      let maxConsec = options.get('clustermaxdeaths');
-      LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
-      if ( consec >= maxConsec ) {
-        LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
-        process.exit(1);
-      }
-      consec += 1;
-      cluster.fork();
-      setTimeout( () => {
-        consec -= 1;
-      }, waitingConsec * 1000 );
-    });
-  } else {
-    if ( cluster.isWorker ) {
-      LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
-    }
+class RangerBroker extends EventEmitter {
+  startServer( options ) {
     const server = http.createServer();
+    let broker = this;
 
     // Exit gracefully on a signal to quit
     [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
@@ -97,6 +47,7 @@ if ( require.main === module ) {
       // Close database connection on server closing.
       server.on('close', () => {
         LOGGER.info("\nServer closing");
+        broker.emit('workerClose');
         dbClose(db);
       });
 
@@ -124,9 +75,9 @@ if ( require.main === module ) {
       // Set up a callback for requests.
       server.on('request', (request, response) => {
         LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
-        if (cluster.isWorker) {
+        /*if (cluster.isWorker) {
           LOGGER.debug("WORKER: served by " + cluster.worker.id);
-        }
+        }*/
 
         // Ensure the processes initiated by request stops if the client disconnects.
         // Closing the response forces an error in the pipeline and allows for a
@@ -135,6 +86,8 @@ if ( require.main === module ) {
           LOGGER.info('CLIENT DISCONNECTED');
           response.end();
         });
+
+        const RangerController = require('../lib/server/controller');
 
         // Create an instance of an application controller and let it
         // handle the request.
@@ -152,7 +105,100 @@ if ( require.main === module ) {
       createTempDataDir(options.get('tempdir'));
       server.listen(options.get('port'), () => {
         LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
+        broker.emit('serverStarted', server);
       });
     });
   }
+}
+
+class FlatBroker extends RangerBroker {
+  start( options ) {
+    this.startServer(options);
+  }
+}
+
+class ClusteredBroker extends RangerBroker {
+  start( options ) {
+    const cluster = require('cluster');
+    if ( cluster.isMaster ) {
+      LOGGER.info(config.logOpts());
+      for (let i = 0; i < options.get('numworkers'); i++) {
+        this.emit('workerForked');
+        cluster.fork();
+      }
+      let consec = 0;
+      cluster.on('exit', (worker, code, signal) => {
+        LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
+        let waitingConsec = options.get('clustertimeout');
+        let maxConsec = options.get('clustermaxdeaths');
+        LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
+        if ( consec >= maxConsec ) {
+          LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
+          process.exit(1);
+        }
+        consec += 1;
+        cluster.fork();
+        this.emit('workerForked');
+        setTimeout( () => {
+          consec -= 1;
+        }, waitingConsec * 1000 );
+      });
+      this.emit('clusterStarted', cluster);
+    } else {
+      if ( cluster.isWorker ) {
+        this.emit('workerStarted', cluster.worker);
+        LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
+        this.startServer(options);
+      }
+    }
+  }
+}
+
+class BrokerFactory extends EventEmitter {
+  buildBroker(numWorkers) {
+    // assert( typeof numWorkers === 'number', 'Number of workers must be a number' );
+    let broker;
+    if ( numWorkers === 0 ) {
+      broker = new FlatBroker();
+    } else {
+      broker = new ClusteredBroker();
+    }
+    this.emit('brokerBuilt', broker);
+    return broker;
+  }
+}
+
+if ( require.main === module ) {
+  // Call to config.provide() must occur here before requiring controller
+  // so that options object is built before it is provided to the
+  // other modules.
+  const options = config.provide(config.fromCommandLine);
+
+  const numWorkers = options.get('numworkers');
+
+  if ( options.get('debug') ) {
+    LOGGER.level = 'debug';
+  }
+
+  /*
+   * Main server script. Create the server object, establish database,
+   * connection, setup server callbacks, start listening for incoming
+   * requests.
+   *
+   * Providing config settings:
+   *  Settings are provided from 3 locations:
+   *  1. Command line - run with -h to see options.
+   *  2. Config json file can be read if it is provided on command line
+   *      by running with -c PATH or --configfile=PATH
+   *  3. There are some defaults, which can be found in lib/config.js
+   */
+  assert(process.env.USER, 'User environment variable is not defined');
+  let bf = new BrokerFactory();
+  let broker = bf.buildBroker(numWorkers);
+
+  broker.on('clusterStarted', () => { console.log('cluster started'); });
+  broker.on('workerStarted', () => { console.log('worker started'); });
+  broker.on('workerForked', () => { console.log('worker forked'); });
+
+  broker.start(options);
 }
