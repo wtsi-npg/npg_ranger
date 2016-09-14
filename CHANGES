@@ -5,6 +5,7 @@ LIST OF CHANGES for npg_ranger project
   - upgrade mongodb from 2.2.8 to 2.2.9
   - add config-chain 1.1.10
   - add new module to handle config options
+  - fix error in interpreting the end range value in the user query
 
 release 0.3.0
   - publish as npm package
