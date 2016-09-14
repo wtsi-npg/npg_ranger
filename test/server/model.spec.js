@@ -58,6 +58,13 @@ describe('Class methods', function() {
     expect(RangerModel.hasReference({reference: ''})).toBe(false);
     expect(RangerModel.hasReference({reference: '/path/to/ref.fa'})).toBe(true);
   });
+  it('provide alternate reference repository', function() {
+    config.provide( () => {return {references: '/test/reference/root'};});
+    let query = {reference: 'references/example/path/fasta.fa'};
+    expect(RangerModel.fixReference(query)).toEqual('/test/reference/root/references/example/path/fasta.fa');
+
+    config.provide( () => {return {};} );
+  });
 });
 
 describe('Creating object instance', function() {
