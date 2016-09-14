@@ -133,12 +133,28 @@ describe('set error response', function() {
       expect(c.db).toEqual({one: "two"});
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
+      expect(c.multiref).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
+      expect(c.multiref).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(true);
+      expect(c.multiref).toBe(false);
+
+      // Set multiref mode
+      config.provide( () => { return {tempdir: tmpDir, multiref: true}; });
+      expect( () => {c = new RangerController(request, response, {}, '', false);} ).not.toThrow();
+      expect(c.skipAuth).toBe(false);
+      expect(c.multiref).toBe(true);
+      expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
+      expect(c.skipAuth).toBe(true);
+      expect(c.multiref).toBe(true);
+
+      // unset multiref
+      config.provide(dummy);
+
       response.end();
       done();
     });
@@ -259,7 +275,8 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a sample url', function(done) {
+
+  it('Invalid input error for a sample url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"}, null, true);
@@ -267,10 +284,10 @@ describe('Handling requests - error responses', function() {
       expect( () => {c.handleRequest('localhost');} ).not.toThrow();
     });
 
-    http.get({socketPath: socket, path: '/sample'}, function(response) {
+    http.get({socketPath: socket, path: '/sample'}, ( response ) => {
       var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
+      response.on('data', ( d ) => { body += d;});
+      response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: sample accession number should be given';
@@ -283,7 +300,7 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a file url', function(done) {
+  it('Invalid input error for a file url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"}, null, true);
@@ -302,6 +319,42 @@ describe('Handling requests - error responses', function() {
         expect(JSON.parse(body)).toEqual(
           {error: {type:    "InvalidInput",
                    message: m}});
+        done();
+      });
+    });
+  });
+
+  it('Invalid input error for a vcf file when multiref set', (done) => {
+
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      // Set multiref mode
+      config.provide(() => { return {tempdir: tmpDir, multiref: true}; });
+
+      let c = new RangerController(request, response, {one: "two"}, null, true);
+      expect(c.skipAuth).toBe(true);
+      expect(c.multiref).toBe(true);
+      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+
+      // unset multiref
+      config.provide(dummy);
+    });
+
+    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, (response) => {
+      var body = '';
+      response.on('data', (d) => { body += d;});
+      response.on('end', () => {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        let m = 'Invalid request: cannot produce VCF files while multiref set on server';
+        expect(response.statusMessage).toEqual(m);
+        expect(JSON.parse(body)).toEqual(
+          {
+            error: {
+              type: "InvalidInput",
+              message: m
+            }
+          });
         done();
       });
     });
@@ -483,7 +536,7 @@ describe('Redirection in json response', function() {
     });
   });
 
-  ['bam', 'BAM'].forEach( ( value ) => {
+  ['bam', 'BAM', 'sam', 'SAM', 'cram', 'CRAM', 'vcf', 'VCF'].forEach( ( value ) => {
     it('successful redirection, query with all possible params', function(done) {
       http.get(
         { socketPath: socket,
@@ -495,8 +548,9 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toBe(200);
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
-          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
+          let formatUpperCase = value.toUpperCase();
+          let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-400`;
+          expect(JSON.parse(body)).toEqual({format: `${formatUpperCase}`, urls: [{'url': url}]});
           done();
         });
       });
@@ -606,7 +660,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(409);
         expect(response.statusMessage).toEqual(
-          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM");
+          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
       });
     });
@@ -638,6 +692,7 @@ describe('content type', function() {
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
       expect(c.contentType('SAM')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('VCF')).toBe('text/vnd.ga4gh.vcf');
       expect(c.contentType('BAM')).toBe('application/vnd.ga4gh.bam');
       expect(c.contentType('CRAM')).toBe('application/vnd.ga4gh.cram');
       done();

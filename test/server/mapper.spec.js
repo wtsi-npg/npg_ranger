@@ -106,7 +106,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({accession: "XYZ120923"}, 'localhost');
@@ -119,7 +120,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_1#63.bam', accessGroup: '2136'}]);
+          [{file: 'irods:/seq/10000/10000_1#63.bam', accessGroup: '2136',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_1#63.bam"}, 'localhost');
@@ -132,7 +134,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'localhost');
@@ -156,11 +159,13 @@ describe('Data info retrieval', function() {
       assert.equal(err, null);
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
-        expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+        expect(data).toEqual([{
+          file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+          reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+        }]);
         done();
       });
-	    dm.getFileInfo({name: "10000_2#22.bam", directory: "/seq/10000"}, 'localhost');
+      dm.getFileInfo({name: "10000_2#22.bam", directory: "/seq/10000"}, 'localhost');
     });
   });
 
@@ -170,7 +175,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{ file: '/irods-seq-i10-bc/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{ file: '/irods-seq-i10-bc/seq/10000/10000_2#22.bam', accessGroup: '2574',
+             reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'irods-seq-i10');
@@ -182,11 +188,20 @@ describe('Data info retrieval', function() {
       assert.equal(err, null);
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
-       let d = [
-          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: 'irods:/seq/10000/10000_7#92.bam', accessGroup: '0'},
-		];
+        let d = [
+          {
+            file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+          },
+          {
+            file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: '',
+            reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'
+          },
+          {
+            file: 'irods:/seq/10000/10000_7#92.bam', accessGroup: '0',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+          },
+        ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
         done();
@@ -201,11 +216,11 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         let d = [
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_7#92.bam', accessGroup: '0'},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_8#97.bam', accessGroup: '2574'}
-		];
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_4#43.bam', accessGroup: '2586', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_5#74.bam', accessGroup: '', reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_7#92.bam', accessGroup: '0', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_8#97.bam', accessGroup: '2574', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}
+        ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
         done();
@@ -220,10 +235,13 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         let d = [
-          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: '/irods-seq-i10-bc/seq/10000/10000_7#92.bam', accessGroup: '0'},
-		];
+          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586',
+           reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: '',
+           reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'},
+          {file: '/irods-seq-i10-bc/seq/10000/10000_7#92.bam', accessGroup: '0',
+           reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+        ];
         d.sort(compareFiles);
         data.sort(compareFiles);
         expect(data).toEqual(d);

@@ -123,7 +123,6 @@ If installed globally
  npg_ranger_server.js -g SECONDS
 
 
-
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
 

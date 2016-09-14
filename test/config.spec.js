@@ -92,11 +92,11 @@ describe('Creating temp file path', function() {
   it('Without prefix', function() {
     let temppath = config.tempFilePath();
     expect( temppath.startsWith(os.tmpdir()) ).toBe(true);
-    expect( temppath ).toMatch(/\/\d{8}_\d{7}$/);
+    expect( temppath ).toMatch(/\/\d{8}_\d{8}$/);
   });
   it('With prefix', function() {
     let temppath = config.tempFilePath('npg_ranger_config_test_');
     expect( temppath.startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test_')) ).toBe(true);
-    expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{7}$/);
+    expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{8}$/);
   });
 });
