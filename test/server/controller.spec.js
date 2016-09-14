@@ -133,26 +133,26 @@ describe('set error response', function() {
       expect(c.db).toEqual({one: "two"});
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
-      expect(c.unsafe).toBe(false);
+      expect(c.multiref).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(false);
-      expect(c.unsafe).toBe(false);
+      expect(c.multiref).toBe(false);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.tmpDir).toBe(tmpDir);
       expect(c.skipAuth).toBe(true);
-      expect(c.unsafe).toBe(false);
+      expect(c.multiref).toBe(false);
 
-      // Set unsafe mode
-      config.provide( () => { return {tempdir: tmpDir, unsafe: true}; });
+      // Set multiref mode
+      config.provide( () => { return {tempdir: tmpDir, multiref: true}; });
       expect( () => {c = new RangerController(request, response, {}, '', false);} ).not.toThrow();
       expect(c.skipAuth).toBe(false);
-      expect(c.unsafe).toBe(true);
+      expect(c.multiref).toBe(true);
       expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
       expect(c.skipAuth).toBe(true);
-      expect(c.unsafe).toBe(true);
+      expect(c.multiref).toBe(true);
 
-      // Reset safe mode
+      // unset multiref
       config.provide(dummy);
 
       response.end();
@@ -324,19 +324,19 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a vcf file when safe mode disabled', (done) => {
+  it('Invalid input error for a vcf file when multiref set', (done) => {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      // Set unsafe mode
-      config.provide(() => { return {tempdir: tmpDir, unsafe: true}; });
+      // Set multiref mode
+      config.provide(() => { return {tempdir: tmpDir, multiref: true}; });
 
       let c = new RangerController(request, response, {one: "two"}, null, true);
       expect(c.skipAuth).toBe(true);
-      expect(c.unsafe).toBe(true);
+      expect(c.multiref).toBe(true);
       expect( () => {c.handleRequest('localhost');} ).not.toThrow();
 
-      // Reset safe mode
+      // unset multiref
       config.provide(dummy);
     });
 
@@ -346,7 +346,7 @@ describe('Handling requests - error responses', function() {
       response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
-        let m = 'Invalid request: cannot produce VCF files while server is not in safe mode';
+        let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual(
           {
