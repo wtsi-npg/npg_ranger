@@ -19,6 +19,7 @@ const RangerController = require('../lib/server/controller');
 if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
+
 LOGGER.info(config.logOpts());
 
 /*

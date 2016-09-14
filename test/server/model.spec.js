@@ -27,18 +27,19 @@ describe('Class methods', function() {
     expect(RangerModel.defaultFormat()).toBe('BAM');
   });
   it('supported formats', function() {
-    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM']);
+    expect(RangerModel.supportedFormats()).toEqual(['BAM', 'CRAM', 'SAM', 'VCF']);
   });
   it('is the format supported?', function() {
     expect( () => {RangerModel.supportsFormat();} )
       .toThrowError(assert.AssertionError,
       'Non-empty format string should be given');
     expect(RangerModel.supportsFormat('CRAM')).toBe(true);
+    expect(RangerModel.supportsFormat('VCF')).toBe(true);
     expect(RangerModel.supportsFormat('bed')).toBe(false);
     expect(RangerModel.supportsFormat('BED')).toBe(false);
   });
   it('textual formats', function() {
-    expect(RangerModel.textualFormats()).toEqual(['SAM']);
+    expect(RangerModel.textualFormats()).toEqual(['SAM', 'VCF']);
   });
   it('is the format textual?', function() {
     expect( () => {RangerModel.isTextualFormat();} )
@@ -46,7 +47,23 @@ describe('Class methods', function() {
       'Non-empty format string should be given');
     expect(RangerModel.isTextualFormat('CRAM')).toBe(false);
     expect(RangerModel.isTextualFormat('BED')).toBe(false);
+    expect(RangerModel.isTextualFormat('VCF')).toBe(true);
     expect(RangerModel.isTextualFormat('SAM')).toBe(true);
+  });
+  it('does the query have a reference?', () => {
+    expect( () => {RangerModel.hasReference();} )
+      .toThrowError(assert.AssertionError,
+      'Query must be given');
+    expect(RangerModel.hasReference({})).toBe(false);
+    expect(RangerModel.hasReference({reference: ''})).toBe(false);
+    expect(RangerModel.hasReference({reference: '/path/to/ref.fa'})).toBe(true);
+  });
+  it('provide alternate reference repository', function() {
+    config.provide( () => {return {references: '/test/reference/root'};});
+    let query = {reference: 'references/example/path/fasta.fa'};
+    expect(RangerModel.fixReference(query)).toEqual('/test/reference/root/references/example/path/fasta.fa');
+
+    config.provide( () => {return {};} );
   });
 });
 
