@@ -36,14 +36,15 @@ LOGGER.info(config.logOpts());
  */
 
 assert(process.env.USER, 'User environment variable is not defined');
-const server = http.createServer();
+require('http-shutdown').extend();
+const server = http.createServer().withShutdown();
 
 // Exit gracefully on a signal to quit
 process.on('SIGTERM', () => {
-  server.close( () => {process.exit(0);} );
+  server.shutdown( () => {process.exit(0);} );
 });
 process.on('SIGINT', () => {
-  server.close( () => {process.exit(0);} );
+  server.shutdown( () => {process.exit(0);} );
 });
 
 // Connect to the database and, if successful, define
