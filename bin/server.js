@@ -12,9 +12,18 @@ const LOGGER       = require('../lib/logsetup.js');
 
 const config = require('../lib/config.js');
 
+const BROKER_BUILT    = 'brokerBuilt';
+const CLUSTER_STARTED = 'clusterStarted';
+const SERVER_STARTED  = 'serverStarted';
+const SERVER_CLOSED   = 'serverClosed';
+const WORKER_STARTED  = 'workerStarted';
+const WORKER_FORKED   = 'workerForked';
+const WORKER_CLOSED   = 'workerClosed';
+
 class RangerBroker extends EventEmitter {
-  startServer( options ) {
+  startServer() {
     const server = http.createServer();
+    let options = config.provide();
     let broker = this;
 
     // Exit gracefully on a signal to quit
@@ -47,7 +56,7 @@ class RangerBroker extends EventEmitter {
       // Close database connection on server closing.
       server.on('close', () => {
         LOGGER.info("\nServer closing");
-        broker.emit('workerClose');
+        broker.emit(SERVER_CLOSED);
         dbClose(db);
       });
 
@@ -105,26 +114,27 @@ class RangerBroker extends EventEmitter {
       createTempDataDir(options.get('tempdir'));
       server.listen(options.get('port'), () => {
         LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
-        broker.emit('serverStarted', server);
+        broker.emit(SERVER_STARTED, server);
       });
     });
   }
 }
 
 class FlatBroker extends RangerBroker {
-  start( options ) {
-    this.startServer(options);
+  start() {
+    this.startServer();
   }
 }
 
 class ClusteredBroker extends RangerBroker {
-  start( options ) {
+  start() {
+    let options = config.provide();
     const cluster = require('cluster');
     if ( cluster.isMaster ) {
       LOGGER.info(config.logOpts());
       for (let i = 0; i < options.get('numworkers'); i++) {
-        this.emit('workerForked');
         cluster.fork();
+        this.emit(WORKER_FORKED);
       }
       let consec = 0;
       cluster.on('exit', (worker, code, signal) => {
@@ -138,15 +148,15 @@ class ClusteredBroker extends RangerBroker {
         }
         consec += 1;
         cluster.fork();
-        this.emit('workerForked');
+        this.emit(WORKER_FORKED);
         setTimeout( () => {
           consec -= 1;
         }, waitingConsec * 1000 );
       });
-      this.emit('clusterStarted', cluster);
+      this.emit(CLUSTER_STARTED, cluster);
     } else {
       if ( cluster.isWorker ) {
-        this.emit('workerStarted', cluster.worker);
+        this.emit(WORKER_STARTED, cluster.worker);
         LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
         this.startServer(options);
       }
@@ -156,14 +166,13 @@ class ClusteredBroker extends RangerBroker {
 
 class BrokerFactory extends EventEmitter {
   buildBroker(numWorkers) {
-    // assert( typeof numWorkers === 'number', 'Number of workers must be a number' );
     let broker;
-    if ( numWorkers === 0 ) {
+    if ( !numWorkers ) {
       broker = new FlatBroker();
     } else {
       broker = new ClusteredBroker();
     }
-    this.emit('brokerBuilt', broker);
+    this.emit(BROKER_BUILT, broker);
     return broker;
   }
 }
@@ -196,9 +205,19 @@ if ( require.main === module ) {
   let bf = new BrokerFactory();
   let broker = bf.buildBroker(numWorkers);
 
-  broker.on('clusterStarted', () => { console.log('cluster started'); });
-  broker.on('workerStarted', () => { console.log('worker started'); });
-  broker.on('workerForked', () => { console.log('worker forked'); });
+  broker.on(CLUSTER_STARTED, () => { console.log('cluster started'); });
+  broker.on(WORKER_STARTED, () => { console.log('worker started'); });
+  broker.on(WORKER_FORKED, () => { console.log('worker forked'); });
 
-  broker.start(options);
+  broker.start();
 }
+
+module.exports = {
+  BrokerFactory:   BrokerFactory,
+  BROKER_BUILT:    BROKER_BUILT,
+  CLUSTER_STARTED: CLUSTER_STARTED,
+  WORKER_STARTED:  WORKER_STARTED,
+  WORKER_FORKED:   WORKER_FORKED,
+  WORKER_CLOSED:   WORKER_CLOSED,
+  SERVER_STARTED:  SERVER_STARTED
+};
