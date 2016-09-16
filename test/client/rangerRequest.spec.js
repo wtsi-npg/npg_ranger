@@ -1,4 +1,4 @@
-/* globals describe, expect, it, afterEach */
+/* globals describe, expect, it, afterEach, jasmine */
 
 "use strict";
 
@@ -40,6 +40,9 @@ describe('Testing RangerRequest requests', () => {
   it('Client can generate a request', ( done ) => {
     var p1 = new Promise( ( resolve ) => {
       srv = http.createServer(function(request, response) {
+        // construct RangerRequest with acceptTrailers = false, so TE: trailers header
+        // should not exist
+        expect(request.headers).not.toEqual(jasmine.objectContaining({te: 'trailers'}));
         response.writeHead(200, {"Content-Type": "text/html"});
         response.write('<!DOCTYPE "html">');
         response.write("<html>");
@@ -63,6 +66,50 @@ describe('Testing RangerRequest requests', () => {
 
       let url = 'http://127.0.0.1:' + srv.address().port + '/someData';
       let req = new RangerRequest();
+      req.open('GET', url);
+
+      req.onreadystatechange = () => {
+        if ( req.readyState === 4 ) {
+          expect(req.readyState).toBe(4, 'Reached a readystate DONE');
+          expect(req.statusMessage).toBe('OK', 'Correct status message');
+          expect(req.status).toBe(200, 'Got a 200 request status');
+          done();
+        }
+      };
+
+      req.send('');
+    });
+  }, 3000);
+
+  it('Client can request trailers', (done) => {
+    let p1 = new Promise( ( resolve ) => {
+      srv = http.createServer(function(request, response) {
+        // construct RangerRequest with acceptTrailers = true, so TE: trailers header
+        // should exist
+        expect(request.headers).toEqual(jasmine.objectContaining({te: 'trailers'}));
+        response.writeHead(200, {"Content-Type": "text/html"});
+        response.write('<!DOCTYPE "html">');
+        response.write("<html>");
+        response.write("<head>");
+        response.write("<title>Test result</title>");
+        response.write("</head>");
+        response.write("<body>");
+        response.write("Test text is in the page!");
+        response.write("</body>");
+        response.write("</html>");
+        response.end();
+      });
+
+      srv.listen(0, function() {
+        resolve(srv);
+      });
+    });
+
+    p1.then( ( srv ) => {
+      expect(srv.address.port).not.toBe(0);
+
+      let url = 'http://127.0.0.1:' + srv.address().port + '/someData';
+      let req = new RangerRequest(true);
       req.open('GET', url);
 
       req.onreadystatechange = () => {
