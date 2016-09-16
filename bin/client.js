@@ -80,7 +80,7 @@ req.onreadystatechange = () => {
   LOGGER.debug('readystatechange: ' + req.readyState);
   if ( req.readyState === 4 ) {
     LOGGER.info('Request done with status ' + req.status);
-    if ( req.status == 200 || req.status == 206 ) {
+    if (( req.status == 200 || req.status == 206 ) && req.response) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
       if ( output ) {
         LOGGER.debug('Will write to ' + output);
