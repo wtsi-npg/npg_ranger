@@ -165,9 +165,11 @@ class ClusteredBroker extends RangerBroker {
 }
 
 class BrokerFactory extends EventEmitter {
-  buildBroker(numWorkers) {
+  buildBroker() {
+    let options = config.provide();
+    let numworkers = options.get('numworkers');
     let broker;
-    if ( !numWorkers ) {
+    if ( !numworkers ) {
       broker = new FlatBroker();
     } else {
       broker = new ClusteredBroker();
