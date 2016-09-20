@@ -7,6 +7,7 @@ const cluster = require('cluster');
 const EventEmitter = require('events');
 const config  = require('../../lib/config.js');
 const Server  = require('../../bin/server.js');
+const child_process = require('child_process');
 
 describe('Broker creation', () => {
   let brokerBuildCall;
@@ -119,7 +120,13 @@ describe('Other test', () => {
   };
   let workers;
 
-  var FakeWorker = class FakeWorker extends EventEmitter {
+  var FakeFork = class FakeFork extends EventEmitter {
+    constructor() {
+      super();
+    }
+  };
+
+  /*var FakeWorker = class FakeWorker extends EventEmitter {
     constructor(id) {
       super();
       this.id = id;
@@ -147,7 +154,7 @@ describe('Other test', () => {
     isDead() {
       return this.dead;
     }
-  };
+  };*/
 
   beforeAll(function() {
     fse.ensureDirSync(tmpDir);
@@ -166,23 +173,10 @@ describe('Other test', () => {
     workers = {};
     cluster.workers = {};
 
-    spyOn(cluster, 'fork').and.callFake(function() {
-      cluster.setupMaster();
-      let fakeWorker = new FakeWorker(ids++);
-      console.log('Fork ' + ids);
-
-      workers[fakeWorker.id] = fakeWorker;
-      cluster.workers[fakeWorker.id] = fakeWorker;
-
-      fakeWorker.on('message', (message, handle) =>
-        cluster.emit('message', message, handle)
-      );
-
-      // let emitForkNT = function(worker) {
-      cluster.emit('fork', fakeWorker);
-      // };
-      // process.nextTick(emitForkNT, fakeWorker);
-      return fakeWorker;
+    spyOn(child_process, 'fork').and.callFake(function() {
+      console.log('child_process Fork');
+      ids++;
+      return new FakeFork();
     });
 
     broker.start();
