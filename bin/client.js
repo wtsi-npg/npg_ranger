@@ -45,6 +45,7 @@ cline
   .description('Command line client for GA4GH data streaming')
   .arguments('<url> [output]')
   .option('--debug', 'Show debug output')
+  .option('--accept-trailers', 'Request trailers from server')
   .parse(process.argv);
 
 cline.on('--help', () => {
@@ -70,7 +71,7 @@ if ( !cline.debug ) {
 
 var url    = cline.args[0];
 var output = cline.args.length == 2 ? cline.args[1] : undefined;
-var req    = new RangerRequest();
+var req    = new RangerRequest( cline.acceptTrailers );
 
 LOGGER.debug('Preparing call');
 req.open('GET', url);
@@ -79,7 +80,7 @@ req.onreadystatechange = () => {
   LOGGER.debug('readystatechange: ' + req.readyState);
   if ( req.readyState === 4 ) {
     LOGGER.info('Request done with status ' + req.status);
-    if ( req.status == 200 || req.status == 206 ) {
+    if (( req.status == 200 || req.status == 206 ) && req.response) {
       LOGGER.info('Got ' + req.response.byteLength + ' bytes');
       if ( output ) {
         LOGGER.debug('Will write to ' + output);

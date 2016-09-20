@@ -108,6 +108,7 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
 
     // Create an instance of an application controller and let it
     // handle the request.
+    LOGGER.debug('request headers: ' + JSON.stringify(request.headers));
     let controller = new RangerController(request, response, db);
     controller.handleRequest(options.get('hostname'));
   });

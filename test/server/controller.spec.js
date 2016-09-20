@@ -704,3 +704,43 @@ describe('content type', function() {
     });
   });
 });
+
+describe('trailers in response', function() {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+
+  beforeAll(function() {
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+    });
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  it('no trailers without TE header', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true);
+      expect(c.sendTrailer).toBe(undefined);
+      done();
+    });
+
+    http.get({socketPath:socket, path: '/file'}, function() {});
+  });
+
+  it('trailers with TE header', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"}, null, true);
+      expect(c.sendTrailer).toBe(true);
+      done();
+    });
+
+    http.get({socketPath:socket, path: '/file', headers: {TE: 'trailers'}}, function() {});
+  });
+});
