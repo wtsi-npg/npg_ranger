@@ -22,14 +22,14 @@ const WORKER_CLOSED   = 'workerClosed';
 
 class RangerBroker extends EventEmitter {
   startServer() {
-    const server = http.createServer();
+    const server = http.createServer().withShutdown();
     let options = config.provide();
     let broker = this;
 
     // Exit gracefully on a signal to quit
     [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
       process.on( sig, () => {
-        server.close( () => {
+        server.shutdown( () => {
           process.exit(0);
         });
       });
@@ -204,6 +204,7 @@ if ( require.main === module ) {
    *  3. There are some defaults, which can be found in lib/config.js
    */
   assert(process.env.USER, 'User environment variable is not defined');
+  require('http-shutdown').extend();
   let bf = new BrokerFactory();
   let broker = bf.buildBroker(numWorkers);
 
