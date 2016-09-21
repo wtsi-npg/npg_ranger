@@ -1,13 +1,12 @@
-/* globals describe, it, expect, beforeAll, afterAll, beforeEach, jasmine, spyOn */
+/* globals describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jasmine, spyOn */
 
 "use strict";
 
 const fse     = require('fs-extra');
 const cluster = require('cluster');
-const EventEmitter = require('events');
+// const EventEmitter = require('events');
 const config  = require('../../lib/config.js');
 const Server  = require('../../bin/server.js');
-const child_process = require('child_process');
 
 describe('Broker creation', () => {
   let brokerBuildCall;
@@ -108,84 +107,22 @@ describe('Cluster creation', () => {
   });
 });
 
-describe('Other test', () => {
-  let tmpDir = config.tempFilePath('npg_ranger_server_test_');
-  let numworkers = 3;
-  let oldFork;
-  let testConfBuilder = () => {
-    return {
-      tempdir: tmpDir,
-      numworkers: numworkers
-    };
-  };
-  let workers;
+describe('Cluster limit consecutive forks', () => {
+  // var sys = require('sys');
+  var exec = require('child_process').exec;
+  let child;
 
-  var FakeFork = class FakeFork extends EventEmitter {
-    constructor() {
-      super();
+  afterEach(function() {
+    if ( child.connected ) {
+      child.disconnect();
     }
-  };
-
-  /*var FakeWorker = class FakeWorker extends EventEmitter {
-    constructor(id) {
-      super();
-      this.id = id;
-      this.dead = false;
-    }
-
-    justDie(exitCode, signalCode) {
-      delete workers['' + this.id];
-      this.suicide = true;
-      this.state = 'dead';
-      this.emit('exit', exitCode, signalCode);
-      cluster.emit('exit', this, exitCode, signalCode);
-    }
-
-    disconnect() {
-      this.dead = true;
-      this.suicide = true;
-    }
-
-    kill() {
-      this.dead = true;
-      this.suicide = false;
-    }
-
-    isDead() {
-      return this.dead;
-    }
-  };*/
-
-  beforeAll(function() {
-    fse.ensureDirSync(tmpDir);
-    config.provide(testConfBuilder);
-    oldFork = cluster.fork;
   });
 
-  afterAll(function() {
-    fse.removeSync(tmpDir);
-    cluster.fork = oldFork;
-  });
-
-  beforeEach( () => {
-    let broker = new Server.BrokerFactory().buildBroker();
-    let ids = 0;
-    workers = {};
-    cluster.workers = {};
-
-    spyOn(child_process, 'fork').and.callFake(function() {
-      console.log('child_process Fork');
-      ids++;
-      return new FakeFork();
+  it('exits with correct code if max number of consec forks reached', ( done ) => {
+    child = exec('bin/server.js -s -k 5 -l 1 -p 33000 -n4 -m mongodb://loclhost:27017/imc', (error) => {
+      expect(error).not.toBe(null);
+      expect(error.code).toEqual(210);
+      done();
     });
-
-    broker.start();
-  });
-
-  it('caused fork to be called correct number ot times', ( done ) => {
-    expect(cluster.fork.calls.count()).toEqual(numworkers);
-    // workers['0'].justDie(1, null);
-    expect(cluster.fork.calls.count()).toEqual(numworkers);
-    done();
-  });
+  }, 10000);
 });

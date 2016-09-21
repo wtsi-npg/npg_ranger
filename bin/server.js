@@ -8,6 +8,7 @@ const assert  = require('assert');
 const util    = require('util');
 const EventEmitter = require('events');
 const MongoClient  = require('mongodb').MongoClient;
+require('http-shutdown').extend();
 const LOGGER       = require('../lib/logsetup.js');
 
 const config = require('../lib/config.js');
@@ -19,6 +20,9 @@ const SERVER_CLOSED   = 'serverClosed';
 const WORKER_STARTED  = 'workerStarted';
 const WORKER_FORKED   = 'workerForked';
 const WORKER_CLOSED   = 'workerClosed';
+const HIT_LIMIT_CONSEC_FORK  = 'hitLimitConsecFork';
+
+const ERROR_SERVER_LIMIT_CONSEC_FORK = 210;
 
 class RangerBroker extends EventEmitter {
   startServer() {
@@ -38,7 +42,6 @@ class RangerBroker extends EventEmitter {
     // callbacks for the server.
     var mongourl = options.get('mongourl');
     MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
-
       assert.equal(err, null, `Failed to connect to ${mongourl}: ${err}`);
       LOGGER.info(`Connected to ${mongourl}`);
 
@@ -137,21 +140,29 @@ class ClusteredBroker extends RangerBroker {
         this.emit(WORKER_FORKED);
       }
       let consec = 0;
+      let exiting = false;
       cluster.on('exit', (worker, code, signal) => {
         LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
         let waitingConsec = options.get('clustertimeout');
         let maxConsec = options.get('clustermaxdeaths');
         LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
         if ( consec >= maxConsec ) {
-          LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
-          process.exit(1);
+          if ( !exiting ) {
+            exiting = true;
+            LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
+            this.emit(HIT_LIMIT_CONSEC_FORK);
+            setTimeout( () => {
+              process.exit(ERROR_SERVER_LIMIT_CONSEC_FORK);
+            }, 3000);
+          }
+        } else {
+          consec += 1;
+          cluster.fork();
+          this.emit(WORKER_FORKED);
+          setTimeout( () => {
+            consec -= 1;
+          }, waitingConsec * 1000 );
         }
-        consec += 1;
-        cluster.fork();
-        this.emit(WORKER_FORKED);
-        setTimeout( () => {
-          consec -= 1;
-        }, waitingConsec * 1000 );
       });
       this.emit(CLUSTER_STARTED, cluster);
     } else {
@@ -185,8 +196,6 @@ if ( require.main === module ) {
   // other modules.
   const options = config.provide(config.fromCommandLine);
 
-  const numWorkers = options.get('numworkers');
-
   if ( options.get('debug') ) {
     LOGGER.level = 'debug';
   }
@@ -204,15 +213,16 @@ if ( require.main === module ) {
    *  3. There are some defaults, which can be found in lib/config.js
    */
   assert(process.env.USER, 'User environment variable is not defined');
-  require('http-shutdown').extend();
   let bf = new BrokerFactory();
-  let broker = bf.buildBroker(numWorkers);
+  let broker = bf.buildBroker();
 
   broker.on(CLUSTER_STARTED, () => { console.log('cluster started'); });
   broker.on(WORKER_STARTED, () => { console.log('worker started'); });
   broker.on(WORKER_FORKED, () => { console.log('worker forked'); });
 
-  broker.start();
+  process.nextTick(() => {
+    broker.start();
+  });
 }
 
 module.exports = {
