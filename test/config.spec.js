@@ -32,11 +32,6 @@ describe('Building options', function() {
     expect( () => {options = config.provide( () => {return {mongourl: 'newmongourl'};} );} ).not.toThrow();
     expect( options.get('mongourl') === 'newmongourl' ).toBe(true);
   });
-  it("Options listing", function() {
-    let o = config.logOpts();
-    expect(o).not.toMatch(/help=/);
-    expect(o).toMatch(/mongourl=newmongourl/);
-  });
   it('Configs can be passed from a json file', function() {
     let options;
     expect( () => {options = config.provide( () => {
@@ -103,5 +98,30 @@ describe('Creating temp file path', function() {
     let temppath = config.tempFilePath('npg_ranger_config_test_');
     expect( temppath.startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test_')) ).toBe(true);
     expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{8}$/);
+  });
+});
+
+describe('Listing config options', function() {
+  it("Options listing", function() {
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true
+                                  };} );
+    let expected = ['configfile=undefined',
+                    'debug=true',
+                    'hostname=myhost',
+                    'mongourl=mymongourl',
+                    'multiref=undefined',
+                    'port=9999',
+                    'references=undefined',
+                    'skipauth=undefined',
+                    'tempdir=/tmp/mydir',
+                    'timeout=3'];
+    let o = config.logOpts();
+    expect(o).not.toMatch(/help=/);
+    expect(o).toMatch(expected.join(', '));
   });
 });
