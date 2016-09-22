@@ -111,6 +111,7 @@ describe('Listing config options', function() {
                                    help:     true
                                   };} );
     let expected = ['configfile=undefined',
+                    'cors=undefined',
                     'debug=true',
                     'hostname=myhost',
                     'mongourl=mymongourl',
