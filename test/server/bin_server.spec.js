@@ -4,9 +4,70 @@
 
 const fse     = require('fs-extra');
 const cluster = require('cluster');
-// const EventEmitter = require('events');
+const EventEmitter = require('events');
 const config  = require('../../lib/config.js');
-const Server  = require('../../bin/server.js');
+const assert  = require('assert');
+// const RangerServer = require('../../lib/server.js');
+const BinServer    = require('../../bin/server.js');
+
+class EmptyServerFactory extends EventEmitter {
+  startServer() {
+    this.emit(BinServer.SERVER_STARTED);
+  }
+}
+
+describe('Broker creation constructor validation', () => {
+  it('constructor complained about missing serverFactory as param', () => {
+    let bf = new BinServer.BrokerFactory();
+    expect(() => { bf.buildBroker(); }).toThrowError(assert.AssertionError);
+  });
+});
+
+describe('Decides which kind of broker', () => {
+  let sf = new EmptyServerFactory();
+
+  it('generates a flat broker when numworkers == 0', () => {
+    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
+    config.provide(() => { return {
+      tempdir: tmpDir,
+      numworkers: 0
+    };});
+
+    let bf = new BinServer.BrokerFactory();
+    let broker = bf.buildBroker(sf);
+    expect(broker instanceof BinServer.Broker).toBe(true);
+    expect(broker instanceof BinServer.FlatBroker).toBe(true);
+    expect(broker instanceof BinServer.ClusteredBroker).toBe(false);
+  });
+
+  it('generates a cluster broker when requested one worker', () => {
+    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
+    config.provide(() => { return {
+      tempdir: tmpDir,
+      numworkers: 1
+    };});
+
+    let bf = new BinServer.BrokerFactory();
+    let broker = bf.buildBroker(sf);
+    expect(broker instanceof BinServer.Broker).toBe(true);
+    expect(broker instanceof BinServer.ClusteredBroker).toBe(true);
+    expect(broker instanceof BinServer.FlatBroker).toBe(false);
+  });
+
+  it('Generates a cluster broker when requested two workers', () => {
+    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
+    config.provide(() => { return {
+      tempdir: tmpDir,
+      numworkers: 2
+    };});
+
+    let bf = new BinServer.BrokerFactory();
+    let broker = bf.buildBroker(sf);
+    expect(broker instanceof BinServer.Broker).toBe(true);
+    expect(broker instanceof BinServer.ClusteredBroker).toBe(true);
+    expect(broker instanceof BinServer.FlatBroker).toBe(false);
+  });
+});
 
 describe('Broker creation', () => {
   let brokerBuildCall;
@@ -17,13 +78,13 @@ describe('Broker creation', () => {
   beforeEach( () => {
     brokerBuildCall = jasmine.createSpy('brokerBuildCall');
 
-    let factory = new Server.BrokerFactory();
+    let factory = new BinServer.BrokerFactory();
 
-    factory.on( Server.BROKER_BUILT, () => {
+    factory.on( BinServer.BROKER_BUILT, () => {
       brokerBuildCall();
     });
 
-    factory.buildBroker();
+    factory.buildBroker(new EmptyServerFactory());
   });
 
   it('emitted the build broker event', ( done ) => {
@@ -66,15 +127,15 @@ describe('Cluster creation', () => {
     clusterStartedCall = jasmine.createSpy('clusterStartedCall');
     workerForkedCall = jasmine.createSpy('workerForkedCall');
 
-    let broker = new Server.BrokerFactory().buildBroker();
+    let broker = new BinServer.BrokerFactory(new EmptyServerFactory()).buildBroker(new EmptyServerFactory());
 
     spyOn(cluster, 'fork');
 
-    broker.on(Server.WORKER_FORKED, () => {
+    broker.on(BinServer.WORKER_FORKED, () => {
       workerForkedCall();
     });
 
-    broker.on(Server.CLUSTER_STARTED, () => {
+    broker.on(BinServer.CLUSTER_STARTED, () => {
       clusterStartedCall();
     });
 
@@ -119,7 +180,7 @@ describe('Cluster limit consecutive forks', () => {
   });
 
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -s -k 5 -l 1 -p 33000 -n4 -m mongodb://loclhost:27017/imc', (error) => {
+    child = exec('bin/server.js -s -k 5 -l 1 -p 33000 -n10 -m mongodb://loclhost:27017/imc', (error) => {
       expect(error).not.toBe(null);
       expect(error.code).toEqual(210);
       done();

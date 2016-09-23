@@ -2,135 +2,53 @@
 
 "use strict";
 
-const fs      = require('fs-extra');
-const http    = require('http');
-const assert  = require('assert');
-const util    = require('util');
 const EventEmitter = require('events');
-const MongoClient  = require('mongodb').MongoClient;
-require('http-shutdown').extend();
+const assert       = require('assert');
 const LOGGER       = require('../lib/logsetup.js');
 
-const config = require('../lib/config.js');
+const config       = require('../lib/config.js');
+const RangerServer = require('../lib/server.js');
 
-const BROKER_BUILT    = 'brokerBuilt';
-const CLUSTER_STARTED = 'clusterStarted';
-const SERVER_STARTED  = 'serverStarted';
-const SERVER_CLOSED   = 'serverClosed';
-const WORKER_STARTED  = 'workerStarted';
-const WORKER_FORKED   = 'workerForked';
-const WORKER_CLOSED   = 'workerClosed';
-const HIT_LIMIT_CONSEC_FORK  = 'hitLimitConsecFork';
+const SERVER_STARTED  = RangerServer.SERVER_STARTED;
+const SERVER_CLOSED   = RangerServer.SERVER_CLOSED;
+
+const BROKER_BUILT          = 'broker_built';
+const CLUSTER_STARTED       = 'cluster_started';
+const WORKER_STARTED        = 'worker_started';
+const WORKER_FORKED         = 'worker_forked';
+const WORKER_CLOSED         = 'worker_closed';
+const HIT_LIMIT_CONSEC_FORK = 'hit_limit_consec_forks';
 
 const ERROR_SERVER_LIMIT_CONSEC_FORK = 210;
 
-class RangerBroker extends EventEmitter {
-  startServer() {
-    const server = http.createServer().withShutdown();
-    let options = config.provide();
-    let broker = this;
-
-    // Exit gracefully on a signal to quit
-    [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
-      process.on( sig, () => {
-        server.shutdown( () => {
-          process.exit(0);
-        });
-      });
+class Broker extends EventEmitter {
+  constructor(serverFactory) {
+    super();
+    this.serverFactory = serverFactory;
+    this.serverFactory.on(SERVER_STARTED, ( server ) => {
+      this.emit(SERVER_STARTED, server);
     });
-    // Connect to the database and, if successful, define
-    // callbacks for the server.
-    var mongourl = options.get('mongourl');
-    MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
-      assert.equal(err, null, `Failed to connect to ${mongourl}: ${err}`);
-      LOGGER.info(`Connected to ${mongourl}`);
-
-      var dbClose = (dbConn) => {
-        if (dbConn) {
-          LOGGER.info('Database connection closing');
-          try {
-            dbConn.close();
-          } catch (err) {
-            LOGGER.error(`Error closing db connection: ${err}`);
-          }
-        }
-      };
-
-      // Close database connection on server closing.
-      server.on('close', () => {
-        LOGGER.info("\nServer closing");
-        broker.emit(SERVER_CLOSED);
-        dbClose(db);
-      });
-
-      // Exit gracefully on error, close the database
-      // connection and remove the socket file.
-      process.on('uncaughtException', (err) => {
-        LOGGER.error(`Caught exception: ${err}\n`);
-        dbClose(db);
-        try {
-          let port = options.get('port');
-          if (typeof port != 'number') {
-            // Throws an error if the assertion fails
-            fs.accessSync(port, fs.W_OK);
-            LOGGER.info(`Remove socket file ${port} that is left behind`);
-            fs.unlinkSync(port);
-          }
-        } catch (err) {
-          LOGGER.error(`Error removing socket file: ${err}`);
-        }
-        let code = 1;
-        LOGGER.info(`Exiting with code ${code}`);
-        process.exit(code);
-      });
-
-      // Set up a callback for requests.
-      server.on('request', (request, response) => {
-        LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
-        /*if (cluster.isWorker) {
-          LOGGER.debug("WORKER: served by " + cluster.worker.id);
-        }*/
-
-        // Ensure the processes initiated by request stops if the client disconnects.
-        // Closing the response forces an error in the pipeline and allows for a
-        // prompt closing of a socket established for this request.
-        request.on('close', () => {
-          LOGGER.info('CLIENT DISCONNECTED');
-          response.end();
-        });
-
-        const RangerController = require('../lib/server/controller');
-
-        // Create an instance of an application controller and let it
-        // handle the request.
-        let controller = new RangerController(request, response, db);
-        controller.handleRequest(options.get('hostname'));
-      });
-
-      var createTempDataDir = () => {
-        let tmpDir = options.get('tempdir');
-        LOGGER.debug(`Using temp data directory ${tmpDir}`);
-        fs.ensureDirSync(tmpDir);
-      };
-
-      // Synchronously create directory for temporary data, then start listening.
-      createTempDataDir(options.get('tempdir'));
-      server.listen(options.get('port'), () => {
-        LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
-        broker.emit(SERVER_STARTED, server);
-      });
+    this.serverFactory.on(SERVER_CLOSED, ( server ) => {
+      this.emit(SERVER_CLOSED, server);
     });
+  }
+
+  start() {
+    LOGGER.debug('broker start server');
   }
 }
 
-class FlatBroker extends RangerBroker {
+class FlatBroker extends Broker {
   start() {
-    this.startServer();
+    super.start();
+    this.serverFactory.startServer();
   }
 }
 
-class ClusteredBroker extends RangerBroker {
+
+class ClusteredBroker extends Broker {
   start() {
+    super.start();
     let options = config.provide();
     const cluster = require('cluster');
     if ( cluster.isMaster ) {
@@ -169,21 +87,23 @@ class ClusteredBroker extends RangerBroker {
       if ( cluster.isWorker ) {
         this.emit(WORKER_STARTED, cluster.worker);
         LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
-        this.startServer(options);
+        this.serverFactory.startServer();
       }
     }
   }
 }
 
 class BrokerFactory extends EventEmitter {
-  buildBroker() {
+  buildBroker(serverFactory) {
+    assert(serverFactory, 'serverFactory is required');
     let options = config.provide();
-    let numworkers = options.get('numworkers');
+    let numworkers = Number.parseInt(options.get('numworkers'));
+    assert(Number.isInteger(numworkers), 'numworkers must be an integer number');
     let broker;
     if ( !numworkers ) {
-      broker = new FlatBroker();
+      broker = new FlatBroker(serverFactory);
     } else {
-      broker = new ClusteredBroker();
+      broker = new ClusteredBroker(serverFactory);
     }
     this.emit(BROKER_BUILT, broker);
     return broker;
@@ -191,34 +111,33 @@ class BrokerFactory extends EventEmitter {
 }
 
 if ( require.main === module ) {
+  // Providing config settings:
+  //  Settings are provided from 3 locations:
+  //  1. Command line - run with -h to see options.
+  //  2. Config json file can be read if it is provided on command line
+  //      by running with -c PATH or --configfile=PATH
+  //  3. There are some defaults, which can be found in lib/config.js
   // Call to config.provide() must occur here before requiring controller
   // so that options object is built before it is provided to the
-  // other modules.
+  // other modules
   const options = config.provide(config.fromCommandLine);
 
   if ( options.get('debug') ) {
     LOGGER.level = 'debug';
   }
 
-  /*
-   * Main server script. Create the server object, establish database,
-   * connection, setup server callbacks, start listening for incoming
-   * requests.
-   *
-   * Providing config settings:
-   *  Settings are provided from 3 locations:
-   *  1. Command line - run with -h to see options.
-   *  2. Config json file can be read if it is provided on command line
-   *      by running with -c PATH or --configfile=PATH
-   *  3. There are some defaults, which can be found in lib/config.js
-   */
   assert(process.env.USER, 'User environment variable is not defined');
   let bf = new BrokerFactory();
-  let broker = bf.buildBroker();
+  let sf = new RangerServer.ServerFactory();
 
-  broker.on(CLUSTER_STARTED, () => { console.log('cluster started'); });
-  broker.on(WORKER_STARTED, () => { console.log('worker started'); });
-  broker.on(WORKER_FORKED, () => { console.log('worker forked'); });
+  sf.on(SERVER_STARTED, () => { LOGGER.debug('require.main sf.server_started'); });
+  sf.on(SERVER_CLOSED,  () => { LOGGER.debug('require.main sf.server_closed'); });
+
+  let broker = bf.buildBroker(sf);
+
+  broker.on(CLUSTER_STARTED, () => { LOGGER.debug('require.main cluster started'); });
+  broker.on(WORKER_STARTED,  () => { LOGGER.debug('require.main worker started'); });
+  broker.on(WORKER_FORKED,   () => { LOGGER.debug('require.main worker forked'); });
 
   process.nextTick(() => {
     broker.start();
@@ -227,10 +146,14 @@ if ( require.main === module ) {
 
 module.exports = {
   BrokerFactory:   BrokerFactory,
+  Broker:          Broker,
+  FlatBroker:      FlatBroker,
+  ClusteredBroker: ClusteredBroker,
   BROKER_BUILT:    BROKER_BUILT,
   CLUSTER_STARTED: CLUSTER_STARTED,
   WORKER_STARTED:  WORKER_STARTED,
   WORKER_FORKED:   WORKER_FORKED,
   WORKER_CLOSED:   WORKER_CLOSED,
-  SERVER_STARTED:  SERVER_STARTED
+  SERVER_STARTED:  SERVER_STARTED,
+  SERVER_CLOSED:   SERVER_CLOSED
 };
