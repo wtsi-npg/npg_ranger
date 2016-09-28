@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - use npm 3.10.7 in travis
   - use node 4.5.0 in travis
   - kill all processes after -g seconds after client disconnection
   - upgrade moment from 2.14.1 to 2.15.0

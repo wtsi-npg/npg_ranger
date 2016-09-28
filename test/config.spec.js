@@ -100,3 +100,28 @@ describe('Creating temp file path', function() {
     expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{8}$/);
   });
 });
+
+describe('Listing config options', function() {
+  it("Options listing", function() {
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true
+                                  };} );
+    let expected = ['configfile=undefined',
+                    'debug=true',
+                    'hostname=myhost',
+                    'mongourl=mymongourl',
+                    'multiref=undefined',
+                    'port=9999',
+                    'references=undefined',
+                    'skipauth=undefined',
+                    'tempdir=/tmp/mydir',
+                    'timeout=3'];
+    let o = config.logOpts();
+    expect(o).not.toMatch(/help=/);
+    expect(o).toMatch(expected.join(', '));
+  });
+});
