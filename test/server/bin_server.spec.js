@@ -2,13 +2,13 @@
 
 "use strict";
 
-const fse     = require('fs-extra');
-const cluster = require('cluster');
+const fse          = require('fs-extra');
+const cluster      = require('cluster');
 const EventEmitter = require('events');
-const config  = require('../../lib/config.js');
-const assert  = require('assert');
-// const RangerServer = require('../../lib/server.js');
-const BinServer    = require('../../bin/server.js');
+const config       = require('../../lib/config.js');
+const assert       = require('assert');
+
+const BinServer = require('../../bin/server.js');
 
 class EmptyServerFactory extends EventEmitter {
   startServer() {
@@ -69,32 +69,68 @@ describe('Decides which kind of broker', () => {
   });
 });
 
-describe('Broker creation', () => {
-  let brokerBuildCall;
+describe('Flat server', () => {
+  let server;
+  let http = require('http');
+  let tmpDir = config.tempFilePath('npg_ranger_server_test_');
+  let testConfBuilder = () => {
+    return {
+      tempdir: tmpDir,
+      numworkers: 0
+    };
+  };
+  let content = 'some chars';
 
-  beforeAll( () => { });
-  afterAll( () => { });
+  class SimpleServerFactory extends EventEmitter {
+    startServer() {
+      server = http.createServer( (request, response) => {
+        response.writeHead(200, {"Content-Type": "text/html"});
+        response.write(content);
+        response.end();
+      });
+      server.listen(0, () => {
+        this.emit(BinServer.SERVER_STARTED);
+      });
+    }
+  }
 
-  beforeEach( () => {
-    brokerBuildCall = jasmine.createSpy('brokerBuildCall');
+  beforeAll( () => {
+    fse.ensureDirSync(tmpDir);
+    config.provide(testConfBuilder);
+  });
 
-    let factory = new BinServer.BrokerFactory();
+  afterAll( () => {
+    fse.removeSync(tmpDir);
+  });
 
-    factory.on( BinServer.BROKER_BUILT, () => {
-      brokerBuildCall();
+  beforeEach( (done) => {
+    let factory = new SimpleServerFactory();
+    let broker = new BinServer.BrokerFactory().buildBroker(factory);
+    factory.on(BinServer.SERVER_STARTED, () => {
+      done();
     });
-
-    factory.buildBroker(new EmptyServerFactory());
+    broker.start();
   });
 
-  it('emitted the build broker event', ( done ) => {
-    expect(brokerBuildCall).toHaveBeenCalled();
-    done();
+  afterEach(( done ) => {
+    server.close(() => {
+      done();
+    });
   });
 
-  it('emitted the build broker event once', ( done ) => {
-    expect(brokerBuildCall.calls.count()).toEqual(1);
-    done();
+  it('starts a test http server', ( done ) => {
+    let requestURL = 'http://localhost:' + server.address().port + '/';
+    http.get(requestURL, ( res ) => {
+      expect(res.statusCode).toBe(200);
+      let responseContent = '';
+      res.on('data', (data) => {
+        responseContent += data;
+      });
+      res.on('end', () => {
+        expect(responseContent).toBe(content);
+        done();
+      });
+    });
   });
 });
 
@@ -112,13 +148,13 @@ describe('Cluster creation', () => {
     };
   };
 
-  beforeAll(function() {
+  beforeAll( () => {
     fse.ensureDirSync(tmpDir);
     config.provide(testConfBuilder);
     oldFork = cluster.fork;
   });
 
-  afterAll(function() {
+  afterAll( () => {
     fse.removeSync(tmpDir);
     cluster.fork = oldFork;
   });
@@ -127,7 +163,7 @@ describe('Cluster creation', () => {
     clusterStartedCall = jasmine.createSpy('clusterStartedCall');
     workerForkedCall = jasmine.createSpy('workerForkedCall');
 
-    let broker = new BinServer.BrokerFactory(new EmptyServerFactory()).buildBroker(new EmptyServerFactory());
+    let broker = new BinServer.BrokerFactory().buildBroker(new EmptyServerFactory());
 
     spyOn(cluster, 'fork');
 
@@ -135,7 +171,7 @@ describe('Cluster creation', () => {
       workerForkedCall();
     });
 
-    broker.on(BinServer.CLUSTER_STARTED, () => {
+    broker.on(BinServer.CLUSTER_STARTED, (cluster) => {
       clusterStartedCall();
     });
 
@@ -173,7 +209,7 @@ describe('Cluster limit consecutive forks', () => {
   var exec = require('child_process').exec;
   let child;
 
-  afterEach(function() {
+  afterEach( () => {
     if ( child.connected ) {
       child.disconnect();
     }

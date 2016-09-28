@@ -9,10 +9,10 @@ const LOGGER       = require('../lib/logsetup.js');
 const config       = require('../lib/config.js');
 const RangerServer = require('../lib/server.js');
 
-const SERVER_STARTED  = RangerServer.SERVER_STARTED;
-const SERVER_CLOSED   = RangerServer.SERVER_CLOSED;
 
-const BROKER_BUILT          = 'broker_built';
+const SERVER_STARTED        = RangerServer.SERVER_STARTED;
+const SERVER_CLOSED         = RangerServer.SERVER_CLOSED;
+
 const CLUSTER_STARTED       = 'cluster_started';
 const WORKER_STARTED        = 'worker_started';
 const WORKER_FORKED         = 'worker_forked';
@@ -45,7 +45,6 @@ class FlatBroker extends Broker {
   }
 }
 
-
 class ClusteredBroker extends Broker {
   start() {
     super.start();
@@ -53,11 +52,12 @@ class ClusteredBroker extends Broker {
     let numworkers = options.get('numworkers');
     assert(Number.isInteger(numworkers), 'numworkers must be an integer');
     const cluster = require('cluster');
+    let self = this;
     if ( cluster.isMaster ) {
       LOGGER.info(config.logOpts());
       for (let i = 0; i < numworkers; i++) {
         cluster.fork();
-        this.emit(WORKER_FORKED);
+        self.emit(WORKER_FORKED);
       }
       let consec = 0;
       let exiting = false;
@@ -70,7 +70,7 @@ class ClusteredBroker extends Broker {
           if ( !exiting ) {
             exiting = true;
             LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
-            this.emit(HIT_LIMIT_CONSEC_FORK);
+            self.emit(HIT_LIMIT_CONSEC_FORK);
             setTimeout( () => {
               process.exit(ERROR_SERVER_LIMIT_CONSEC_FORK);
             }, 3000);
@@ -78,18 +78,18 @@ class ClusteredBroker extends Broker {
         } else {
           consec += 1;
           cluster.fork();
-          this.emit(WORKER_FORKED);
+          self.emit(WORKER_FORKED);
           setTimeout( () => {
             consec -= 1;
           }, waitingConsec * 1000 );
         }
       });
-      this.emit(CLUSTER_STARTED, cluster);
+      self.emit(CLUSTER_STARTED, cluster);
     } else {
       if ( cluster.isWorker ) {
-        this.emit(WORKER_STARTED, cluster.worker);
+        self.emit(WORKER_STARTED, cluster.worker);
         LOGGER.debug('WORKER: new fork ' + cluster.worker.id);
-        this.serverFactory.startServer();
+        self.serverFactory.startServer();
       }
     }
   }
@@ -107,7 +107,6 @@ class BrokerFactory extends EventEmitter {
     } else {
       broker = new ClusteredBroker(serverFactory);
     }
-    this.emit(BROKER_BUILT, broker);
     return broker;
   }
 }
@@ -151,11 +150,11 @@ module.exports = {
   Broker:          Broker,
   FlatBroker:      FlatBroker,
   ClusteredBroker: ClusteredBroker,
-  BROKER_BUILT:    BROKER_BUILT,
-  CLUSTER_STARTED: CLUSTER_STARTED,
-  WORKER_STARTED:  WORKER_STARTED,
-  WORKER_FORKED:   WORKER_FORKED,
-  WORKER_CLOSED:   WORKER_CLOSED,
-  SERVER_STARTED:  SERVER_STARTED,
-  SERVER_CLOSED:   SERVER_CLOSED
+  CLUSTER_STARTED:       CLUSTER_STARTED,
+  WORKER_STARTED:        WORKER_STARTED,
+  WORKER_FORKED:         WORKER_FORKED,
+  WORKER_CLOSED:         WORKER_CLOSED,
+  SERVER_STARTED:        SERVER_STARTED,
+  SERVER_CLOSED:         SERVER_CLOSED,
+  HIT_LIMIT_CONSEC_FORK: HIT_LIMIT_CONSEC_FORK
 };
