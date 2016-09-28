@@ -182,7 +182,9 @@ describe('Cluster limit consecutive forks', () => {
   it('exits with correct code if max number of consec forks reached', ( done ) => {
     child = exec('bin/server.js -s -k 5 -l 1 -p 33000 -n10 -m mongodb://loclhost:27017/imc', (error) => {
       expect(error).not.toBe(null);
-      expect(error.code).toEqual(210);
+      if ( !!error ) {
+        expect(error.code).toEqual(210);
+      }
       done();
     });
   }, 10000);

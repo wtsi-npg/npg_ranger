@@ -50,10 +50,12 @@ class ClusteredBroker extends Broker {
   start() {
     super.start();
     let options = config.provide();
+    let numworkers = options.get('numworkers');
+    assert(Number.isInteger(numworkers), 'numworkers must be an integer');
     const cluster = require('cluster');
     if ( cluster.isMaster ) {
       LOGGER.info(config.logOpts());
-      for (let i = 0; i < options.get('numworkers'); i++) {
+      for (let i = 0; i < numworkers; i++) {
         cluster.fork();
         this.emit(WORKER_FORKED);
       }
@@ -97,8 +99,8 @@ class BrokerFactory extends EventEmitter {
   buildBroker(serverFactory) {
     assert(serverFactory, 'serverFactory is required');
     let options = config.provide();
-    let numworkers = Number.parseInt(options.get('numworkers'));
-    assert(Number.isInteger(numworkers), 'numworkers must be an integer number');
+    let numworkers = options.get('numworkers');
+    assert(Number.isInteger(numworkers), 'numworkers must be an integer');
     let broker;
     if ( !numworkers ) {
       broker = new FlatBroker(serverFactory);
