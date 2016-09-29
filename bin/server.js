@@ -9,7 +9,6 @@ const LOGGER       = require('../lib/logsetup.js');
 const config       = require('../lib/config.js');
 const RangerServer = require('../lib/server.js');
 
-
 const SERVER_STARTED        = RangerServer.SERVER_STARTED;
 const SERVER_CLOSED         = RangerServer.SERVER_CLOSED;
 

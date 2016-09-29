@@ -8,7 +8,7 @@ const EventEmitter = require('events');
 const assert       = require('assert');
 const tmp          = require('tmp');
 
-const config       = require('../../lib/config.js');
+const config    = require('../../lib/config.js');
 const BinServer = require('../../bin/server.js');
 
 class EmptyServerFactory extends EventEmitter {
@@ -230,8 +230,8 @@ describe('Cluster limit consecutive forks', () => {
   let spawn    = require('child_process').spawn;
   let exec     = require('child_process').exec;
   let execSync = require('child_process').execSync;
-  let child;
 
+  let child;
   let tmp_dir;
 
   let BASE_PORT  = 1400;
@@ -261,7 +261,7 @@ describe('Cluster limit consecutive forks', () => {
     child = spawn(command,[
       `-mmongodb://localhost:${PORT}`,
       '-k5', '-l1', // Max 3 deaths in 1 second
-      '-n' + numForks,
+      `-n${numForks}`,
       '-p33000']
     );
     setTimeout(() => {
@@ -273,7 +273,12 @@ describe('Cluster limit consecutive forks', () => {
         });
         let victim = grandchildrenBefore[0];
         expect(grandchildrenBefore.length).toEqual(numForks);
-        process.kill(victim, 'SIGKILL');
+        try {
+          process.kill(victim, 'SIGKILL');
+        } catch (e) {
+          fail('Something went wrong when killing victim');
+        }
+        expect( () => { execSync(`ps -p ${victim}`); } ).toThrow();
         setTimeout(() => {
           exec('pgrep -P ' + child.pid, (error2, stdout2) => {
             stdout2 = stdout2.trim();
@@ -287,9 +292,44 @@ describe('Cluster limit consecutive forks', () => {
             expect(grandchildrenAfter.indexOf(victim)).toEqual(-1);
             done();
           });
-        }, 1000);
+        }, 500);
       });
-    }, 3000);
+    }, 2000);
+  }, 7000);
+
+  it('killing cluster pid kill children', (done) => {
+    let command = 'bin/server.js';
+    let numForks = 3;
+    child = spawn(command,[
+      `-mmongodb://localhost:${PORT}`,
+      '-k5', '-l1', // Max 3 deaths in 1 second
+      `-n${numForks}`,
+      '-p33000']
+    );
+    setTimeout(() => {
+      let grandchildren;
+      exec('pgrep -P ' + child.pid, (error, stdout) => {
+        stdout = stdout.trim();
+        grandchildren = stdout.split('\n').map((value) => {
+          return Number.parseInt(value);
+        });
+        grandchildren.forEach((pid) => {
+          expect( () => { execSync(`ps -p ${pid}`); } ).not.toThrow();
+        });
+        try {
+          process.kill(child.pid, 'SIGINT');
+        } catch (e) {
+          fail(`Something went wrong when kiling child process: ${e}`);
+        }
+        setTimeout(() => {
+          grandchildren.forEach((pid) => {
+            // because ps -p on non existing pid returns 1 and becomes an exception
+            expect( () => { execSync(`ps -p ${pid}`); } ).toThrow();
+          });
+          done();
+        }, 2000);
+      });
+    }, 2000);
   }, 7000);
 
   it('dies with correct error code if enough children die in short time', ( done ) => {
