@@ -9,6 +9,8 @@ before_install:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
   - tar xfz mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
   - export PATH=`pwd`/mongodb-linux-x86_64-${MONGODB_VERSION}/bin:$PATH
+  - npm install -g npm@3.10.7
+  - npm --version
   - npm install -g grunt-cli
 script:
   - grunt -v
