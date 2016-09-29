@@ -13,6 +13,9 @@ LIST OF CHANGES for npg_ranger project
      request if data is truncated
   - client script - exit with error code if the request is unsuccessful
   - server - only set trailers if the client declared that it accepts them
+  - restrict request types handled by teh server to GET and OPTIONS
+  - add a separate handler for OPTIONS request
+  - set CORS headers in accordance with buisness logic
 
 release 0.3.0
   - publish as npm package
