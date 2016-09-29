@@ -255,6 +255,43 @@ describe('Cluster limit consecutive forks', () => {
     child.kill('SIGINT');
   });
 
+  it('re forks if single child dies', (done) => {
+    let command = 'bin/server.js';
+    let numForks = 7;
+    child = spawn(command,[
+      `-mmongodb://localhost:${PORT}`,
+      '-k5', '-l1', // Max 3 deaths in 1 second
+      '-n' + numForks,
+      '-p33000']
+    );
+    setTimeout(() => {
+      let grandchildrenBefore, grandchildrenAfter;
+      exec('pgrep -P ' + child.pid, (error, stdout) => {
+        stdout = stdout.trim();
+        grandchildrenBefore = stdout.split('\n').map((value) => {
+          return Number.parseInt(value);
+        });
+        let victim = grandchildrenBefore[0];
+        expect(grandchildrenBefore.length).toEqual(numForks);
+        process.kill(victim, 'SIGKILL');
+        setTimeout(() => {
+          exec('pgrep -P ' + child.pid, (error2, stdout2) => {
+            stdout2 = stdout2.trim();
+            grandchildrenAfter = stdout2.split('\n').map((value) => {
+              return Number.parseInt(value);
+            });
+            expect(grandchildrenAfter.length).toEqual(numForks);
+            grandchildrenBefore.slice(1).forEach((value)=>{
+              expect(grandchildrenAfter.indexOf(value)).not.toEqual(-1);
+            });
+            expect(grandchildrenAfter.indexOf(victim)).toEqual(-1);
+            done();
+          });
+        }, 1000);
+      });
+    }, 3000);
+  }, 7000);
+
   it('dies with correct error code if enough children die in short time', ( done ) => {
     let command = 'bin/server.js';
     let killing = false;
