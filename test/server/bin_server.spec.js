@@ -260,7 +260,7 @@ describe('Cluster limit consecutive forks', () => {
     let numForks = 7;
     child = spawn(command,[
       `-mmongodb://localhost:${PORT}`,
-      '-k5', '-l1', // Max 3 deaths in 1 second
+      '-k5', '-l1', // Max 5 deaths in 1 second
       `-n${numForks}`,
       '-p33000']
     );
