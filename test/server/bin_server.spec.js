@@ -1,13 +1,14 @@
-/* globals describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jasmine, spyOn */
+/* globals describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jasmine, spyOn, fail */
 
 "use strict";
 
 const fse          = require('fs-extra');
 const cluster      = require('cluster');
 const EventEmitter = require('events');
-const config       = require('../../lib/config.js');
 const assert       = require('assert');
+const tmp          = require('tmp');
 
+const config       = require('../../lib/config.js');
 const BinServer = require('../../bin/server.js');
 
 class EmptyServerFactory extends EventEmitter {
@@ -171,7 +172,7 @@ describe('Cluster creation', () => {
       workerForkedCall();
     });
 
-    broker.on(BinServer.CLUSTER_STARTED, (cluster) => {
+    broker.on(BinServer.CLUSTER_STARTED, () => {
       clusterStartedCall();
     });
 
@@ -204,9 +205,8 @@ describe('Cluster creation', () => {
   });
 });
 
-describe('Cluster limit consecutive forks', () => {
-  // var sys = require('sys');
-  var exec = require('child_process').exec;
+describe('Cluster limit consecutive forks at start', () => {
+  let exec = require('child_process').exec;
   let child;
 
   afterEach( () => {
@@ -216,12 +216,75 @@ describe('Cluster limit consecutive forks', () => {
   });
 
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -s -k 5 -l 1 -p 33000 -n10 -m mongodb://loclhost:27017/imc', (error) => {
+    child = exec('bin/server.js -k5 -l1 -n10 -m mongodb://loclhost:27017/imc', (error) => {
       expect(error).not.toBe(null);
       if ( !!error ) {
         expect(error.code).toEqual(210);
       }
       done();
     });
+  }, 10000);
+});
+
+describe('Cluster limit consecutive forks', () => {
+  let spawn    = require('child_process').spawn;
+  let exec     = require('child_process').exec;
+  let execSync = require('child_process').execSync;
+  let child;
+
+  let tmp_dir;
+
+  let BASE_PORT  = 1400;
+  let PORT_RANGE = 200;
+  let PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+
+  beforeAll(() => {
+    let tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
+    tmp_dir = tmpobj.name;
+    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
+    let out = execSync(command);
+    console.log(`Loaded data to MONGO DB: ${out}`);
+  });
+
+  afterAll(() => {
+    execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
+    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
+  });
+
+  afterEach( () => {
+    child.kill('SIGINT');
+  });
+
+  it('dies with correct error code if enough children die in short time', ( done ) => {
+    let command = 'bin/server.js';
+    let killing = false;
+    child = spawn(command,[
+      `-mmongodb://localhost:${PORT}`,
+      '-k3', '-l1', // Max 3 deaths in 1 second
+      '-n5',
+      '-p33000']
+    );
+    child.on('close', (code) => {
+      expect(killing).toBe(true);
+      expect(code).toEqual(210);
+      done();
+    });
+    let grandchildren;
+    setTimeout(() => {
+      exec('pgrep -P ' + child.pid, (error, stdout) => {
+        killing = true;
+        stdout = stdout.trim();
+        grandchildren = stdout.split('\n').map((value) => {
+          return Number.parseInt(value);
+        });
+        grandchildren.forEach((value) => {
+          try {
+            process.kill(value, 'SIGKILL');
+          } catch(e) {
+            fail('Something went wrong when killing grandchildren');
+          }
+        });
+      });
+    }, 5000);
   }, 10000);
 });
