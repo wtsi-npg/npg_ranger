@@ -83,13 +83,14 @@ describe('set error response', function() {
   // Generate synchronously a temporary file name.
   var socket = tmp.tmpNameSync();
 
-  beforeAll(function() {
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
     // Start listening on a socket
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
+      done();
     });
-    fse.ensureDirSync(tmpDir);
-    options = config.provide(dummy);
   });
 
   // This tidy-up callback is not called when the spec exits early
@@ -181,12 +182,13 @@ describe('set error response', function() {
 describe('Handling requests - error responses', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
-  beforeAll(function() {
-    server.listen(socket, () => {
-      console.log(`Server listening on socket ${socket}`);
-    });
+  beforeAll((done) => {
     options = config.provide(dummy);
     fse.ensureDirSync(tmpDir);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
   });
 
   afterAll(function() {
@@ -370,16 +372,17 @@ describe('Redirection in json response', function() {
   let server_path_basic = '/ga4gh/v.0.1/get/sample';
   let server_path = server_path_basic + '/' + id;
 
-  beforeAll(function() {
-    server.listen(socket, () => {
-      console.log(`Server listening on socket ${socket}`);
-    });
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {}, null, true);
       c.handleRequest('localhost');
     });
-    fse.ensureDirSync(tmpDir);
-    options = config.provide(dummy);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
   });
 
   afterAll(function() {
@@ -674,12 +677,13 @@ describe('content type', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
 
-  beforeAll(function() {
-    server.listen(socket, () => {
-      console.log(`Server listening on socket ${socket}`);
-    });
+  beforeAll((done) => {
     fse.ensureDirSync(tmpDir);
     options = config.provide(dummy);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
   });
   afterAll(function() {
     server.close();
@@ -711,19 +715,20 @@ describe('trailers in response', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
 
-  beforeAll(function() {
-    server.listen(socket, () => {
-      console.log(`Server listening on socket ${socket}`);
-    });
+  beforeAll((done) => {
     fse.ensureDirSync(tmpDir);
     options = config.provide(dummy);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
   });
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
     fse.removeSync(tmpDir);
   });
-
+ 
   it('no trailers without TE header', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -746,3 +751,5 @@ describe('trailers in response', function() {
     http.get({socketPath:socket, path: '/file', headers: {TE: 'trailers'}}, function() {});
   });
 });
+
+
