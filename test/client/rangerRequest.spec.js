@@ -112,8 +112,8 @@ describe('Testing RangerRequest requests', () => {
       response.setHeader('Trailer', 'data-truncated,mytrailer,yourtrailer');
       response.writeHead(200, 'OK', {"Content-Type": "text/html"});
       response.addTrailers({'data-truncated': 'true',
-                            'mytrailer':      'is a trailer',
-                            'yourtrailer':    'is also a trailer'});
+                            mytrailer:        'is a trailer',
+                            yourtrailer:      'is also a trailer'});
       response.end();
     });
 
