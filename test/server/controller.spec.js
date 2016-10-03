@@ -210,6 +210,24 @@ describe('Handling requests - error responses', function() {
     http.get({socketPath: socket}, function() {});
   });
 
+   it('Method not allowed error', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+    });
+
+    let options = {socketPath: socket, method:    'POST'};
+    let req = http.request(options);
+    req.on('response', (response) => {
+      expect(response.headers['content-type']).toEqual('application/json');
+      expect(response.statusCode).toEqual(405);
+      expect(response.statusMessage).toEqual('POST request is not allowed');
+      done();
+    });
+    req.end();
+  }); 
+
   it('Authentication error', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -472,7 +490,6 @@ describe('Redirection in json response', function() {
     http.get(
       { socketPath: socket,
         path: server_path + '?referenceName=chr1'}, function(response) {
-        //path: server_path}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
@@ -749,6 +766,203 @@ describe('trailers in response', function() {
     });
 
     http.get({socketPath:socket, path: '/file', headers: {TE: 'trailers'}}, function() {});
+  });
+});
+
+describe('CORS in response', function() {
+  var server;
+  let serverPath = '/ga4gh/v.0.1/get/sample/EGA45678';
+  let socket = tmp.tmpNameSync();
+
+  let checkHeaders = (headers, origin) => {
+    expect(headers.vary).toBe('Origin', 'Vary header is set');
+    expect(headers['access-control-allow-origin']).toBe(
+      origin, `allowed origin is ${origin}`);
+    expect(headers['access-control-allow-methods']).toBe(
+      'GET,OPTIONS', 'allowed methods are set'); 
+    expect(headers['access-control-allow-headers']).toBe(
+      'TE,X-Remote-User', 'allowed headers are set');
+    expect(headers['access-control-max-age']).toBe('1800', 'max age is set');
+    expect(Object.keys(headers).indexOf('Access-Control-Allow-Credentials')).toBe(
+      -1, 'Access-Control-Allow-Credentials header is not set');
+  };
+
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server = http.createServer();
+    server.listen(socket, () => { console.log('listening'); done();});
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+ 
+  it('no CORS in a response to a standart request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(false, 'request does not have Origin header');
+      let c = new RangerController(request, response, {one: "two"}, null);
+      c.handleRequest('localhost');
+    });
+
+    http.get({socketPath:socket, path: serverPath}, (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('Access-Control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      expect(res.headers.vary).toBe('Origin', 'Vary header is set');
+      done();
+    });
+  });
+
+  it('no CORS headers in a response to CORS GET request due to server options', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"}, null);
+      c.handleRequest('localhost');
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      expect(res.headers.vary).toBe('Origin', 'Vary header is set');
+      done();
+    });
+    req.end();
+  });
+
+  it('no CORS headers in a response to CORS OPTIONS request due to server options', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      done();
+    });
+    req.end();
+  });
+
+  it('Allow all CORS headers in a response to CORS GET request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: true, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"}, null);
+      c.handleRequest('localhost');
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, '*');
+      done();
+    });
+    req.end();
+  });
+
+  it('Allow all CORS headers in a response to CORS OPTIONS request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: true, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"}, null);
+      c.handleRequest('localhost');
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, '*');
+      done();
+    });
+    req.end();
+  });
+
+  it('No CORS headers since the origin is not white listed', function(done) {
+    config.provide( () => {
+      return {tempdir:     tmpDir,
+              anyorigin:   false,
+              originlist: 'http://other.com,http://other.com:9090',
+              skipauth:   true};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.end();
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      done();
+    });
+  });
+
+  it('Origin-specific CORS headers set for a white listed origin', function(done) {
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://other.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, 'http://other.com');
+      done();
+    });
+    req.end();
+  });
+
+  it('Additional CORS header is set when running with authorization', function(done) {
+    config.provide( () => {
+      return {tempdir:    tmpDir,
+              anyorigin:  false,
+              originlist: 'http://other.com,http://other.com:9090',
+              skipauth:   false};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://other.com:9090'},
+                   method:    'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.headers['access-control-allow-origin']).toBe(
+        'http://other.com:9090', 'origin http://other.com:9090 is allowed');
+      expect(res.headers['access-control-allow-credentials']).toBe(
+        'true', 'Access-Control-Allow-Credentials header is set');
+      done();
+    });
+    req.end();
   });
 });
 
