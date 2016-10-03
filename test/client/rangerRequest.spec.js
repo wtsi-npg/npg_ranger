@@ -41,7 +41,7 @@ describe('Testing RangerRequest requests', () => {
     page += '<head><title>Test result</title></head>';
     page += '<body>Test text is in the page!</body>';
     page += '</html>';
-    
+
     srv = http.createServer();
     srv.listen(0, function() {
       url = 'http://127.0.0.1:' + srv.address().port + '/someData';
@@ -68,7 +68,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe('OK', 'Correct status message');
         expect(req.status).toBe(200, 'Got a 200 request status');
         expect(req.response.toString()).toBe(page, 'response data as sent by the server');
@@ -93,7 +92,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe(
             'Ranger server error No 6 for ' + url, 'Correct status message');
         expect(req.status).toBe(500, 'Request status 500 as set by the server');
@@ -114,8 +112,8 @@ describe('Testing RangerRequest requests', () => {
       response.setHeader('Trailer', 'data-truncated,mytrailer,yourtrailer');
       response.writeHead(200, 'OK', {"Content-Type": "text/html"});
       response.addTrailers({'data-truncated': 'true',
-                            'mytrailer':      'is a trailer',
-                            'yourtrailer':    'is also a trailer'});
+                            mytrailer:        'is a trailer',
+                            yourtrailer:      'is also a trailer'});
       response.end();
     });
 
@@ -123,7 +121,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe(
           'Incomplete or truncated data for ' + url, 'Data truncation status message');
         expect(req.status).toBe(424, 'The client changes status code from 200 to 424');
@@ -151,7 +148,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe('OK in the trailer', 'Status message');
         expect(req.status).toBe(206, 'Status code 206');
         expect(req.response.toString()).toBe(page, 'response as sent by the server');
@@ -165,7 +161,7 @@ describe('Testing RangerRequest requests', () => {
 
   it('If not accepting trailers, than not checking trailers either', (done) => {
     srv.removeAllListeners('request');
-    srv.on('request', (request, response) => {    
+    srv.on('request', (request, response) => {
       response.setHeader('Transfer-Encoding', 'chunked');
       response.setHeader('Trailer', 'data-truncated');
       response.writeHead(200, 'Fail in the trailer',{"Content-Type": "text/html"});
@@ -180,7 +176,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe('Fail in the trailer', 'Status message');
         expect(req.status).toBe(200, 'Status code 200');
         expect(req.response.toString()).toBe(page, 'response as sent by the server');
@@ -194,7 +189,7 @@ describe('Testing RangerRequest requests', () => {
 
   it('Not getting trailers when asked is not a failure', (done) => {
     srv.removeAllListeners('request');
-    srv.on('request', (request, response) => {   
+    srv.on('request', (request, response) => {
       expect(request.headers).toEqual(jasmine.objectContaining({te: 'trailers'}));
       response.setHeader('Transfer-Encoding', 'chunked');
       response.writeHead(200, 'OK, no trailer', {"Content-Type": "text/html"});
@@ -206,7 +201,6 @@ describe('Testing RangerRequest requests', () => {
     req.open('GET', url);
     req.onreadystatechange = () => {
       if ( req.readyState === 4 ) {
-        expect(req.readyState).toBe(4, 'Reached a readystate DONE');
         expect(req.statusMessage).toBe('OK, no trailer', 'Status message');
         expect(req.status).toBe(200, 'Status code 200');
         expect(req.response.toString()).toBe(page, 'response as sent by the server');
