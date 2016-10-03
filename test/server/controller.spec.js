@@ -757,15 +757,19 @@ describe('trailers in response', function() {
     http.get({socketPath:socket, path: '/file'}, function() {});
   });
 
-  it('trailers with TE header', function(done) {
-    server.removeAllListeners('request');
-    server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true);
-      expect(c.sendTrailer).toBe(true);
-      done();
-    });
+  ['TE', 'te', 'Te', 'tE'].forEach( ( headerName ) => {
+    it(`trailers with ${headerName} header`, function(done) {
+      server.removeAllListeners('request');
+      server.on('request', (request, response) => {
+        let c = new RangerController(request, response, {one: "two"}, null, true);
+        expect(c.sendTrailer).toBe(true);
+        done();
+      });
 
-    http.get({socketPath:socket, path: '/file', headers: {TE: 'trailers'}}, function() {});
+      let headers = {};
+      headers[headerName] = 'trailers';
+      http.get({socketPath:socket, path: '/file', headers: headers}, () => {});
+    });
   });
 });
 

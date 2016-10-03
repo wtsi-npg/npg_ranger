@@ -18,37 +18,45 @@ const RangerRequest = require('../lib/client/rangerRequest');
  */
 
 /**
- * Command line client
  * @module client
  *
  * @requires {@link external:fs|fs}
  * @requires {@link external:commander|commander}
- * @requires module:logsetup
+ * @requires {@link module:logsetup|logsetup}
  *
- * A command line client for sequencing data retrieval base on GA4GH data sharing
+ * @description
+ * <p>Command line client</p>
+ *
+ * <p>A command line client for sequencing data retrieval base on GA4GH data sharing
  * API. The client is implemented with parallel, asynchronous requests to every URL
- * listed in the initial JSON responce of the GA4GH-compliant server. The clent
+ * listed in the initial JSON response of the GA4GH-compliant server. The clent
  * itself is synchronous, ie the data is returned to the caller only when all requests
  * successfully completed. Untill that moment all received chunks of data are
- * kept in memory, thus limiting the total amount of data this client can retrieve.
+ * kept in memory, thus limiting the total amount of data this client can retrieve.</p>
  *
- * The client is also able to process direct HTTP GET requests.
+ * <p>The client is also able to process direct HTTP GET requests.</p>
  *
- * Data is written to stdout
+ * <p>Data is written to stdout</p>
  *
- * $ client.js "http://some_server_url/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" > data.bam
+ * <code>$ client.js "http://some_server_url/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" > data.bam</code>
  *
- * ... or to an output file if a file path is provided as the second parameter.
+ * <p>... or to an output file if a file path is provided as the second parameter.</p>
  *
- * $ client.js "http://some_server_url/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" AA0011.bam
+ * <code>$ client.js "http://some_server_url/resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM" AA0011.bam</code>
  *
- * If the response was empty, an empty file is created.
+ * <p>If the response was empty, an empty file is created.</p>
  *
- * The client exits with an error code 1 if an error occured when requesting/receiving
- * the data. If --accept-trailers option is enabled (1) for each response, trailers, if
- * available, are written to stderr, (2) if any of the responses has 'data-truncated'
- * trailer set to true, the script exits with an error code 1.
+ * <p>The client exits with an error code <em>1</em> if an error occured when
+ * requesting/receiving the data. If <em>--accept-trailers</em> option is
+ * enabled:</p>
+ * <ol>
+ *   <li>for each response, trailers, if available, are written to
+ *       <em>stderr</em></li>
+ *   <li>if any of the responses has <em>data-truncated</em> trailer set to
+ *       true, the script exits with an error code <em>1</em></li>
+ * </ol>
  *
+ * @author Marina Gourtovaia
  * @author Jaime Tovar
  * @copyright Genome Research Limited 2016
  */
