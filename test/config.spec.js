@@ -73,7 +73,7 @@ describe('Building options', function() {
       return {port: '45678'};
     });}).not.toThrow();
     expect( options.get('tempdir').startsWith(path.join(os.tmpdir(), 'npg_ranger_')) ).toBe(true);
-    expect( options.get('port') == '45678' ).toBe(true);
+    expect( options.get('port') === 45678 ).toBe(true);
   });
   it('tempdir specified, port specified', function() {
     let options;
@@ -84,7 +84,7 @@ describe('Building options', function() {
       };
     });}).not.toThrow();
     expect( options.get('tempdir').startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test_')) ).toBe(true);
-    expect( options.get('port') == '45678' ).toBe(true);
+    expect( options.get('port') === 45678 ).toBe(true);
   });
 });
 
@@ -110,7 +110,8 @@ describe('Listing config options', function() {
                                    debug:    true,
                                    help:     true
                                   };} );
-    let expected = ['configfile=undefined',
+    let expected = ['anyorigin=undefined',
+                    'configfile=undefined',
                     'debug=true',
                     'hostname=myhost',
                     'mongourl=mymongourl',
@@ -125,3 +126,235 @@ describe('Listing config options', function() {
     expect(o).toMatch(expected.join(', '));
   });
 });
+
+describe('Validating CORS options', function() {
+
+  it('anyorigin and originlist options cannot be set together', function() {
+    let dir = config.provide().get('tempdir');
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/yourdir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: 'true'
+                    };});
+		  }).toThrowError("'anyorigin' should be a boolean type value");
+    expect(config.provide().get('tempdir')).toBe(dir, 'old value retained');
+  });
+
+  it('anyorigin and originlist options cannot be set together', function() {
+    let port = config.provide().get('port');
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     port - 1,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: true,
+                                   originlist: 'url1,url2'
+                    };});
+		  }).toThrowError(
+                    "'anyorigin' and 'originlist' options cannot both be set");
+    expect(config.provide().get('port')).toBe(port, 'old value retained');
+  });
+
+  it('anyorigin is incompatible with authorization', function() {
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: true,
+                                   skipauth: false
+                    };});
+		  }).toThrowError(
+                    "'anyorigin' option cannot be set if authorization is performed");
+  });
+
+  it('validation for originlist', function() {
+
+     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                    hostname: 'myhost',
+                                    tempdir:  '/tmp/mydir',
+                                    port:     9999,
+                                    debug:    true,
+                                    help:     true,
+                                    anyorigin: false,
+     				   originlist: ['some', 'urls']
+                    };});
+     		  })
+       .toThrowError("'originlist' should be a comma-separated string");
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: '*'
+                    };});
+    		  }).toThrowError(
+                    "'originlist' string should not contain the wild card character *");
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'myurl'
+                    };});
+    		  }).toThrowError(/Protocol is absent/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'myurl'
+                    };});
+    		  }).toThrowError(/Protocol is absent/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'https://myurl'
+                    };});
+    		  }).toThrowError(/URL protocol should match server protocol/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://'
+                    };});
+    		  }).toThrowError(/Server host is absent/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://server.com/foo'
+                    };});
+    		  }).toThrowError(/Path cannot be present/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://server.com/'
+                    };});
+    		  }).not.toThrow();
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin:  false,
+    				   originlist: 'http://server.com/,,http://server.org'
+                    };});
+    		  }).toThrowError(/Empty string in 'originlist'/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://server.com:8080?foo=2'
+                    };});
+    		  }).toThrowError(/Search string cannot be present/);
+
+   expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://server.com:8080?'
+                    };});
+    		  }).toThrowError(/Search string cannot be present/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://localhost:9999#mttag'
+                    };});
+    		  }).toThrowError(/Hash tag cannot be present/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+    				   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+    				   originlist: 'http://server.com:9999#'
+                    };});
+    		  }).toThrowError(/Hash tag cannot be present/);
+  });
+
+  it('Setting originlist to an array of URL strings', function() {
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   originlist: 'http://my.com'
+                                  };});
+    expect(config.provide().get('originlist').join()).toEqual(
+      'http://my.com', 'one url in the array');
+
+    let expected = 'http://my.com:80,http://your.org';
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   originlist: 'http://my.com:80,http://your.org'
+                                  };});
+    expect(config.provide().get('originlist').join()).toEqual(expected, 'two urls in the array');
+
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   originlist: 'http://my.com:80, http://your.org'
+                                  };});
+    expect(config.provide().get('originlist').join()).toEqual(
+      expected, 'spaces between strings are allowed');
+  });
+
+});
+
