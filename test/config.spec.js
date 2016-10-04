@@ -138,8 +138,8 @@ describe('Validating CORS options', function() {
                                    debug:    true,
                                    help:     true,
                                    anyorigin: 'true'
-                    };});
-		  }).toThrowError("'anyorigin' should be a boolean type value");
+                                                  };});
+                  }).toThrowError("'anyorigin' should be a boolean type value");
     expect(config.provide().get('tempdir')).toBe(dir, 'old value retained');
   });
 
@@ -153,8 +153,8 @@ describe('Validating CORS options', function() {
                                    help:     true,
                                    anyorigin: true,
                                    originlist: 'url1,url2'
-                    };});
-		  }).toThrowError(
+                                                  };});
+                  }).toThrowError(
                     "'anyorigin' and 'originlist' options cannot both be set");
     expect(config.provide().get('port')).toBe(port, 'old value retained');
   });
@@ -168,8 +168,8 @@ describe('Validating CORS options', function() {
                                    help:     true,
                                    anyorigin: true,
                                    skipauth: false
-                    };});
-		  }).toThrowError(
+                                                  };});
+                  }).toThrowError(
                     "'anyorigin' option cannot be set if authorization is performed");
   });
 
@@ -182,9 +182,9 @@ describe('Validating CORS options', function() {
                                     debug:    true,
                                     help:     true,
                                     anyorigin: false,
-     				   originlist: ['some', 'urls']
-                    };});
-     		  })
+                                    originlist: ['some', 'urls']
+                                                   };});
+                   })
        .toThrowError("'originlist' should be a comma-separated string");
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
@@ -194,131 +194,152 @@ describe('Validating CORS options', function() {
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: '*'
-                    };});
-    		  }).toThrowError(
+                                   originlist: '*'
+                                                  };});
+                  }).toThrowError(
                     "'originlist' string should not contain the wild card character *");
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'myurl'
-                    };});
-    		  }).toThrowError(/Protocol is absent/);
+                                   originlist: 'myurl'
+                                                  };});
+                  }).toThrowError(/Protocol is absent/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'myurl'
-                    };});
-    		  }).toThrowError(/Protocol is absent/);
+                                   originlist: 'myurl'
+                                                  };});
+                  }).toThrowError(/Protocol is absent/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'https://myurl'
-                    };});
-    		  }).toThrowError(/URL protocol should match server protocol/);
+                                   originlist: 'https://myurl'
+                                                  };});
+                  }).toThrowError(/URL protocol should match server protocol/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://'
-                    };});
-    		  }).toThrowError(/Server host is absent/);
+                                   originlist: 'http://'
+                                                  };});
+                  }).toThrowError(/Server host is absent/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://server.com/foo'
-                    };});
-    		  }).toThrowError(/Path cannot be present/);
+                                   originlist: 'http://server.com/foo'
+                                                  };});
+                  }).toThrowError(/Path cannot be present/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://server.com/'
-                    };});
-    		  }).not.toThrow();
+                                   originlist: 'http://server.com/'
+                                                  };});
+                  }).not.toThrow();
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
+                                   debug:    true,
+                                   help:     true,
+                                   anyorigin: false,
+                                   originlist: 'http://server.com//'
+                                                  };});
+                  }).toThrowError(/Path cannot be present/);
+
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                   hostname: 'myhost',
+                                   tempdir:  '/tmp/mydir',
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin:  false,
-    				   originlist: 'http://server.com/,,http://server.org'
-                    };});
-    		  }).toThrowError(/Empty string in 'originlist'/);
+                                   originlist: 'http://server.com/,,http://server.org'
+                                                  };});
+                  }).toThrowError(/Empty string in 'originlist'/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://server.com:8080?foo=2'
-                    };});
-    		  }).toThrowError(/Search string cannot be present/);
+                                   originlist: 'http://server.com:8080?foo=2'
+                                                  };});
+                  }).toThrowError(/Search string cannot be present/);
 
    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://server.com:8080?'
-                    };});
-    		  }).toThrowError(/Search string cannot be present/);
+                                   originlist: 'http://server.com:8080?'
+                                                 };});
+                 }).toThrowError(/Search string cannot be present/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://localhost:9999#mttag'
-                    };});
-    		  }).toThrowError(/Hash tag cannot be present/);
+                                   originlist: 'http://localhost:9999#mttag'
+                                                  };});
+                  }).toThrowError(/Hash tag cannot be present/);
 
     expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
                                    hostname: 'myhost',
                                    tempdir:  '/tmp/mydir',
-    				   port:     9999,
+                                   port:     9999,
                                    debug:    true,
                                    help:     true,
                                    anyorigin: false,
-    				   originlist: 'http://server.com:9999#'
-                    };});
-    		  }).toThrowError(/Hash tag cannot be present/);
+                                   originlist: 'http://server.com:9999#'
+                                                  };});
+                  }).toThrowError(/Hash tag cannot be present/);
+    expect( () => { config.provide( () => {return {mongourl: 'mymongourl',
+                                         hostname: 'myhost',
+                                         tempdir:  '/tmp/mydir',
+                                         port:     9999,
+                                         debug:    true,
+                                         help:     true,
+                                         anyorigin: false,
+                                         originlist: 'http://server.com:9999/#tag'
+                                                  };});
+                  }).toThrowError(/Hash tag cannot be present/);
   });
 
   it('Setting originlist to an array of URL strings', function() {
@@ -355,6 +376,4 @@ describe('Validating CORS options', function() {
     expect(config.provide().get('originlist').join()).toEqual(
       expected, 'spaces between strings are allowed');
   });
-
 });
-
