@@ -9,6 +9,10 @@ LIST OF CHANGES for npg_ranger project
   - add config-chain 1.1.10
   - add new module to handle config options
   - fix error in interpreting the end range value in the user query
+  - client library - an option to accept trailers and failing the overall
+     request if data is truncated
+  - client script - exit with error code if the request is unsuccessful
+  - server - only set trailers if the client declared that it accepts them
 
 release 0.3.0
   - publish as npm package
