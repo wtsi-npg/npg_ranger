@@ -11,8 +11,7 @@ const LOGGER      = require('../lib/logsetup.js');
 
 const config = require('../lib/config.js');
 // Call to config.provide() must occur here before requiring controller
-// so that options object is built before it is provided to the
-// other modules.
+// so that options object is built before it is provided to other modules.
 const options = config.provide(config.fromCommandLine);
 const RangerController = require('../lib/server/controller');
 
@@ -110,7 +109,7 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
     // handle the request.
     LOGGER.debug('request headers: ' + JSON.stringify(request.headers));
     let controller = new RangerController(request, response, db);
-    controller.handleRequest(options.get('hostname'));
+    controller.handleRequest();
   });
 
   var createTempDataDir = () => {

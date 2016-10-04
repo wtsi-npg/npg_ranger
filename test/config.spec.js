@@ -355,6 +355,5 @@ describe('Validating CORS options', function() {
     expect(config.provide().get('originlist').join()).toEqual(
       expected, 'spaces between strings are allowed');
   });
-
 });
 
