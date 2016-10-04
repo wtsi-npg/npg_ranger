@@ -25,7 +25,6 @@ let mongourl = `mongodb://localhost:${PORT}/${db_name}`;
 let options = config.provide(() => {return {mongourl: mongourl};});
 
 describe('server fetching', function() {
-  // TODO do a better job of managing db connection
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
   let expectedMd5s = {
@@ -60,11 +59,9 @@ describe('server fetching', function() {
     out = child.execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
-    // TODO this ought to go (or at least be commented)
+    // Uncomment these lines to view server debug output
     //let LOGGER = require('../../lib/logsetup.js');
     //LOGGER.level = 'debug';
-    // /TODO
-
 
     MongoClient.connect(mongourl, function(err, db) {
       assert.equal(err, null, `failed to connect to ${mongourl}: ${err}`);
