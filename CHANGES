@@ -9,6 +9,7 @@ LIST OF CHANGES for npg_ranger project
   - add config-chain 1.1.10
   - add new module to handle config options
   - fix error in interpreting the end range value in the user query
+  - full cycle tests using bioinf tools, compiled tools cached in travis
 
 release 0.3.0
   - publish as npm package
