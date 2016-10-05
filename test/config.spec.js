@@ -1,10 +1,15 @@
-/* globals describe, it, expect */
+/* globals describe, it, expect, afterAll */
 
 "use strict";
 const assert  = require('assert');
 const os      = require('os');
 const path    = require('path');
 const config  = require('../lib/config.js');
+const decache = require('decache');
+
+afterAll(function() {
+  decache('../lib/config.js');
+});
 
 describe('Building options', function() {
   it('Must define options before retrieval', function() {
@@ -354,6 +359,15 @@ describe('Validating CORS options', function() {
                                   };});
     expect(config.provide().get('originlist').join()).toEqual(
       expected, 'spaces between strings are allowed');
+  });
+
+  it('Setting readonly', function() {
+    config.provide( () => {return {mongourl: 'mymongourl',
+                                   'config_ro': true
+                                  };});
+    expect(config.provide().get('mongourl')).toBe('mymongourl');
+
+    expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError('Attempt to overwrite original configuration');
   });
 });
 
