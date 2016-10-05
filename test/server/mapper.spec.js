@@ -13,8 +13,8 @@ const config      = require('../../lib/config.js');
 
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
-const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
+const PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
 
 /* ***************************************************************************
  * Test cases (sample accession number, file path, details)
