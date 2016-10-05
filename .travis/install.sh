@@ -8,6 +8,7 @@ wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
 tar xfz mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
 
 # htslib & samtools
+if [ ! "$(ls -A htslib)" ]; then
 git clone --branch ${HTSLIB_VERSION} --depth 1 https://github.com/wtsi-npg/htslib.git htslib
 pushd htslib
 autoreconf -fi
@@ -15,7 +16,9 @@ autoreconf -fi
 make
 make install
 popd
+fi
 
+if [ ! "$(ls -A samtools)" ]; then
 git clone --branch ${SAMTOOLS1_VERSION} --depth 1 https://github.com/wtsi-npg/samtools.git samtools
 pushd samtools
 mkdir -p acinclude.m4
@@ -28,6 +31,7 @@ autoreconf -i
 ./configure --prefix=/tmp --with-htslib=/tmp/htslib --enable-plugins
 make
 popd
+fi
 
 # biobambam
 wget https://github.com/gt1/biobambam2/releases/download/${BIOBAMBAM_VERSION}/biobambam2-${BIOBAMBAM_VERSION}-x86_64-etch-linux-gnu.tar.gz -O biobambam2.tar.gz
@@ -35,11 +39,13 @@ mkdir biobambam2
 tar xzf biobambam2.tar.gz -C biobambam2 --strip-components 1
 
 # freebayes
+if [ ! "$(ls -A freebayes)" ]; then
 git clone --branch ${FREEBAYES_VERSION} --depth 1 https://github.com/wtsi-npg/freebayes.git freebayes
 pushd freebayes
 git submodule update --init --recursive
 make BAMTOOLS_ARGS="-DEnableNodeJS=true"
 popd
+fi
 
 # symlink to path
 mkdir -p /tmp/usr/bin
