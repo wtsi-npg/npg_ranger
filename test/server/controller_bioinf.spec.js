@@ -2,29 +2,29 @@
 
 'use strict';
 
-const assert = require('assert');
-const child = require('child_process');
-const crypto = require('crypto');
-const fse = require('fs-extra');
-const http = require('http');
-const path = require('path');
-const tmp = require('tmp');
+const assert      = require('assert');
+const child       = require('child_process');
+const crypto      = require('crypto');
+const fse         = require('fs-extra');
+const http        = require('http');
+const path        = require('path');
+const tmp         = require('tmp');
 const MongoClient = require('mongodb').MongoClient;
 
 const RangerController = require('../../lib/server/controller.js');
-const config = require('../../lib/config.js');
+const config           = require('../../lib/config.js');
 
-const BASE_PORT = 1400;
+const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
-const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
+const PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
 
-var tmpDir = config.tempFilePath('npg_ranger_controller_bioinf_test_');
-let db_name = 'imetacache';
+var tmpDir   = config.tempFilePath('npg_ranger_controller_bioinf_test_');
+let db_name  = 'imetacache';
 let mongourl = `mongodb://localhost:${PORT}/${db_name}`;
-let options = config.provide(() => {return {mongourl: mongourl};});
+let options  = config.provide( () => { return {mongourl: mongourl}; });
 
-describe('server fetching', function() {
+describe('server fetching', () => {
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
   let expectedMd5s = {
@@ -42,11 +42,11 @@ describe('server fetching', function() {
     }
   };
   let testRuns = {
-    'single file': '/file?name=20818_1%23888.bam&format=',
+    'single file':             '/file?name=20818_1%23888.bam&format=',
     'multiple (merged) files': '/sample?accession=ABC123456&format='
   };
 
-  beforeAll(function(done) {
+  beforeAll( (done) => {
     // Start mongod
     fse.ensureDirSync(tmpDir);
     let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmpDir} --pidfilepath ${tmpDir}/mpid --logpath ${tmpDir}/dbserver.log`;
@@ -63,7 +63,7 @@ describe('server fetching', function() {
     //let LOGGER = require('../../lib/logsetup.js');
     //LOGGER.level = 'debug';
 
-    MongoClient.connect(mongourl, function(err, db) {
+    MongoClient.connect(mongourl, (err, db) => {
       assert.equal(err, null, `failed to connect to ${mongourl}: ${err}`);
 
       // The model runs samtools merge in a temporary directory,
@@ -100,7 +100,7 @@ describe('server fetching', function() {
         dbClose(db);
       });
 
-      let listenPromise = new Promise(function(resolve) {
+      let listenPromise = new Promise( (resolve) => {
         server.listen(socket, () => {
           console.log('server listening on ' + socket);
           resolve();
@@ -115,14 +115,14 @@ describe('server fetching', function() {
       Promise.all(updatePromises.concat([listenPromise]))
       .then(function serverReady() {
         done();
-      }, function(reason) {
+      }, ( reason ) => {
         console.log('Server wasn\'t ready: ' + reason);
       });
     });
   });
 
-  afterAll(function() {
-    server.close(function closed(err) {
+  afterAll( () => {
+    server.close( function closed(err){
       if (err) {
         console.log('Tried to close server, but it was already closed.');
       }
@@ -136,10 +136,10 @@ describe('server fetching', function() {
     });
   });
 
-  Object.keys(testRuns).forEach( function(description) {
-    describe(description, function() {
-      Object.keys(expectedMd5s[description]).forEach( function(format) {
-        it('run controller on ' + description + ' outputting ' + format, function(done) {
+  Object.keys(testRuns).forEach( ( description ) => {
+    describe(description, () => {
+      Object.keys(expectedMd5s[description]).forEach( ( format ) => {
+        it('run controller on ' + description + ' outputting ' + format, ( done ) => {
           function isOneOf(subject, expecteds) {
             let matched = false;
             for (let i = 0; i < expecteds.length; i++) {
@@ -155,7 +155,7 @@ describe('server fetching', function() {
                 socketPath: socket,
                 path: testRuns[description] + format,
                 headers: {TE: 'trailers'}
-              }, function(res) {
+              }, ( res ) => {
 
             let hash = crypto.createHash('md5');
 
@@ -167,16 +167,16 @@ describe('server fetching', function() {
                   'inputformat=' + format.toLowerCase(),
                   'reference=test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa'
                 ]);
-              res.on('data', function(data) {
+              res.on('data', ( data ) => {
                 bamseqchksum.stdin.write(data);
               });
-              bamseqchksum.stdout.on('data', function(data) {
+              bamseqchksum.stdout.on('data', ( data ) => {
                 hash.update(data);
               });
-              res.on('end', function() {
+              res.on('end', () => {
                 bamseqchksum.stdin.end();
               });
-              bamseqchksum.stdout.on('end', function() {
+              bamseqchksum.stdout.on('end', () => {
                 let hashDigest = hash.digest('hex');
                 let match = isOneOf(hashDigest, expectedMd5s[description][format]);
                 expect(match).toBe(true);
@@ -185,14 +185,14 @@ describe('server fetching', function() {
             } else {
               let body = '';
               let file = fse.createWriteStream('./out.vcf');
-              res.on('data', function(data) {
+              res.on('data', ( data ) => {
                 body += data;
               });
-              res.on('end', function() {
+              res.on('end', () => {
                 // in VCF file, header is unpredictable, so remove and md5 remaining data
                 file.end(body);
                 let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
-                                 .digest('hex');
+                                     .digest('hex');
                 let match = isOneOf(hashDigest,
                                     expectedMd5s[description][format]
                                    );
