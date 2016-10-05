@@ -115,20 +115,26 @@ describe('Listing config options', function() {
                                    debug:    true,
                                    help:     true
                                   };} );
-    let expected = ['anyorigin=undefined',
+    let a =        ['anyorigin=undefined',
                     'configfile=undefined',
                     'debug=true',
-                    'hostname=myhost',
-                    'mongourl=mymongourl',
+                    'hostname="myhost"',
+                    'mongourl="mymongourl"',
                     'multiref=undefined',
                     'port=9999',
                     'references=undefined',
                     'skipauth=undefined',
-                    'tempdir=/tmp/mydir',
+                    "tempdir=\"\\/tmp\\/mydir\"",
                     'timeout=3'];
+    let expected = "^\n" + a.join("\n");
+    let re = new RegExp(expected);
     let o = config.logOpts();
     expect(o).not.toMatch(/help=/);
-    expect(o).toMatch(expected.join(', '));
+    expect(o.match(re)).not.toBeNull();
+    re = new RegExp('mongourl="mymongourl"');
+    expect(o.match(re)).not.toBeNull();
+    re = new RegExp('config_ro=false');
+    expect(o.match(re)).not.toBeNull();
   });
 });
 
@@ -383,11 +389,15 @@ describe('Validating CORS options', function() {
   });
 
   it('Setting readonly', function() {
-    config.provide( () => {return {mongourl: 'mymongourl',
-                                   'config_ro': true
-                                  };});
+    let c = config.provide( () => {return {mongourl: 'mymongourl',
+                                           config_ro: true};
+                                  });
     expect(config.provide().get('mongourl')).toBe('mymongourl');
-
-    expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError('Attempt to overwrite original configuration');
+    expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError(
+      'Attempt to overwrite original configuration');
+    expect( () => {c.set('mongourl');}).toThrowError(
+      'Attempt to change read-only configuration');
+    expect( () => {c.set('config_ro');}).toThrowError(
+      'Attempt to change read-only configuration');
   });
 });
