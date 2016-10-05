@@ -92,7 +92,7 @@ describe('server fetching', function() {
         if (dbConn) {
           try {
             dbConn.close();
-          } catch (err) {}
+          } catch (err) { console.log(err); }
         }
       };
 
@@ -129,8 +129,8 @@ describe('server fetching', function() {
       child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
       // the above shutdown command can return before server is
       // shut down, so set a short timeout to make sure
-      setTimeout(function() {
-        try { fse.unlinkSync(socket); } catch (e) {}
+      setTimeout( () => {
+        try { fse.unlinkSync(socket); } catch (e) { console.log(e); }
         fse.removeSync(tmpDir);
       }, 1000);
     });

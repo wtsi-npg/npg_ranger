@@ -97,7 +97,7 @@ describe('set error response', function() {
   // due to an error. Seems to be a bug in jasmine.
   afterAll(function() {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
+    try { fs.unlinkSync(socket); } catch ( e ) { console.log(e); }
     fse.removeSync(tmpDir);
   });
 
