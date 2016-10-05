@@ -4,12 +4,12 @@ set -e -x
 
 pushd /tmp
 # mongo
-wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
-tar xfz mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
+wget "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
+tar xfz "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
 
 # htslib & samtools
 if [ ! "$(ls -A htslib)" ]; then
-git clone --branch ${HTSLIB_VERSION} --depth 1 https://github.com/wtsi-npg/htslib.git htslib
+git clone --branch "${HTSLIB_VERSION}" --depth 1 https://github.com/wtsi-npg/htslib.git htslib
 pushd htslib
 autoreconf -fi
 ./configure --prefix=/tmp --enable-plugins
@@ -19,7 +19,7 @@ popd
 fi
 
 if [ ! "$(ls -A samtools)" ]; then
-git clone --branch ${SAMTOOLS1_VERSION} --depth 1 https://github.com/wtsi-npg/samtools.git samtools
+git clone --branch "${SAMTOOLS1_VERSION}" --depth 1 https://github.com/wtsi-npg/samtools.git samtools
 pushd samtools
 mkdir -p acinclude.m4
 pushd acinclude.m4
@@ -34,13 +34,13 @@ popd
 fi
 
 # biobambam
-wget https://github.com/gt1/biobambam2/releases/download/${BIOBAMBAM_VERSION}/biobambam2-${BIOBAMBAM_VERSION}-x86_64-etch-linux-gnu.tar.gz -O biobambam2.tar.gz
+wget "https://github.com/gt1/biobambam2/releases/download/${BIOBAMBAM_VERSION}/biobambam2-${BIOBAMBAM_VERSION}-x86_64-etch-linux-gnu.tar.gz" -O biobambam2.tar.gz
 mkdir biobambam2
 tar xzf biobambam2.tar.gz -C biobambam2 --strip-components 1
 
 # freebayes
 if [ ! "$(ls -A freebayes)" ]; then
-git clone --branch ${FREEBAYES_VERSION} --depth 1 https://github.com/wtsi-npg/freebayes.git freebayes
+git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/wtsi-npg/freebayes.git freebayes
 pushd freebayes
 git submodule update --init --recursive
 make BAMTOOLS_ARGS="-DEnableNodeJS=true"
@@ -50,9 +50,9 @@ fi
 # symlink to path
 mkdir -p /tmp/usr/bin
 
-ln -s /tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongo /tmp/usr/bin/mongo
-ln -s /tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod /tmp/usr/bin/mongod
-ln -s /tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongoimport /tmp/usr/bin/mongoimport
+ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongo" /tmp/usr/bin/mongo
+ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod" /tmp/usr/bin/mongod
+ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongoimport" /tmp/usr/bin/mongoimport
 ln -s /tmp/samtools/samtools /tmp/usr/bin/samtools
 ln -s /tmp/biobambam2/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
 ln -s /tmp/biobambam2/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
