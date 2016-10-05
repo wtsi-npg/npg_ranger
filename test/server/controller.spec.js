@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect, beforeAll, afterAll */
 
 "use strict";
 
@@ -105,7 +105,7 @@ describe('set error response', function() {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      console.log(response.toString());
+      //console.log(response.toString());
       assert(typeof request == 'object');
       expect( () => {new RangerController(request, response);} ).toThrowError(
         assert.AssertionError, 'DB handle object is required');
