@@ -127,8 +127,12 @@ describe('server fetching', function() {
         console.log('Tried to close server, but it was already closed.');
       }
       child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
-      try { fse.unlinkSync(socket); } catch (e) {}
-      fse.removeSync(tmpDir);
+      // the above shutdown command can return before server is
+      // shut down, so set a short timeout to make sure
+      setTimeout(function() {
+        try { fse.unlinkSync(socket); } catch (e) {}
+        fse.removeSync(tmpDir);
+      }, 1000);
     });
   });
 

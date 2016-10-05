@@ -9,6 +9,7 @@ const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
 const DataMapper  = require('../../lib/server/mapper.js');
+const config      = require('../../lib/config.js');
 
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
@@ -55,7 +56,54 @@ describe('Data info retrieval', function() {
     command = `mongoimport --port ${PORT} --db ${db_name} --collection fileinfo --jsonArray --file ${FIXTURES}`;
     out = child.execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
+    config.provide(() => { return {multiref: true}; });
   });
+
+
+  describe('Reference mismatch correctly handled', function() {
+    beforeAll( () => {
+      config.provide(() => { return {}; });
+    });
+
+    afterAll( () => {
+      config.provide(() => { return {multiref: true}; });
+    });
+
+    it('Do not allow mismatching references when multiref falsy', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        var dm = new DataMapper(db);
+        dm.once('data', () => {
+          // Data should not be returned, so fail
+          expect(true).toBe(false);
+          done();
+        });
+        dm.once('nodata', (reason) => {
+          expect(reason).toBe('Not all references match for sample accession XYZ238967');
+          done();
+        });
+        dm.getFileInfo({accession: "XYZ238967"}, 'localhost');
+      });
+    });
+
+    it('Fail if no reference found', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        var dm = new DataMapper(db);
+        dm.once('data', () => {
+          // No data should be returned, so fail
+          expect(true).toBe(false);
+          done();
+        });
+        dm.once('nodata', (reason) => {
+          expect(reason).toBe('No reference for 10000_1#58_phix.bam');
+          done();
+        });
+        dm.getFileInfo({name: "10000_1#58_phix.bam"}, 'localhost');
+      });
+    });
+  });
+
 
   it('Input validation', function() {
     expect( () => {new DataMapper();} ).toThrowError(ReferenceError,
@@ -267,5 +315,6 @@ describe('Data info retrieval', function() {
     child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
     console.log('\nMONGODB server has been shut down');
     fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
+    config.provide(() => { return {}; });
   });
 });
