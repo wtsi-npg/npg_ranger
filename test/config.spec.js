@@ -115,17 +115,17 @@ describe('Listing config options', function() {
                                    debug:    true,
                                    help:     true
                                   };} );
-    let a =        ['anyorigin=undefined',
-                    'configfile=undefined',
-                    'debug=true',
-                    'hostname="myhost"',
-                    'mongourl="mymongourl"',
-                    'multiref=undefined',
-                    'port=9999',
-                    'references=undefined',
-                    'skipauth=undefined',
-                    "tempdir=\"\\/tmp\\/mydir\"",
-                    'timeout=3'];
+    let a = ['anyorigin=undefined',
+             'configfile=undefined',
+             'debug=true',
+             'hostname="myhost"',
+             'mongourl="mymongourl"',
+             'multiref=undefined',
+             'port=9999',
+             'references=undefined',
+             'skipauth=undefined',
+             "tempdir=\"\\/tmp\\/mydir\"",
+             'timeout=3'];
     let expected = "^\n" + a.join("\n");
     let re = new RegExp(expected);
     let o = config.logOpts();
