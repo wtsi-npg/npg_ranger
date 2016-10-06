@@ -621,6 +621,112 @@ describe('Redirection in json response', function() {
 
 });
 
+describe('redirection when running behind a proxy', () => {
+  const server = http.createServer();
+  let socket = tmp.tmpNameSync();
+  let id              = 'EGA45678';
+  let serverPathBasic = '/ga4gh/v.0.1/get/sample';
+  let serverPath      = serverPathBasic + '/' + id;
+
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    config.provide(() => {return {
+      tempdir:   tmpDir,
+      skipauth:  true,
+      proxylist: {
+        'http://myserver.com':      'http://myserver.com/path1/path2',
+        'http://myserver.com:3456': 'http://myserver.com:3456/path3',
+      }
+    };});
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  afterAll(() => {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  it('direct access is not allowed', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(422);
+      expect(res.statusMessage).toEqual(
+        'Bypassing proxy server is not allowed');
+      done();   
+    });
+    req.end();
+  });
+
+  it('unknown proxy is not allowed', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'x-Forwarded-Host': 'http://myserver.com:9090/'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(422);
+      expect(res.statusMessage).toEqual(
+        'Unknown proxy http://myserver.com:9090');
+      done();   
+    });
+    req.end();
+  });
+
+  it('Redirection to one of known proxies', (done) => {
+    let url = `http://myserver.com:3456/path3/sample?accession=${id}&format=BAM`;
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'x-Forwarded-Host': 'http://myserver.com:3456/'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      var body = '';
+      expect(res.statusCode).toEqual(200);
+      res.on('data', (d) => { body += d;});
+      res.on('end', () => {
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });   
+    });
+    req.end();
+  });
+
+  it('Redirection to one of known proxies', (done) => {
+    let url = `http://myserver.com/path1/path2/sample?accession=${id}&format=BAM`;
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'x-Forwarded-Host': 'http://myserver.com'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      var body = '';
+      expect(res.statusCode).toEqual(200);
+      res.on('data', (d) => { body += d;});
+      res.on('end', () => {
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });   
+    });
+    req.end();
+  });
+});
+
 describe('content type', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();

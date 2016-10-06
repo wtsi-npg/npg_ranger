@@ -16,6 +16,8 @@ LIST OF CHANGES for npg_ranger project
   - restrict request types handled by teh server to GET and OPTIONS
   - add a separate handler for OPTIONS request, set CORS headers
   - read-only configuration when options are read from a command line
+  - proxy-aware server configuration
+  - validation for reference name user input
 
 release 0.3.0
   - publish as npm package
