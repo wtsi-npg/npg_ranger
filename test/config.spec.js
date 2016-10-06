@@ -1,10 +1,15 @@
-/* globals describe, it, expect */
+/* globals describe, it, expect, afterAll */
 
 "use strict";
 const assert  = require('assert');
 const os      = require('os');
 const path    = require('path');
 const config  = require('../lib/config.js');
+const decache = require('decache');
+
+afterAll(function() {
+  decache('../lib/config.js');
+});
 
 describe('Building options', function() {
   it('Must define options before retrieval', function() {
@@ -110,20 +115,26 @@ describe('Listing config options', function() {
                                    debug:    true,
                                    help:     true
                                   };} );
-    let expected = ['anyorigin=undefined',
-                    'configfile=undefined',
-                    'debug=true',
-                    'hostname=myhost',
-                    'mongourl=mymongourl',
-                    'multiref=undefined',
-                    'port=9999',
-                    'references=undefined',
-                    'skipauth=undefined',
-                    'tempdir=/tmp/mydir',
-                    'timeout=3'];
+    let a = ['anyorigin=undefined',
+             'configfile=undefined',
+             'debug=true',
+             'hostname="myhost"',
+             'mongourl="mymongourl"',
+             'multiref=undefined',
+             'port=9999',
+             'references=undefined',
+             'skipauth=undefined',
+             "tempdir=\"\\/tmp\\/mydir\"",
+             'timeout=3'];
+    let expected = "^\n" + a.join("\n");
+    let re = new RegExp(expected);
     let o = config.logOpts();
     expect(o).not.toMatch(/help=/);
-    expect(o).toMatch(expected.join(', '));
+    expect(o.match(re)).not.toBeNull();
+    re = new RegExp('mongourl="mymongourl"');
+    expect(o.match(re)).not.toBeNull();
+    re = new RegExp('config_ro=false');
+    expect(o.match(re)).not.toBeNull();
   });
 });
 
@@ -375,5 +386,18 @@ describe('Validating CORS options', function() {
                                   };});
     expect(config.provide().get('originlist').join()).toEqual(
       expected, 'spaces between strings are allowed');
+  });
+
+  it('Setting readonly', function() {
+    let c = config.provide( () => {return {mongourl: 'mymongourl',
+                                           config_ro: true};
+                                  });
+    expect(config.provide().get('mongourl')).toBe('mymongourl');
+    expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError(
+      'Attempt to overwrite original configuration');
+    expect( () => {c.set('mongourl');}).toThrowError(
+      'Attempt to change read-only configuration');
+    expect( () => {c.set('config_ro');}).toThrowError(
+      'Attempt to change read-only configuration');
   });
 });

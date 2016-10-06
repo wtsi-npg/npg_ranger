@@ -22,7 +22,6 @@ const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
 var tmpDir   = config.tempFilePath('npg_ranger_controller_bioinf_test_');
 let db_name  = 'imetacache';
 let mongourl = `mongodb://localhost:${PORT}/${db_name}`;
-let options  = config.provide( () => { return {mongourl: mongourl}; });
 
 describe('server fetching', () => {
   const server = http.createServer();
@@ -49,6 +48,12 @@ describe('server fetching', () => {
   beforeAll( (done) => {
     // Start mongod
     fse.ensureDirSync(tmpDir);
+    config.provide( () => { return {
+                     mongourl: mongourl,
+                     skipauth: true,
+                     tempdir:  tmpDir
+                                   };});
+
     let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmpDir} --pidfilepath ${tmpDir}/mpid --logpath ${tmpDir}/dbserver.log`;
     console.log(`\nCommand to start MONGO DB daemon: ${command}`);
     let out = child.execSync(command);
@@ -108,8 +113,8 @@ describe('server fetching', () => {
       });
 
       server.on('request', (request, response) => {
-        let c = new RangerController(request, response, db, tmpDir, true);
-        c.handleRequest(options.get('hostname'));
+        let c = new RangerController(request, response, db);
+        c.handleRequest();
       });
 
       Promise.all(updatePromises.concat([listenPromise]))

@@ -15,6 +15,7 @@ LIST OF CHANGES for npg_ranger project
   - server - only set trailers if the client declared that it accepts them
   - restrict request types handled by teh server to GET and OPTIONS
   - add a separate handler for OPTIONS request, set CORS headers
+  - read-only configuration when options are read from a command line
   - full cycle tests using bioinf tools, compiled tools cached in travis
 
 release 0.3.0
