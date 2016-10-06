@@ -12,7 +12,7 @@ const LOGGER      = require('../lib/logsetup.js');
 const config = require('../lib/config.js');
 // Call to config.provide() must occur here before requiring controller
 // so that options object is built before it is provided to other modules.
-const options = config.provide(config.fromCommandLine);
+const options = config.provide(config.fromCommandLine, true);
 const RangerController = require('../lib/server/controller');
 
 if ( options.get('debug') ) {
@@ -128,4 +128,3 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
     LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
   });
 });
-

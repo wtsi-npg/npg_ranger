@@ -4,7 +4,7 @@
 const assert  = require('assert');
 const os      = require('os');
 const path    = require('path');
-const config  = require('../lib/config.js');
+var   config  = require('../lib/config.js');
 const decache = require('decache');
 
 afterAll(function() {
@@ -388,11 +388,49 @@ describe('Validating CORS options', function() {
       expected, 'spaces between strings are allowed');
   });
 
-  it('Setting readonly', function() {
-    let c = config.provide( () => {return {mongourl: 'mymongourl',
-                                           config_ro: true};
-                                  });
+  it('Immutable validation', () => {
+    decache('../lib/config.js');
+    config = require('../lib/config.js');
+    expect( () => {
+      config.provide( () => { return {}; }, false );
+    } ).not.toThrow();
+    expect( () => {
+      config.provide( () => { return {}; }, true );
+    } ).not.toThrow();
+    decache('../lib/config.js');
+    config = require('../lib/config.js');
+    expect( () => {
+      config.provide( () => { return {}; }, 'true');
+    } ).toThrowError('immutable must be boolean');
+  });
+
+  it('Immutable prevents rewrite', () => {
+    decache('../lib/config.js');
+    config = require('../lib/config.js');
+
+    config.provide( () => {
+      return {
+        mongourl:  'mymongourl',
+      };
+    }, true);
     expect(config.provide().get('mongourl')).toBe('mymongourl');
+    expect(config.provide().get('config_ro')).toBe(true);
+    expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError(
+      'Attempt to overwrite original configuration');
+  });
+
+  it('Setting readonly from configuration init', function() {
+    decache('../lib/config.js');
+    config = require('../lib/config.js');
+
+    let c = config.provide( () => {
+      return {
+        mongourl:  'mymongourl',
+        config_ro: true
+      };
+    });
+    expect(config.provide().get('mongourl')).toBe('mymongourl');
+    expect(config.provide().get('config_ro')).toBe(true);
     expect( () => {config.provide( () => {return {mongourl: 'newmongourl'};});}).toThrowError(
       'Attempt to overwrite original configuration');
     expect( () => {c.set('mongourl');}).toThrowError(
