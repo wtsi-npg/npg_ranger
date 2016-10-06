@@ -145,8 +145,8 @@ describe('Handling requests - error responses', function() {
 
   it('Authentication error', function(done) {
     config.provide( () => {
-      return {tempdir:    tmpDir,
-              skipauth:   false};
+      return {tempdir:  tmpDir,
+              skipauth: false};
     });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -170,8 +170,8 @@ describe('Handling requests - error responses', function() {
 
   it('Not found error, no auth', function(done) {
     config.provide( () => {
-      return {tempdir:    tmpDir,
-              skipauth:   true};
+      return {tempdir:  tmpDir,
+              skipauth: true};
     });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -201,7 +201,6 @@ describe('Handling requests - error responses', function() {
     });
     let req = http.request({socketPath: socket, path: '/invalid'});
     req.setHeader('X-Remote-User', 'user1');
-    req.end();
     req.on('response', function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -215,6 +214,7 @@ describe('Handling requests - error responses', function() {
         done();
       });
     });
+    req.end();
   });
 
 
@@ -883,4 +883,3 @@ describe('CORS in response', function() {
     req.end();
   });
 });
-
