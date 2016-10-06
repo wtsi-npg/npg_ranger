@@ -142,12 +142,12 @@ describe('Handling requests - error responses', function() {
       done();
     });
     req.end();
-  }); 
+  });
 
   it('Authentication error', function(done) {
     config.provide( () => {
-      return {tempdir:    tmpDir,
-              skipauth:   false};
+      return {tempdir:  tmpDir,
+              skipauth: false};
     });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -171,8 +171,8 @@ describe('Handling requests - error responses', function() {
 
   it('Not found error, no auth', function(done) {
     config.provide( () => {
-      return {tempdir:    tmpDir,
-              skipauth:   true};
+      return {tempdir:  tmpDir,
+              skipauth: true};
     });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -202,7 +202,6 @@ describe('Handling requests - error responses', function() {
     });
     let req = http.request({socketPath: socket, path: '/invalid'});
     req.setHeader('X-Remote-User', 'user1');
-    req.end();
     req.on('response', function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -216,6 +215,7 @@ describe('Handling requests - error responses', function() {
         done();
       });
     });
+    req.end();
   });
 
 
@@ -660,7 +660,7 @@ describe('trailers in response', function() {
     try { fs.unlinkSync(socket); } catch (e) {}
     fse.removeSync(tmpDir);
   });
- 
+
   it('no trailers without TE header', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -698,7 +698,7 @@ describe('CORS in response', function() {
     expect(headers['access-control-allow-origin']).toBe(
       origin, `allowed origin is ${origin}`);
     expect(headers['access-control-allow-methods']).toBe(
-      'GET,OPTIONS', 'allowed methods are set'); 
+      'GET,OPTIONS', 'allowed methods are set');
     expect(headers['access-control-allow-headers']).toBe(
       'TE,X-Remote-User', 'allowed headers are set');
     expect(headers['access-control-max-age']).toBe('1800', 'max age is set');
@@ -717,7 +717,7 @@ describe('CORS in response', function() {
     try { fs.unlinkSync(socket); } catch (e) {}
     fse.removeSync(tmpDir);
   });
- 
+
   it('no CORS in a response to a standart request', function(done) {
     config.provide( () => {
       return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
@@ -884,4 +884,3 @@ describe('CORS in response', function() {
     req.end();
   });
 });
-
