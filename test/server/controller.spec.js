@@ -832,7 +832,7 @@ describe('CORS in response', function() {
     config.provide( () => {
       return {tempdir:     tmpDir,
               anyorigin:   false,
-              originlist: 'http://other.com,http://other.com:9090',
+              originlist: ['http://other.com','http://other.com:9090'],
               skipauth:   true};
     });
     let options = {socketPath: socket,
@@ -866,7 +866,7 @@ describe('CORS in response', function() {
     config.provide( () => {
       return {tempdir:    tmpDir,
               anyorigin:  false,
-              originlist: 'http://other.com,http://other.com:9090',
+              originlist: ['http://other.com','http://other.com:9090'],
               skipauth:   false};
     });
     let options = {socketPath: socket,
