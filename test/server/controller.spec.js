@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect, beforeAll, afterAll */
 
 "use strict";
 
@@ -64,7 +64,7 @@ describe('set error response', function() {
   // due to an error. Seems to be a bug in jasmine.
   afterAll(function() {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
+    try { fs.unlinkSync(socket); } catch ( e ) { console.log(e); }
     fse.removeSync(tmpDir);
   });
 
@@ -72,7 +72,6 @@ describe('set error response', function() {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      console.log(response.toString());
       assert(typeof request == 'object');
       expect( () => {new RangerController(request, response);} ).toThrowError(
         assert.AssertionError, 'DB handle object is required');
@@ -142,7 +141,7 @@ describe('Handling requests - error responses', function() {
       done();
     });
     req.end();
-  }); 
+  });
 
   it('Authentication error', function(done) {
     config.provide( () => {
@@ -660,7 +659,7 @@ describe('trailers in response', function() {
     try { fs.unlinkSync(socket); } catch (e) {}
     fse.removeSync(tmpDir);
   });
- 
+
   it('no trailers without TE header', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
@@ -698,7 +697,7 @@ describe('CORS in response', function() {
     expect(headers['access-control-allow-origin']).toBe(
       origin, `allowed origin is ${origin}`);
     expect(headers['access-control-allow-methods']).toBe(
-      'GET,OPTIONS', 'allowed methods are set'); 
+      'GET,OPTIONS', 'allowed methods are set');
     expect(headers['access-control-allow-headers']).toBe(
       'TE,X-Remote-User', 'allowed headers are set');
     expect(headers['access-control-max-age']).toBe('1800', 'max age is set');
@@ -717,7 +716,7 @@ describe('CORS in response', function() {
     try { fs.unlinkSync(socket); } catch (e) {}
     fse.removeSync(tmpDir);
   });
- 
+
   it('no CORS in a response to a standart request', function(done) {
     config.provide( () => {
       return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};

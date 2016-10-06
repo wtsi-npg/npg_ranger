@@ -16,6 +16,7 @@ LIST OF CHANGES for npg_ranger project
   - restrict request types handled by teh server to GET and OPTIONS
   - add a separate handler for OPTIONS request, set CORS headers
   - read-only configuration when options are read from a command line
+  - full cycle tests using bioinf tools, compiled tools cached in travis
 
 release 0.3.0
   - publish as npm package
@@ -57,4 +58,3 @@ release 0.1
     'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
       error in the pipeline it is set to 'true'.
-
