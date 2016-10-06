@@ -202,7 +202,6 @@ describe('Handling requests - error responses', function() {
     });
     let req = http.request({socketPath: socket, path: '/invalid'});
     req.setHeader('X-Remote-User', 'user1');
-    req.end();
     req.on('response', function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -216,6 +215,7 @@ describe('Handling requests - error responses', function() {
         done();
       });
     });
+    req.end();
   });
 
 
