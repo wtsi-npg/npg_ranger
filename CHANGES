@@ -1,12 +1,14 @@
 LIST OF CHANGES for npg_ranger project
 
+  - set node recomended to >= 4.5.0 in package.json
+  - add config-chain 1.1.11
+  - upgrade moment to 2.15.1 from 2.14.1
+  - upgrade mongodb to 2.2.10 from 2.2.8
+  - upgrade tmp to 0.0.29 from 0.0.28
   - use npm 3.10.7 in travis
   - use node 4.5.0 in travis
   - kill all processes after -g seconds after client disconnection
-  - upgrade moment from 2.14.1 to 2.15.0
-  - upgrade mongodb from 2.2.8 to 2.2.9
   - Provide VCF files using freebayes
-  - add config-chain 1.1.10
   - add new module to handle config options
   - fix error in interpreting the end range value in the user query
   - client library - an option to accept trailers and failing the overall
