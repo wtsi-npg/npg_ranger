@@ -587,6 +587,22 @@ describe('Redirection in json response', function() {
     });
   });
 
+  it('redirection error, invalid characted in reference name', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr@1&start=400&end=4'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          'Invalid character in reference name chr@1');
+        done();
+      });
+    });
+  });
+
   it('redirection error, unknown format requested', function(done) {
     http.get(
       { socketPath: socket,
