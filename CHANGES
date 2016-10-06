@@ -18,6 +18,7 @@ LIST OF CHANGES for npg_ranger project
   - read-only configuration when options are read from a command line
   - proxy-aware server configuration
   - validation for reference name user input
+  - full cycle tests using bioinf tools, compiled tools cached in travis
 
 release 0.3.0
   - publish as npm package
@@ -59,4 +60,3 @@ release 0.1
     'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
       error in the pipeline it is set to 'true'.
-
