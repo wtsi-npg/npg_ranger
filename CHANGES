@@ -9,6 +9,12 @@ LIST OF CHANGES for npg_ranger project
   - add config-chain 1.1.10
   - add new module to handle config options
   - fix error in interpreting the end range value in the user query
+  - client library - an option to accept trailers and failing the overall
+     request if data is truncated
+  - client script - exit with error code if the request is unsuccessful
+  - server - only set trailers if the client declared that it accepts them
+  - restrict request types handled by teh server to GET and OPTIONS
+  - add a separate handler for OPTIONS request, set CORS headers
   - full cycle tests using bioinf tools, compiled tools cached in travis
 
 release 0.3.0
@@ -51,4 +57,3 @@ release 0.1
     'data_truncated' trailer header is set to 'false' if the data
       processing pipeline completed successfully, in case of an
       error in the pipeline it is set to 'true'.
-
