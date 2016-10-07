@@ -624,8 +624,7 @@ describe('redirection when running behind a proxy', () => {
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
   let id              = 'EGA45678';
-  let serverPathBasic = '/ga4gh/v.0.1/get/sample';
-  let serverPath      = serverPathBasic + '/' + id;
+  let serverPath      = '/ga4gh/v.0.1/get/sample/' + id;
 
   beforeAll((done) =>  {
     fse.ensureDirSync(tmpDir);
@@ -653,7 +652,23 @@ describe('redirection when running behind a proxy', () => {
     fse.removeSync(tmpDir);
   });
 
-  it('direct access is not allowed', (done) => {
+  it('direct access is not allowed - GA4GH url', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       '/sample/' + id,
+      headers:    {},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(403);
+      expect(res.statusMessage).toEqual(
+        'Bypassing proxy server is not allowed');
+      done();   
+    });
+    req.end();
+  });
+
+  it('direct access is not allowed - sample url', (done) => {
     let options = {
       socketPath: socket,
       path:       serverPath,
@@ -661,7 +676,7 @@ describe('redirection when running behind a proxy', () => {
       method:    'GET'};
     let req = http.request(options);
     req.on('response', (res) => {
-      expect(res.statusCode).toEqual(422);
+      expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Bypassing proxy server is not allowed');
       done();   
@@ -677,7 +692,7 @@ describe('redirection when running behind a proxy', () => {
       method:    'GET'};
     let req = http.request(options);
     req.on('response', (res) => {
-      expect(res.statusCode).toEqual(422);
+      expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Unknown proxy http://myserver.com:9090');
       done();   
