@@ -134,12 +134,12 @@ req.onreadystatechange = () => {
       } else {
         if (numBytes) {
           LOGGER.debug('Will write to stdout');
-          let writeComplete = process.stdout.write(req.response, () => {
+          process.stdout.on('error', (err) => {
+            exitWithError('Failed to write complete data to stdout: ' + err);
+          });
+          process.stdout.write(req.response, () => {
             LOGGER.info('Finished writing operation');
           });
-          if ( !writeComplete ) {
-            exitWithError('Failed to write complete data to sdtout');
-          }
         }
       }
     } else {
