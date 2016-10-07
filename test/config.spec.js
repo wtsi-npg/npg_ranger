@@ -1,4 +1,4 @@
-/* globals describe, it, expect, afterAll */
+/* globals describe, it, expect, beforeEach, afterAll */
 
 "use strict";
 const assert  = require('assert');
@@ -387,27 +387,27 @@ describe('Validating CORS options', function() {
     expect(config.provide().get('originlist').join()).toEqual(
       expected, 'spaces between strings are allowed');
   });
+});
 
-  it('Immutable validation', () => {
+describe('Setting config as immutable', () => {
+  beforeEach( () => {
     decache('../lib/config.js');
     config = require('../lib/config.js');
+  });
+
+  it('Immutable validation', () => {
     expect( () => {
       config.provide( () => { return {}; }, false );
     } ).not.toThrow();
     expect( () => {
-      config.provide( () => { return {}; }, true );
-    } ).not.toThrow();
-    decache('../lib/config.js');
-    config = require('../lib/config.js');
-    expect( () => {
       config.provide( () => { return {}; }, 'true');
     } ).toThrowError('immutable must be boolean');
+    expect( () => {
+      config.provide( () => { return {}; }, true );
+    } ).not.toThrow();
   });
 
   it('Immutable prevents rewrite', () => {
-    decache('../lib/config.js');
-    config = require('../lib/config.js');
-
     config.provide( () => {
       return {
         mongourl:  'mymongourl',
@@ -420,9 +420,6 @@ describe('Validating CORS options', function() {
   });
 
   it('Setting readonly from configuration init', function() {
-    decache('../lib/config.js');
-    config = require('../lib/config.js');
-
     let c = config.provide( () => {
       return {
         mongourl:  'mymongourl',
