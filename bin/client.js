@@ -79,6 +79,13 @@ cline.on('--help', () => {
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
+  console.log('  If you know the server supports trailers, we suggest you execute' +
+              ' with "--accept-trailers" option to improve error control.');
+  console.log('');
+  console.log('    $ client.js --accept-trailers "http://some_server_url/' +
+              'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
+              ' AA0011.bam');
+  console.log('');
 });
 
 if ( !cline.args.length ||
@@ -134,12 +141,12 @@ req.onreadystatechange = () => {
       } else {
         if (numBytes) {
           LOGGER.debug('Will write to stdout');
-          let writeComplete = process.stdout.write(req.response, () => {
+          process.stdout.on('error', (err) => {
+            exitWithError('Failed to write complete data to stdout: ' + err);
+          });
+          process.stdout.write(req.response, () => {
             LOGGER.info('Finished writing operation');
           });
-          if ( !writeComplete ) {
-            exitWithError('Failed to write complete data to sdtout');
-          }
         }
       }
     } else {
