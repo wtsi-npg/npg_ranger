@@ -189,13 +189,11 @@ describe('server fetching', () => {
               });
             } else {
               let body = '';
-              let file = fse.createWriteStream('./out.vcf');
               res.on('data', ( data ) => {
                 body += data;
               });
               res.on('end', () => {
                 // in VCF file, header is unpredictable, so remove and md5 remaining data
-                file.end(body);
                 let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
                                      .digest('hex');
                 let match = isOneOf(hashDigest,
