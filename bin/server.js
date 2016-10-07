@@ -125,6 +125,12 @@ MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
   // Synchronously create directory for temporary data, then start listening.
   createTempDataDir(options.get('tempdir'));
   server.listen(options.get('port'), () => {
+    // If the process has been created by child_process.fork,
+    // e.g. in bin_server.spec.js, send a message to let parent
+    // process know that server is ready to accept connections.
+    if (process.send) {
+      process.send({listening: true});
+    }
     LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
   });
 });
