@@ -224,7 +224,6 @@ if ( require.main === module ) {
     LOGGER.level = 'debug';
   }
 
-  assert(process.env.USER, 'User environment variable is not defined');
   let bf = new BrokerFactory();
   let sf = new RangerServer.ServerFactory();
 
