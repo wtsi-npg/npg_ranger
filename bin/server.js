@@ -77,7 +77,7 @@ const WORKER_CLOSED         = 'worker_closed';
 /**
 * Emitted when the cluster identifies too many workers has died in a short span
 * of time. The cluster will stop forking after this event is emitted. Short
-* after it will try to clean and die.
+* after it will try to clean up and exit.
 * @type {String}
 */
 const HIT_LIMIT_CONSEC_FORK = 'hit_limit_consec_forks';
@@ -126,11 +126,9 @@ class FlatBroker extends Broker {
  */
 class ClusteredBroker extends Broker {
   /**
-   * Creates a cluster and runs as many workers as specified in the
-   * configuration. Emits events when the cluster starts and when workers are
-   * forked, started and die. If too many wokers die in short span of time the
-   * master will emit an event marking a limit of workers forked has been
-   * reached and try to close up.
+   * Creates a cluster and runs multiple workers. Emits events when the cluster
+   * starts and when workers are forked, when they start and die. If too many wokers
+   * die in short time span, the master will stop forking workers, clean-up and exit.
    */
   start() {
     super.start();
@@ -216,6 +214,9 @@ class BrokerFactory {
   }
 }
 
+/**
+ * Application's main method.
+ */
 if ( require.main === module ) {
   const options = config.provide(config.fromCommandLine);
 
@@ -243,9 +244,6 @@ if ( require.main === module ) {
 
 module.exports = {
   BrokerFactory:   BrokerFactory,
-  Broker:          Broker,
-  FlatBroker:      FlatBroker,
-  ClusteredBroker: ClusteredBroker,
   // Event names
   CLUSTER_STARTED:       CLUSTER_STARTED,
   WORKER_STARTED:        WORKER_STARTED,

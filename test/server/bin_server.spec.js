@@ -36,9 +36,7 @@ describe('Decides which kind of broker', () => {
 
     let bf = new BinServer.BrokerFactory();
     let broker = bf.buildBroker(sf);
-    expect(broker instanceof BinServer.Broker).toBe(true);
-    expect(broker instanceof BinServer.FlatBroker).toBe(true);
-    expect(broker instanceof BinServer.ClusteredBroker).toBe(false);
+    expect(broker.constructor.toString()).toMatch(/^class\ FlatBroker\ extends\ Broker/);
   });
 
   it('generates a cluster broker when requested one worker', () => {
@@ -50,9 +48,8 @@ describe('Decides which kind of broker', () => {
 
     let bf = new BinServer.BrokerFactory();
     let broker = bf.buildBroker(sf);
-    expect(broker instanceof BinServer.Broker).toBe(true);
-    expect(broker instanceof BinServer.ClusteredBroker).toBe(true);
-    expect(broker instanceof BinServer.FlatBroker).toBe(false);
+    expect(broker.constructor.toString())
+      .toMatch(/^class\ ClusteredBroker\ extends\ Broker/);
   });
 
   it('Generates a cluster broker when requested two workers', () => {
@@ -64,9 +61,8 @@ describe('Decides which kind of broker', () => {
 
     let bf = new BinServer.BrokerFactory();
     let broker = bf.buildBroker(sf);
-    expect(broker instanceof BinServer.Broker).toBe(true);
-    expect(broker instanceof BinServer.ClusteredBroker).toBe(true);
-    expect(broker instanceof BinServer.FlatBroker).toBe(false);
+    expect(broker.constructor.toString())
+      .toMatch(/^class\ ClusteredBroker\ extends\ Broker/);
   });
 });
 
