@@ -17,9 +17,14 @@ class EmptyServerFactory extends EventEmitter {
   }
 }
 
+let tmpDir = config.tempFilePath('npg_ranger_server_test_');
+config.provide(() => { return {
+  tempdir: tmpDir,
+};});
+
 describe('Broker creation constructor validation', () => {
   it('constructor complained about missing serverFactory as param', () => {
-    let bf = new BinServer.BrokerFactory();
+    let bf = new BinServer.BrokerFactory(0,20,10);
     expect(() => { bf.buildBroker(); }).toThrowError(assert.AssertionError);
   });
 });
@@ -28,38 +33,21 @@ describe('Decides which kind of broker', () => {
   let sf = new EmptyServerFactory();
 
   it('generates a flat broker when numworkers == 0', () => {
-    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
-    config.provide(() => { return {
-      tempdir: tmpDir,
-      numworkers: 0
-    };});
-
-    let bf = new BinServer.BrokerFactory();
+    let bf = new BinServer.BrokerFactory(0,20,10);
     let broker = bf.buildBroker(sf);
-    expect(broker.constructor.toString()).toMatch(/^class\ FlatBroker\ extends\ Broker/);
+    expect(broker.constructor.toString())
+      .toMatch(/^class\ FlatBroker\ extends\ Broker/);
   });
 
   it('generates a cluster broker when requested one worker', () => {
-    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
-    config.provide(() => { return {
-      tempdir: tmpDir,
-      numworkers: 1
-    };});
-
-    let bf = new BinServer.BrokerFactory();
+    let bf = new BinServer.BrokerFactory(1,9,10);
     let broker = bf.buildBroker(sf);
     expect(broker.constructor.toString())
       .toMatch(/^class\ ClusteredBroker\ extends\ Broker/);
   });
 
   it('Generates a cluster broker when requested two workers', () => {
-    let tmpDir = config.tempFilePath('npg_ranger_server_test_');
-    config.provide(() => { return {
-      tempdir: tmpDir,
-      numworkers: 2
-    };});
-
-    let bf = new BinServer.BrokerFactory();
+    let bf = new BinServer.BrokerFactory(2,20,10);
     let broker = bf.buildBroker(sf);
     expect(broker.constructor.toString())
       .toMatch(/^class\ ClusteredBroker\ extends\ Broker/);
@@ -73,7 +61,6 @@ describe('Flat server', () => {
   let testConfBuilder = () => {
     return {
       tempdir: tmpDir,
-      numworkers: 0
     };
   };
   let content = 'some chars';
@@ -102,7 +89,7 @@ describe('Flat server', () => {
 
   beforeEach( (done) => {
     let factory = new SimpleServerFactory();
-    let broker = new BinServer.BrokerFactory().buildBroker(factory);
+    let broker = new BinServer.BrokerFactory(0,20,10).buildBroker(factory);
     factory.on(BinServer.SERVER_STARTED, () => {
       done();
     });
@@ -141,7 +128,6 @@ describe('Cluster creation', () => {
   let testConfBuilder = () => {
     return {
       tempdir: tmpDir,
-      numworkers: numworkers
     };
   };
 
@@ -160,7 +146,8 @@ describe('Cluster creation', () => {
     clusterStartedCall = jasmine.createSpy('clusterStartedCall');
     workerForkedCall = jasmine.createSpy('workerForkedCall');
 
-    let broker = new BinServer.BrokerFactory().buildBroker(new EmptyServerFactory());
+    let broker = new BinServer.BrokerFactory(3,20,10)
+                    .buildBroker(new EmptyServerFactory());
 
     spyOn(cluster, 'fork');
 
@@ -212,7 +199,7 @@ describe('Cluster limit consecutive forks at start', () => {
   });
 
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -k5 -l1 -n10 -m mongodb://loclhost:27017/imc', (error) => {
+    child = exec('bin/server.js -k10 -l1 -n10 -m mongodb://loclhost:27017/imc', (error) => {
       expect(error).not.toBe(null);
       if ( !!error ) {
         expect(error.code).toEqual(210);
@@ -256,7 +243,7 @@ describe('Cluster limit consecutive forks', () => {
     let numForks = 7;
     child = spawn(command,[
       `-mmongodb://localhost:${PORT}`,
-      '-k5', '-l1', // Max 5 deaths in 1 second
+      '-k8', '-l1', // Max 8 deaths in 1 second
       `-n${numForks}`,
       '-p33000']
     );
@@ -293,12 +280,12 @@ describe('Cluster limit consecutive forks', () => {
     }, 2000);
   }, 7000);
 
-  it('killing cluster pid kill children', (done) => {
+  it('killing cluster pid kills children', (done) => {
     let command = 'bin/server.js';
     let numForks = 3;
     child = spawn(command,[
       `-mmongodb://localhost:${PORT}`,
-      '-k5', '-l1', // Max 3 deaths in 1 second
+      '-k5', '-l1', // Max 5 deaths in 1 second
       `-n${numForks}`,
       '-p33000']
     );
@@ -333,10 +320,12 @@ describe('Cluster limit consecutive forks', () => {
     let killing = false;
     child = spawn(command,[
       `-mmongodb://localhost:${PORT}`,
-      '-k3', '-l1', // Max 3 deaths in 1 second
+      '-k5', '-l1', // Max 5 deaths in 1 second
       '-n5',
       '-p33000']
     );
+    //child.stderr.on('data', (d) => {console.log(d.toString());});
+    //child.stdout.on('data', (d) => {console.log(d.toString());});
     child.on('close', (code) => {
       expect(killing).toBe(true);
       expect(code).toEqual(210);
@@ -345,6 +334,7 @@ describe('Cluster limit consecutive forks', () => {
     let grandchildren;
     setTimeout(() => {
       exec('pgrep -P ' + child.pid, (error, stdout) => {
+        if (error) {throw new Error(error);}
         killing = true;
         stdout = stdout.trim();
         grandchildren = stdout.split('\n').map((value) => {
