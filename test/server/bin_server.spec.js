@@ -257,7 +257,11 @@ describe('Cluster limit consecutive forks', () => {
       exec('pgrep -P ' + child.pid, (error, stdout) => {
         stdout = stdout.trim();
         grandchildrenBefore = stdout.split('\n').map((value) => {
-          return Number.parseInt(value);
+          let n = Number.parseInt(value);
+          if (! Number.isInteger(n) ) {
+            fail('failed to find any grandchildren: ' + value);
+          }
+          return n;
         });
         let victim = grandchildrenBefore[0];
         expect(grandchildrenBefore.length).toEqual(numForks);
@@ -271,7 +275,11 @@ describe('Cluster limit consecutive forks', () => {
           exec('pgrep -P ' + child.pid, (error2, stdout2) => {
             stdout2 = stdout2.trim();
             grandchildrenAfter = stdout2.split('\n').map((value) => {
-              return Number.parseInt(value);
+              let n = Number.parseInt(value);
+              if (! Number.isInteger(n) ) {
+                fail('failed to find any grandchildren: ' + value);
+              }
+              return n;
             });
             expect(grandchildrenAfter.length).toEqual(numForks);
             grandchildrenBefore.slice(1).forEach((value)=>{
@@ -299,7 +307,11 @@ describe('Cluster limit consecutive forks', () => {
       exec('pgrep -P ' + child.pid, (error, stdout) => {
         stdout = stdout.trim();
         grandchildren = stdout.split('\n').map((value) => {
-          return Number.parseInt(value);
+          let n = Number.parseInt(value);
+          if (! Number.isInteger(n) ) {
+            fail('failed to find any grandchildren: ' + value);
+          }
+          return n;
         });
         grandchildren.forEach((pid) => {
           expect( () => { execSync(`ps -p ${pid}`); } ).not.toThrow();
@@ -343,7 +355,11 @@ describe('Cluster limit consecutive forks', () => {
         killing = true;
         stdout = stdout.trim();
         grandchildren = stdout.split('\n').map((value) => {
-          return Number.parseInt(value);
+          let n = Number.parseInt(value);
+          if (! Number.isInteger(n) ) {
+            fail('failed to find any grandchildren: ' + value);
+          }
+          return n;
         });
         grandchildren.forEach((value) => {
           try {
