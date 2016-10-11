@@ -198,8 +198,11 @@ describe('Cluster limit consecutive forks at start', () => {
     }
   });
 
+  // Test is known to be flaky: if server takes longer than the given
+  // timeout to kill workers, it will not recognise that consecutive
+  // forks are dying, so will not kill the sever within the jasmine timeout.
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -k10 -l1 -n10 -m mongodb://loclhost:27017/imc', (error) => {
+    child = exec('bin/server.js -k10 -l3 -n10 -m mongodb://loclhost:27017/imc', (error) => {
       expect(error).not.toBe(null);
       if ( !!error ) {
         expect(error.code).toEqual(210);
@@ -247,6 +250,8 @@ describe('Cluster limit consecutive forks', () => {
       `-n${numForks}`,
       '-p33000']
     );
+    // Test is known to be flaky: server may take longer than the set
+    // timeout to begin listening.
     setTimeout(() => {
       let grandchildrenBefore, grandchildrenAfter;
       exec('pgrep -P ' + child.pid, (error, stdout) => {
@@ -277,8 +282,8 @@ describe('Cluster limit consecutive forks', () => {
           });
         }, 500);
       });
-    }, 2000);
-  }, 7000);
+    }, 5000);
+  }, 10000);
 
   it('killing cluster pid kills children', (done) => {
     let command = 'bin/server.js';
@@ -310,10 +315,10 @@ describe('Cluster limit consecutive forks', () => {
             expect( () => { execSync(`ps -p ${pid}`); } ).toThrow();
           });
           done();
-        }, 2000);
+        }, 4000);
       });
-    }, 2000);
-  }, 7000);
+    }, 5000);
+  }, 12000);
 
   it('dies with correct error code if enough children die in short time', ( done ) => {
     let command = 'bin/server.js';
