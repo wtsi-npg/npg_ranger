@@ -125,6 +125,27 @@ class FlatBroker extends Broker {
  * a cluster of servers.
  */
 class ClusteredBroker extends Broker {
+  constructor(serverFactory, numWorkers, maxConsec, waitingConsec) {
+    super(serverFactory);
+    this.numWorkers    = numWorkers;
+    this.maxConsec     = maxConsec;
+    this.waitingConsec = waitingConsec;
+
+    assert(Number.isInteger(this.numWorkers), 'number of workers must be an integer');
+    assert(this.numWorkers >= 0, 'number of workers cannot be negative');
+
+    assert(Number.isInteger(this.maxConsec), 'maximun number of deaths should be an integer');
+    assert(this.numWorkers <= this.maxConsec,
+      'Maximun number of deaths should at least be equal the number of workers');
+    assert(10 * this.numWorkers >= this.maxConsec,
+      'Maximun number of deaths should not bigger than ten times number of workers');
+
+    assert(Number.isInteger(this.waitingConsec),
+      'wait window for the maximun number of deaths should be an integer');
+    assert(this.waitingConsec >= 0, 'wait window should be positive');
+    assert(this.waitingConsec <= 600, 'wait window cannot be longer than 600 seconds');
+  }
+
   /**
    * Creates a cluster and runs multiple workers. Emits events when the cluster
    * starts and when workers are forked, when they start and die. If too many wokers
@@ -132,25 +153,23 @@ class ClusteredBroker extends Broker {
    */
   start() {
     super.start();
-    let options = config.provide();
-    let numworkers = options.get('numworkers');
-    assert(Number.isInteger(numworkers), 'numworkers must be an integer');
+
     const cluster = require('cluster');
     let self = this;
     if ( cluster.isMaster ) {
       LOGGER.info(config.logOpts());
-      for (let i = 0; i < numworkers; i++) {
+      for (let i = 0; i < this.numWorkers; i++) {
         cluster.fork();
         self.emit(WORKER_FORKED);
       }
       let consec = 0;
       let exiting = false;
+
       cluster.on('exit', (worker, code, signal) => {
+        consec += 1;
         LOGGER.debug('Worker %d died (%s). Forking to replace ...', worker.id, signal || code);
-        let waitingConsec = options.get('clustertimeout');
-        let maxConsec = options.get('clustermaxdeaths');
-        LOGGER.debug(`${consec} forks have died in the previous ${waitingConsec} seconds.`);
-        if ( consec >= maxConsec ) {
+        LOGGER.debug(`${consec} forks have died in the previous ${this.waitingConsec} seconds.`);
+        if ( consec >= this.maxConsec ) {
           if ( !exiting ) {
             exiting = true;
             LOGGER.error('Too many forks started in short span of time. Trying to exit now.');
@@ -160,12 +179,11 @@ class ClusteredBroker extends Broker {
             }, 3000);
           }
         } else {
-          consec += 1;
           cluster.fork();
           self.emit(WORKER_FORKED);
           setTimeout( () => {
             consec -= 1;
-          }, waitingConsec * 1000 );
+          }, this.waitingConsec * 1000 );
         }
       });
       self.emit(CLUSTER_STARTED, cluster);
@@ -186,7 +204,7 @@ class ClusteredBroker extends Broker {
  *
  * const RangerServer = require('../lib/server.js');
  *
- * let brokerFactory = new BrokerFactory();
+ * let brokerFactory = new BrokerFactory(numWorkers, maxConsec, waitingConsec);
  * let serverFactory = new RangerServer.ServerFactory();
  * let broker = brokerFactory.buildBroker(serverFactory);
  *
@@ -195,22 +213,23 @@ class ClusteredBroker extends Broker {
  * });
  */
 class BrokerFactory {
+
+  constructor(numWorkers, maxConsec, waitingConsec) {
+    this.numWorkers    = numWorkers;
+    this.maxConsec     = maxConsec;
+    this.waitingConsec = waitingConsec;
+    assert(Number.isInteger(this.numWorkers), 'number of workers must be an integer');
+  }
+
   /**
    * Use the number of workers build the specific broker needed. Pass the server
    * factory to the broker so it can build servers with it.
    */
   buildBroker(serverFactory) {
     assert(serverFactory, 'serverFactory is required');
-    let options = config.provide();
-    let numworkers = options.get('numworkers');
-    assert(Number.isInteger(numworkers), 'numworkers must be an integer');
-    let broker;
-    if ( !numworkers ) {
-      broker = new FlatBroker(serverFactory);
-    } else {
-      broker = new ClusteredBroker(serverFactory);
-    }
-    return broker;
+    return this.numWorkers
+      ? new ClusteredBroker(serverFactory, this.numWorkers, this.maxConsec, this.waitingConsec)
+      : new FlatBroker(serverFactory);
   }
 }
 
@@ -218,13 +237,16 @@ class BrokerFactory {
  * Application's main method.
  */
 if ( require.main === module ) {
-  const options = config.provide(config.fromCommandLine);
 
+  const options = config.provide(config.fromCommandLine);
   if ( options.get('debug') ) {
     LOGGER.level = 'debug';
   }
+  let numWorkers    = options.get('numworkers');
+  let waitingConsec = options.get('clustertimeout');
+  let maxConsec     = options.get('clustermaxdeaths');
 
-  let bf = new BrokerFactory();
+  let bf = new BrokerFactory(numWorkers, maxConsec, waitingConsec);
   let sf = new RangerServer.ServerFactory();
 
   sf.on(SERVER_STARTED, () => { LOGGER.debug('Server factory started server'); });
