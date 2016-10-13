@@ -1,17 +1,31 @@
-
-
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect, beforeAll, afterAll */
 
 "use strict";
 
 const assert  = require('assert');
 const http    = require('http');
 const fs      = require('fs');
-const os      = require('os');
+const fse     = require('fs-extra');
 const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
+const config  = require('../../lib/config.js');
+
+// Create temp dir here so it is available for all tests.
+// Use this dir as a default dir that will be available in all.
+var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
+var dummy     = function() { return {tempdir: tmpDir, skipauth: true}; };
+var options;
 
 describe('Creating object instance - synch', function() {
+  beforeAll(function() {
+    options = config.provide(dummy);
+    fse.ensureDirSync(tmpDir);
+  });
+
+  afterAll(function() {
+    fse.removeSync(tmpDir);
+  });
+
   it('request object is not given - error', function() {
     expect( () => {new RangerController();} ).toThrowError(assert.AssertionError,
     'HTTP request object is required');
@@ -28,10 +42,6 @@ describe('Creating object instance - synch', function() {
     expect( () => {new RangerController({}, 1);} ).toThrowError(assert.AssertionError,
     'Server response object is required');
   });
-  it('response is not an http.ServerResponse type object - error', function() {
-    expect( () => {new RangerController({}, []);} ).toThrowError(
-    assert.AssertionError, 'Server response object is required');
-  });
 });
 
 describe('set error response', function() {
@@ -40,10 +50,13 @@ describe('set error response', function() {
   // Generate synchronously a temporary file name.
   var socket = tmp.tmpNameSync();
 
-  beforeAll(function() {
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
     // Start listening on a socket
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
+      done();
     });
   });
 
@@ -51,14 +64,14 @@ describe('set error response', function() {
   // due to an error. Seems to be a bug in jasmine.
   afterAll(function() {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
+    try { fs.unlinkSync(socket); } catch ( e ) { console.log(e); }
+    fse.removeSync(tmpDir);
   });
 
   it('db object is not given or is not an object - error', function(done) {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      console.log(response.toString());
       assert(typeof request == 'object');
       expect( () => {new RangerController(request, response);} ).toThrowError(
         assert.AssertionError, 'DB handle object is required');
@@ -87,29 +100,7 @@ describe('set error response', function() {
       expect((c.request == request)).toBe(true);
       expect((c.response == response)).toBe(true);
       expect(c.db).toEqual({one: "two"});
-      expect(c.tmpDir).toBe(os.tmpdir());
-      expect(c.skipAuth).toBe(false);
-      expect( () => {c = new RangerController(request, response, {}, null, 0);} ).not.toThrow();
-      expect(c.tmpDir).toBe(os.tmpdir());
-      expect(c.skipAuth).toBe(false);
-      expect( () => {c = new RangerController(request, response, {}, '', true);} ).not.toThrow();
-      expect(c.tmpDir).toBe(os.tmpdir());
-      expect(c.skipAuth).toBe(true);
       response.end();
-      done();
-    });
-    http.get({socketPath: socket}, function() {});
-  });
-
-  it('Temporary directory should exist', function(done) {
-    server.removeAllListeners('request');
-    server.on('request', (request, response) => {
-      expect( () => {new RangerController(request, response, {}, '/some/dir');} )
-        .toThrowError(assert.AssertionError,
-        "Temp data directory '/some/dir' does not exist");
-      let c;
-      expect( () => {c = new RangerController(request, response, {}, 'test', 0);} ).not.toThrow();
-      expect(c.tmpDir).toBe('test');
       done();
     });
     http.get({socketPath: socket}, function() {});
@@ -119,35 +110,48 @@ describe('set error response', function() {
 describe('Handling requests - error responses', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
-  beforeAll(function() {
+  beforeAll((done) => {
+    options = config.provide(dummy);
+    fse.ensureDirSync(tmpDir);
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
+      done();
     });
   });
+
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
-  it('Data host name argument is required', function(done) {
+  it('Method not allowed error', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"});
-      expect( () => {c.handleRequest();} ).toThrowError(assert.AssertionError,
-        'The data host name is required');
-      c.handleRequest('localhost');
-      response.end();
+      expect( () => {c.handleRequest();} ).not.toThrow();
+    });
+
+    let options = {socketPath: socket, method:    'POST'};
+    let req = http.request(options);
+    req.on('response', (response) => {
+      expect(response.headers['content-type']).toEqual('application/json');
+      expect(response.statusCode).toEqual(405);
+      expect(response.statusMessage).toEqual('POST request is not allowed');
       done();
     });
-    http.get({socketPath: socket}, function() {});
+    req.end();
   });
 
   it('Authentication error', function(done) {
+    config.provide( () => {
+      return {tempdir:  tmpDir,
+              skipauth: false};
+    });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"});
-      expect(c.skipAuth).toBe(false);
-      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+      expect( () => {c.handleRequest();} ).not.toThrow();
     });
     http.get({socketPath: socket}, function(response) {
       var body = '';
@@ -165,11 +169,14 @@ describe('Handling requests - error responses', function() {
   });
 
   it('Not found error, no auth', function(done) {
+    config.provide( () => {
+      return {tempdir:  tmpDir,
+              skipauth: true};
+    });
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true);
-      expect(c.skipAuth).toBe(true);
-      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
     });
     http.get({socketPath: socket, path: '/invalid'}, function(response) {
       var body = '';
@@ -189,13 +196,11 @@ describe('Handling requests - error responses', function() {
   it('Not found error, auth checked', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, false);
-      expect(c.skipAuth).toBe(false);
-      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
     });
     let req = http.request({socketPath: socket, path: '/invalid'});
     req.setHeader('X-Remote-User', 'user1');
-    req.end();
     req.on('response', function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -209,20 +214,21 @@ describe('Handling requests - error responses', function() {
         done();
       });
     });
+    req.end();
   });
 
-  it('Invalid input error for a sample url', function(done) {
+
+  it('Invalid input error for a sample url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true);
-      expect(c.skipAuth).toBe(true);
-      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
     });
 
-    http.get({socketPath: socket, path: '/sample'}, function(response) {
+    http.get({socketPath: socket, path: '/sample'}, ( response ) => {
       var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
+      response.on('data', ( d ) => { body += d;});
+      response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: sample accession number should be given';
@@ -235,12 +241,11 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  it('Invalid input error for a file url', function(done) {
+  it('Invalid input error for a file url', ( done ) => {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true);
-      expect(c.skipAuth).toBe(true);
-      expect( () => {c.handleRequest('localhost');} ).not.toThrow();
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
     });
 
     http.get({socketPath: socket, path: '/file'}, function(response) {
@@ -258,6 +263,38 @@ describe('Handling requests - error responses', function() {
       });
     });
   });
+
+  it('Invalid input error for a vcf file when multiref set', (done) => {
+
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      // Set multiref mode
+      config.provide(() => { return {tempdir: tmpDir, multiref: true, skipauth: true}; });
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
+      // unset multiref
+      config.provide(dummy);
+    });
+
+    http.get({socketPath: socket, path: '/sample?accession=XYZ120923&format=vcf'}, (response) => {
+      var body = '';
+      response.on('data', (d) => { body += d;});
+      response.on('end', () => {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        let m = 'Invalid request: cannot produce VCF files while multiref set on server';
+        expect(response.statusMessage).toEqual(m);
+        expect(JSON.parse(body)).toEqual(
+          {
+            error: {
+              type: "InvalidInput",
+              message: m
+            }
+          });
+        done();
+      });
+    });
+  });
 });
 
 describe('Redirection in json response', function() {
@@ -266,18 +303,24 @@ describe('Redirection in json response', function() {
   let id          = 'EGA45678';
   let server_path_basic = '/ga4gh/v.0.1/get/sample';
   let server_path = server_path_basic + '/' + id;
-  beforeAll(function() {
+
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
-    });
-    server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {}, null, true);
-      c.handleRequest('localhost');
+      done();
     });
   });
+
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('invalid url - no id - error response', function(done) {
@@ -361,7 +404,6 @@ describe('Redirection in json response', function() {
     http.get(
       { socketPath: socket,
         path: server_path + '?referenceName=chr1'}, function(response) {
-        //path: server_path}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
@@ -405,7 +447,7 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-5`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-4`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
@@ -423,14 +465,14 @@ describe('Redirection in json response', function() {
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
-        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
+        let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
       });
     });
   });
 
-  ['bam', 'BAM'].forEach( ( value ) => {
+  ['bam', 'BAM', 'sam', 'SAM', 'cram', 'CRAM', 'vcf', 'VCF'].forEach( ( value ) => {
     it('successful redirection, query with all possible params', function(done) {
       http.get(
         { socketPath: socket,
@@ -442,8 +484,9 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toBe(200);
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-401`;
-          expect(JSON.parse(body)).toEqual({format: `${value}`.toUpperCase(), urls: [{'url': url}]});
+          let formatUpperCase = value.toUpperCase();
+          let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-400`;
+          expect(JSON.parse(body)).toEqual({format: `${formatUpperCase}`, urls: [{'url': url}]});
           done();
         });
       });
@@ -482,7 +525,7 @@ describe('Redirection in json response', function() {
     });
   });
 
- it('redirection error, range start is a negative integer', function(done) {
+  it('redirection error, range start is a negative integer', function(done) {
     http.get(
       { socketPath: socket,
         path: server_path + '?referenceName=chr1&start=-44&end=400'}, function(response) {
@@ -497,7 +540,7 @@ describe('Redirection in json response', function() {
     });
   });
 
- it('redirection error, range end is not an integer', function(done) {
+  it('redirection error, range end is not an integer', function(done) {
     http.get(
       { socketPath: socket,
         path: server_path + '?referenceName=chr1&start=4&end=foo'}, function(response) {
@@ -512,7 +555,7 @@ describe('Redirection in json response', function() {
     });
   });
 
- it('redirection error, range end is a negative integer', function(done) {
+  it('redirection error, range end is a negative integer', function(done) {
     http.get(
       { socketPath: socket,
         path: server_path + '?referenceName=chr1&start=4&end=-400'}, function(response) {
@@ -537,7 +580,23 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(422);
         expect(response.statusMessage).toEqual(
-          'Range end should be bigger that start');
+          'Range end should be bigger than start');
+        done();
+      });
+    });
+  });
+
+  it('redirection error, invalid characted in reference name', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?referenceName=chr@1&start=400&end=4'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        expect(response.statusMessage).toEqual(
+          'Invalid character in reference name chr@1');
         done();
       });
     });
@@ -553,7 +612,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(409);
         expect(response.statusMessage).toEqual(
-          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM");
+          "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
       });
     });
@@ -561,27 +620,153 @@ describe('Redirection in json response', function() {
 
 });
 
+describe('redirection when running behind a proxy', () => {
+  const server = http.createServer();
+  let socket = tmp.tmpNameSync();
+  let id              = 'EGA45678';
+  let serverPath      = '/ga4gh/v.0.1/get/sample/' + id;
+
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    config.provide(() => {return {
+      tempdir:   tmpDir,
+      skipauth:  true,
+      proxylist: {
+        'http://myserver.com':      'http://myserver.com/path1/path2',
+        'http://myserver.com:3456': 'http://myserver.com:3456/path3',
+      }
+    };});
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  afterAll(() => {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  it('direct access is not allowed - GA4GH url', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       '/sample/' + id,
+      headers:    {},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(403);
+      expect(res.statusMessage).toEqual(
+        'Bypassing proxy server is not allowed');
+      done();   
+    });
+    req.end();
+  });
+
+  it('direct access is not allowed - sample url', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(403);
+      expect(res.statusMessage).toEqual(
+        'Bypassing proxy server is not allowed');
+      done();   
+    });
+    req.end();
+  });
+
+  it('unknown proxy is not allowed', (done) => {
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'X-Forwarded-Host': 'myserver.com:9090', 'X-Forwarded-Proto': 'http:'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.statusCode).toEqual(403);
+      expect(res.statusMessage).toEqual(
+        'Unknown proxy http://myserver.com:9090');
+      done();   
+    });
+    req.end();
+  });
+
+  it('Redirection to one of known proxies', (done) => {
+    let url = `http://myserver.com:3456/path3/sample?accession=${id}&format=BAM`;
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'X-Forwarded-Host': 'myserver.com:3456'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      var body = '';
+      expect(res.statusCode).toEqual(200);
+      res.on('data', (d) => { body += d;});
+      res.on('end', () => {
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });   
+    });
+    req.end();
+  });
+
+  it('Redirection to one of known proxies', (done) => {
+    let url = `http://myserver.com/path1/path2/sample?accession=${id}&format=BAM`;
+    let options = {
+      socketPath: socket,
+      path:       serverPath,
+      headers:    {'X-Forwarded-Host': 'myserver.com', 'X-Forwarded-Proto': 'http:'},
+      method:    'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      var body = '';
+      expect(res.statusCode).toEqual(200);
+      res.on('data', (d) => { body += d;});
+      res.on('end', () => {
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });   
+    });
+    req.end();
+  });
+});
+
 describe('content type', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
 
-  beforeAll(function() {
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
     server.listen(socket, () => {
       console.log(`Server listening on socket ${socket}`);
+      done();
     });
   });
   afterAll(function() {
     server.close();
     try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
   });
 
   it('data format driven content type', function(done) {
     server.on('request', (request, response) => {
-      let c = new RangerController(request, response, {one: "two"}, null, true);
+      let c = new RangerController(request, response, {one: "two"});
       expect( () => {c.contentType();} )
         .toThrowError(assert.AssertionError,
         'Non-empty format string should be given');
       expect(c.contentType('SAM')).toBe('text/vnd.ga4gh.sam');
+      expect(c.contentType('VCF')).toBe('text/vnd.ga4gh.vcf');
       expect(c.contentType('BAM')).toBe('application/vnd.ga4gh.bam');
       expect(c.contentType('CRAM')).toBe('application/vnd.ga4gh.cram');
       done();
@@ -591,5 +776,247 @@ describe('content type', function() {
       let body = '';
       response.on('data', function(d) { body += d;});
     });
+  });
+});
+
+describe('trailers in response', function() {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  it('no trailers without TE header', function(done) {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"});
+      expect(c.sendTrailer).toBe(false);
+      done();
+    });
+
+    http.get({socketPath:socket, path: '/file'}, function() {});
+  });
+
+  ['TE', 'te', 'Te', 'tE'].forEach( ( headerName ) => {
+    it(`trailers with ${headerName} header`, function(done) {
+      server.removeAllListeners('request');
+      server.on('request', (request, response) => {
+        let c = new RangerController(request, response, {one: "two"});
+        expect(c.sendTrailer).toBe(true);
+        done();
+      });
+
+      let headers = {};
+      headers[headerName] = 'trailers';
+      http.get({socketPath:socket, path: '/file', headers: headers}, () => {});
+    });
+  });
+});
+
+describe('CORS in response', function() {
+  var server;
+  let serverPath = '/ga4gh/v.0.1/get/sample/EGA45678';
+  let socket = tmp.tmpNameSync();
+
+  let checkHeaders = (headers, origin) => {
+    expect(headers.vary).toBe('Origin', 'Vary header is set');
+    expect(headers['access-control-allow-origin']).toBe(
+      origin, `allowed origin is ${origin}`);
+    expect(headers['access-control-allow-methods']).toBe(
+      'GET,OPTIONS', 'allowed methods are set');
+    expect(headers['access-control-allow-headers']).toBe(
+      'TE,X-Remote-User,withcredentials', 'allowed headers are set');
+    expect(headers['access-control-max-age']).toBe('1800', 'max age is set');
+    expect(Object.keys(headers).indexOf('Access-Control-Allow-Credentials')).toBe(
+      -1, 'Access-Control-Allow-Credentials header is not set');
+  };
+
+  beforeAll((done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server = http.createServer();
+    server.listen(socket, () => { console.log('listening'); done();});
+  });
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  it('no CORS in a response to a standart request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(false, 'request does not have Origin header');
+      let c = new RangerController(request, response, {one: "two"});
+      c.handleRequest();
+    });
+
+    http.get({socketPath:socket, path: serverPath}, (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('Access-Control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      expect(res.headers.vary).toBe('Origin', 'Vary header is set');
+      done();
+    });
+  });
+
+  it('no CORS headers in a response to CORS GET request due to server options', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"});
+      c.handleRequest();
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      expect(res.headers.vary).toBe('Origin', 'Vary header is set');
+      done();
+    });
+    req.end();
+  });
+
+  it('no CORS headers in a response to CORS OPTIONS request due to server options', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      done();
+    });
+    req.end();
+  });
+
+  it('Allow all CORS headers in a response to CORS GET request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: true, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"});
+      c.handleRequest();
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'GET'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, '*');
+      done();
+    });
+    req.end();
+  });
+
+  it('Allow all CORS headers in a response to CORS OPTIONS request', function(done) {
+    config.provide( () => {
+      return {tempdir: tmpDir, anyorigin: true, originlist: null, skipauth: true};
+    });
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      expect('origin' in request.headers).toBe(true, 'request has Origin header');
+      let c = new RangerController(request, response, {one: "two"});
+      c.handleRequest();
+    });
+
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, '*');
+      done();
+    });
+    req.end();
+  });
+
+  it('No CORS headers since the origin is not white listed', function(done) {
+    config.provide( () => {
+      return {tempdir:     tmpDir,
+              anyorigin:   false,
+              originlist: ['http://other.com','http://other.com:9090'],
+              skipauth:   true};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://some.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.end();
+    req.on('response', (res) => {
+      expect( Object.keys(res.headers).filter((headerName) => {
+        return headerName.startsWith('access-control');
+      }).length).toBe(0, 'no CORS headers in reply');
+      done();
+    });
+  });
+
+  it('Origin-specific CORS headers set for a white listed origin', function(done) {
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://other.com'},
+                   method:     'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      checkHeaders(res.headers, 'http://other.com');
+      done();
+    });
+    req.end();
+  });
+
+  it('Additional CORS header is set when running with authorization', function(done) {
+    config.provide( () => {
+      return {tempdir:    tmpDir,
+              anyorigin:  false,
+              originlist: ['http://other.com','http://other.com:9090'],
+              skipauth:   false};
+    });
+    let options = {socketPath: socket,
+                   path:       serverPath,
+                   headers:    {Origin: 'http://other.com:9090'},
+                   method:    'OPTIONS'};
+    let req = http.request(options);
+    req.on('response', (res) => {
+      expect(res.headers['access-control-allow-origin']).toBe(
+        'http://other.com:9090', 'origin http://other.com:9090 is allowed');
+      expect(res.headers['access-control-allow-credentials']).toBe(
+        'true', 'Access-Control-Allow-Credentials header is set');
+      done();
+    });
+    req.end();
   });
 });

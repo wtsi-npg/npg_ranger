@@ -20,7 +20,9 @@ module.exports = function(grunt) {
       pkg: {
         src: [
           'package.json',
-          'test/server/data/fixtures/*.json'
+          'test/server/data/fixtures/*.json',
+          'test/server/data/testConfig.json',
+          'docs/config.json'
         ]
       }
     },
@@ -40,7 +42,7 @@ module.exports = function(grunt) {
         'Gruntfile.js',
         'bin/*.js',
         'lib/**/*.js',
-        'test/**/*.js',
+        'test/**/*.js'
       ],
       options: {
         jshintrc: '.jshintrc'
@@ -71,6 +73,9 @@ module.exports = function(grunt) {
         // add custom Jasmine reporter(s)
         customReporters: []
       },
+      'config_tests': {
+        specs: [ "test/config.spec.js" ]
+      },
       'server_tests': {
         // target specific options
         //options: {
@@ -86,7 +91,7 @@ module.exports = function(grunt) {
       },
       'client_tests': {
         specs: [ "test/client/*.js" ]
-      }
+      },
     },
 
     browserify: {

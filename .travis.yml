@@ -1,14 +1,24 @@
 sudo: false
 language: node_js
 node_js :
-  - "4.4.2"
+  - "4.5.0"
+cache:
+  directories:
+  - /tmp/htslib
+  - /tmp/samtools
+  - /tmp/freebayes
 env:
   global:
     - MONGODB_VERSION=3.2.4
+    - FREEBAYES_VERSION="v1.0.2-npg-Aug2016"
+    - BIOBAMBAM_VERSION="2.0.50-release-20160705161609"
+    - HTSLIB_VERSION="1.3.1-npg-Apr2016"
+    - SAMTOOLS1_VERSION="1.3.1-npg-May2016"
 before_install:
-  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
-  - tar xfz mongodb-linux-x86_64-${MONGODB_VERSION}.tgz
-  - export PATH=`pwd`/mongodb-linux-x86_64-${MONGODB_VERSION}/bin:$PATH
+  - ./.travis/install.sh
+  - export PATH="/tmp/usr/bin:${PATH}"
+  - npm install -g npm@3.10.7
+  - npm --version
   - npm install -g grunt-cli
 script:
   - grunt -v

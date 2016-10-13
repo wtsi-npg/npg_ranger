@@ -9,11 +9,12 @@ const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
 const DataMapper  = require('../../lib/server/mapper.js');
+const config      = require('../../lib/config.js');
 
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
-const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
+const PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
 
 /* ***************************************************************************
  * Test cases (sample accession number, file path, details)
@@ -55,7 +56,54 @@ describe('Data info retrieval', function() {
     command = `mongoimport --port ${PORT} --db ${db_name} --collection fileinfo --jsonArray --file ${FIXTURES}`;
     out = child.execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
+    config.provide(() => { return {multiref: true}; });
   });
+
+
+  describe('Reference mismatch correctly handled', function() {
+    beforeAll( () => {
+      config.provide(() => { return {}; });
+    });
+
+    afterAll( () => {
+      config.provide(() => { return {multiref: true}; });
+    });
+
+    it('Do not allow mismatching references when multiref falsy', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        var dm = new DataMapper(db);
+        dm.once('data', () => {
+          // Data should not be returned, so fail
+          expect(true).toBe(false);
+          done();
+        });
+        dm.once('nodata', (reason) => {
+          expect(reason).toBe('Not all references match for sample accession XYZ238967');
+          done();
+        });
+        dm.getFileInfo({accession: "XYZ238967"}, 'localhost');
+      });
+    });
+
+    it('Fail if no reference found', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        var dm = new DataMapper(db);
+        dm.once('data', () => {
+          // No data should be returned, so fail
+          expect(true).toBe(false);
+          done();
+        });
+        dm.once('nodata', (reason) => {
+          expect(reason).toBe('No reference for 10000_1#58_phix.bam');
+          done();
+        });
+        dm.getFileInfo({name: "10000_1#58_phix.bam"}, 'localhost');
+      });
+    });
+  });
+
 
   it('Input validation', function() {
     expect( () => {new DataMapper();} ).toThrowError(ReferenceError,
@@ -106,7 +154,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({accession: "XYZ120923"}, 'localhost');
@@ -119,7 +168,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_1#63.bam', accessGroup: '2136'}]);
+          [{file: 'irods:/seq/10000/10000_1#63.bam', accessGroup: '2136',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_1#63.bam"}, 'localhost');
@@ -132,7 +182,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'localhost');
@@ -156,11 +207,13 @@ describe('Data info retrieval', function() {
       assert.equal(err, null);
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
-        expect(data).toEqual(
-          [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+        expect(data).toEqual([{
+          file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
+          reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+        }]);
         done();
       });
-	    dm.getFileInfo({name: "10000_2#22.bam", directory: "/seq/10000"}, 'localhost');
+      dm.getFileInfo({name: "10000_2#22.bam", directory: "/seq/10000"}, 'localhost');
     });
   });
 
@@ -170,7 +223,8 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         expect(data).toEqual(
-          [{ file: '/irods-seq-i10-bc/seq/10000/10000_2#22.bam', accessGroup: '2574'}]);
+          [{ file: '/irods-seq-i10-bc/seq/10000/10000_2#22.bam', accessGroup: '2574',
+             reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'irods-seq-i10');
@@ -182,11 +236,20 @@ describe('Data info retrieval', function() {
       assert.equal(err, null);
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
-       let d = [
-          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: 'irods:/seq/10000/10000_7#92.bam', accessGroup: '0'},
-		];
+        let d = [
+          {
+            file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+          },
+          {
+            file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: '',
+            reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'
+          },
+          {
+            file: 'irods:/seq/10000/10000_7#92.bam', accessGroup: '0',
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+          },
+        ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
         done();
@@ -201,11 +264,11 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         let d = [
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_7#92.bam', accessGroup: '0'},
-          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_8#97.bam', accessGroup: '2574'}
-		];
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_4#43.bam', accessGroup: '2586', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_5#74.bam', accessGroup: '', reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_7#92.bam', accessGroup: '0', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_8#97.bam', accessGroup: '2574', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}
+        ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
         done();
@@ -220,10 +283,13 @@ describe('Data info retrieval', function() {
       var dm = new DataMapper(db);
       dm.on('data', (data) => {
         let d = [
-          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586'},
-          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: ''},
-          {file: '/irods-seq-i10-bc/seq/10000/10000_7#92.bam', accessGroup: '0'},
-		];
+          {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586',
+           reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+          {file: 'irods:/seq/10000/10000_5#74.bam', accessGroup: '',
+           reference: '/Caenorhabditis_elegans/101019/all/fasta/C_elegans_101019.fasta'},
+          {file: '/irods-seq-i10-bc/seq/10000/10000_7#92.bam', accessGroup: '0',
+           reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
+        ];
         d.sort(compareFiles);
         data.sort(compareFiles);
         expect(data).toEqual(d);
@@ -249,5 +315,6 @@ describe('Data info retrieval', function() {
     child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
     console.log('\nMONGODB server has been shut down');
     fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
+    config.provide(() => { return {}; });
   });
 });

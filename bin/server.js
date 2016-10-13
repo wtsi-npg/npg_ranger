@@ -2,59 +2,36 @@
 
 "use strict";
 
-const os      = require('os');
 const fs      = require('fs');
-const path    = require('path');
 const http    = require('http');
 const assert  = require('assert');
 const util    = require('util');
 const MongoClient = require('mongodb').MongoClient;
-const GetOpt      = require('node-getopt');
 const LOGGER      = require('../lib/logsetup.js');
 
+const config = require('../lib/config.js');
+// Call to config.provide() must occur here before requiring controller
+// so that options object is built before it is provided to other modules.
+const options = config.provide(config.fromCommandLine, true);
 const RangerController = require('../lib/server/controller');
 
-var opt = new GetOpt([
-    ['p','port=PORT'        ,'PORT or socket which server listens on'],
-    ['m','mongourl=URI'     ,'URI to contact mongodb'],
-    ['t','tempdir=PATH'     ,'PATH of temporary directory'],
-    ['H','hostname=HOST'    ,'override hostname with HOST'],
-    ['s','skipauth'         ,'skip authorisation steps'],
-    ['d','debug'            ,'debugging mode for this server'],
-    ['h','help'             ,'display this help']
-]).bindHelp().parseSystem();
-
-const PORT               = opt.options.port || opt.argv[0]
-                           || path.join(os.tmpdir(), process.env.USER, 'npg_ranger.sock');
-const HOST               = opt.options.hostname || os.hostname() || 'localhost';
-const MONGO              = opt.options.mongourl || 'mongodb://sf2-farm-srv1:27017/imetacache';
-const TEMP_DATA_DIR_NAME = 'npg_ranger_data';
-const TEMP_DATA_DIR      = opt.options.tempdir || path.join(os.tmpdir(), process.env.USER, TEMP_DATA_DIR_NAME);
-
-const MONGO_OPTIONS = {
-  db: {
-    numberOfRetries: 5
-  },
-  server: {
-    auto_reconnect: true,
-    poolSize: 40,
-    socketOptions: {
-      connectTimeoutMS: 5000
-    }
-  },
-  replSet: {},
-  mongos: {}
-};
-
-if ( opt.options.debug ) {
+if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
-LOGGER.info(opt.options);
+
+LOGGER.info(config.logOpts());
 
 /*
  * Main server script. Create the server object, establish database,
  * connection, setup server callbacks, start listening for incoming
  * requests.
+ *
+ * Providing config settings:
+ *  Settings are provided from 3 locations:
+ *  1. Command line - run with -h to see options.
+ *  2. Config json file can be read if it is provided on command line
+ *      by running with -c PATH or --configfile=PATH
+ *  3. There are some defaults, which can be found in lib/config.js
  */
 
 assert(process.env.USER, 'User environment variable is not defined');
@@ -70,10 +47,11 @@ process.on('SIGINT', () => {
 
 // Connect to the database and, if successful, define
 // callbacks for the server.
-MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
+var mongourl = options.get('mongourl');
+MongoClient.connect(mongourl, options.get('mongoopt'), function(err, db) {
 
-  assert.equal(err, null, `Failed to connect to ${MONGO}: ${err}`);
-  LOGGER.info(`Connected to ${MONGO}`);
+  assert.equal(err, null, `Failed to connect to ${mongourl}: ${err}`);
+  LOGGER.info(`Connected to ${mongourl}`);
 
   var dbClose = (dbConn) => {
     if (dbConn) {
@@ -98,11 +76,12 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
     LOGGER.error(`Caught exception: ${err}\n`);
     dbClose(db);
     try {
-      if (typeof PORT != 'number') {
+      let port = options.get('port');
+      if (typeof port != 'number') {
         // Throws an error if the assertion fails
-        fs.accessSync(PORT, fs.W_OK);
-        LOGGER.info(`Remove socket file ${PORT} that is left behind`);
-        fs.unlinkSync(PORT);
+        fs.accessSync(port, fs.W_OK);
+        LOGGER.info(`Remove socket file ${port} that is left behind`);
+        fs.unlinkSync(port);
       }
     } catch (err) {
       LOGGER.error(`Error removing socket file: ${err}`);
@@ -114,7 +93,7 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
   // Set up a callback for requests.
   server.on('request', (request, response) => {
-    if (opt.options.debug) {
+    if (options.get('debug')) {
       LOGGER.debug("MEMORY USAGE: " + util.inspect(process.memoryUsage()) + "\n");
     }
 
@@ -128,17 +107,14 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
 
     // Create an instance of an application controller and let it
     // handle the request.
-    let controller = new RangerController(
-      request, response, db, TEMP_DATA_DIR, opt.options.skipauth);
-    controller.handleRequest(HOST);
+    LOGGER.debug('request headers: ' + JSON.stringify(request.headers));
+    let controller = new RangerController(request, response, db);
+    controller.handleRequest();
   });
 
-  var createTempDataDir = (tmpDir) => {
+  var createTempDataDir = () => {
+    let tmpDir = options.get('tempdir');
     if (!fs.existsSync(tmpDir)) {
-      let dir = path.join(os.tmpdir(), process.env.USER);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
       fs.mkdirSync(tmpDir);
       LOGGER.debug(`Created temp data directory ${tmpDir}`);
     } else {
@@ -147,9 +123,8 @@ MongoClient.connect(MONGO, MONGO_OPTIONS, function(err, db) {
   };
 
   // Synchronously create directory for temporary data, then start listening.
-  createTempDataDir(TEMP_DATA_DIR);
-  server.listen(PORT, () => {
-    LOGGER.info(`Server listening on ${HOST}, ${PORT}`);
+  createTempDataDir(options.get('tempdir'));
+  server.listen(options.get('port'), () => {
+    LOGGER.info(`Server listening on ${options.get('hostname')}, ${options.get('port')}`);
   });
 });
-

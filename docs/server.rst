@@ -9,11 +9,63 @@ Running
 
 2. Ensure that samtools v1.3 or higher is on your path
 
-3. Run server
+3. Create a config.json file with url to running mongo db.
+   Alternatively, pass this url on the command line using option -m.
+
+4. Run server
+
+Parameters
+----------
+
+Parameters can be used to configure the server. You can use -h to list
+supported parameters.
+
+::
+
+  bin/server.js -h
+
+Parameters and extended configuration can be defined in a configuration
+file. An example configuration file can be found at docs/config.json.
+
+::
+
+  bin/server.js -c yourConfig.json
+
+
+Providing mongo database URL
+----------------------------
+
+A parameter which is essential is the mongo database url. You can set
+this parameter by creating a configuration file and passing it to the
+server.
+
+::
+
+ {
+   "mongourl": "mongodb://<url of mongo server>:<port>/imetacache"
+ }
+
+ # from  a configuration file
+ bin/server.js -c <...>/yourConfig.json
+
+Or by passing the parameter when starting the server.
+
+::
+
+ #providing url of mongo server
+ bin/server.js -m 'mongodb://<url>:<port>/imetacache'
+
+ #providing path to unix socket
+ bin/server.js -m 'mongodb:///tmp/mongodb-27017.sock/imetacache'
+
+
+Other options
+-------------
 
 Installed from source
 
 ::
+
 
  #on the default socket /tmp/${USER}/npg_ranger.sock
  bin/server.js
@@ -26,6 +78,9 @@ Installed from source
 
  #on a custom port and skip authentication
  bin/server.js -p PORT -s
+
+ #changing time to wait before killing child processes
+ bin/server.js -g SECONDS
 
 Installed with npm
 
@@ -45,6 +100,9 @@ If installed locally
  #on a custom port and skip authentication
  ./node_modules/.bin/npg_ranger_server -p PORT -s
 
+ #changing time to wait before killing child processes
+ ./node_modules/.bin/npg_ranger_server.js -g SECONDS
+
 If installed globally
 
 ::
@@ -60,6 +118,9 @@ If installed globally
 
  #on a custom port and skip authentication
  npg_ranger_server.js -p PORT -s
+
+ #changing time to wait before killing child processes
+ npg_ranger_server.js -g SECONDS
 
 
 EXAMPLES AND COMPATIBLE CLIENTS

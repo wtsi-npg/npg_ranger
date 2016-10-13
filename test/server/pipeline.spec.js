@@ -5,6 +5,9 @@
 const spawn    = require('child_process').spawn;
 const devnull  = require('dev-null');
 const pipeline = require('../../lib/server/pipeline.js');
+const config   = require('../../lib/config.js');
+
+config.provide( () => { return {}; } );
 
 var path = 'test/server/data/pipeline/text.txt';
 var isSuccess = null;

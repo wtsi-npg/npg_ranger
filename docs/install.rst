@@ -48,6 +48,12 @@ This will install npg_ranger globally for your node deployment. Unless you insta
 
   npm install -g npg_ranger
 
+Install 3rd party dependencies
+------------------------------
+
+VCF Files
+npg_ranger relies on freebayes for generating VCF files, but to run in node.js, freebayes must be compiled in a different way. You should get the npg patched version from https://github.com/wtsi-npg/freebayes, and follow the [instructions in the README](https://github.com/wtsi-npg/freebayes#compilation) for compiling with node.js support.
+
 Post install
 ============
 
