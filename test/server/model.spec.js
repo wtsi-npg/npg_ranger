@@ -67,32 +67,6 @@ describe('Class methods', function() {
   });
 });
 
-describe('Creating object instance', function() {
-  beforeAll(function() {
-    fse.ensureDirSync(tmpDir);
-    config.provide(dummy);
-  });
-
-  afterAll(function() {
-    fse.removeSync(tmpDir);
-  });
-
-  it('temp directory attr is optional', function() {
-    let m;
-    expect( () => {m = new RangerModel();} ).not.toThrow();
-    expect(m.tmpDir).toBe(tmpDir);
-  });
-
-  it('Temporary directory should exist', function() {
-    expect( () => {new RangerModel('/some/dir');} )
-      .toThrowError(assert.AssertionError,
-      "Temp data directory '/some/dir' does not exist");
-    let m;
-    expect( () => {m = new RangerModel('test');} ).not.toThrow();
-    expect(m.tmpDir).toBe('test');
-  });
-});
-
 describe('Processing request', function() {
   let m;
   beforeAll(function() {
