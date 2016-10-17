@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - allow for email in the remote user value
+
   - set node recomended to >= 4.5.0 in package.json
   - add config-chain 1.1.11
   - upgrade moment to 2.15.1 from 2.14.1
