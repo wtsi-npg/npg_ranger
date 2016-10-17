@@ -836,7 +836,7 @@ describe('CORS in response', function() {
     expect(headers['access-control-allow-methods']).toBe(
       'GET,OPTIONS', 'allowed methods are set');
     expect(headers['access-control-allow-headers']).toBe(
-      'TE,X-Remote-User', 'allowed headers are set');
+      'TE,X-Remote-User,withcredentials', 'allowed headers are set');
     expect(headers['access-control-max-age']).toBe('1800', 'max age is set');
     expect(Object.keys(headers).indexOf('Access-Control-Allow-Credentials')).toBe(
       -1, 'Access-Control-Allow-Credentials header is not set');
