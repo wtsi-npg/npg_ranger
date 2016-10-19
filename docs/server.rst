@@ -165,7 +165,7 @@ multiple files found - an outcome of samtools merge
  curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
  curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
-The default output format is bam. Use 'format' option with value either 'SAM' or
+The default output format is BAM. Use 'format' option with value either 'SAM' or
 'BAM' or 'CRAM' to change the output format.
 
 nodejs client (this project)
@@ -183,7 +183,7 @@ Authentication and authorisation
 
 Authentication should be done by a front server. It is expected that the
 incoming request has X-Remote-User header set. The data will be served if the
-remote user has 'read' permission for alll files that have to be merged/served.
+remote user has 'read' permission for all files that have to be merged/served.
 
 APACHE REVERSE PROXY
 ====================
