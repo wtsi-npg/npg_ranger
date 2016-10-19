@@ -1,5 +1,8 @@
 # npg_ranger project
 
+[![Build Status](https://travis-ci.org/wtsi-npg/npg_ranger.svg?branch=master)](https://travis-ci.org/wtsi-npg/npg_ranger)
+[![NPM dependencies](https://david-dm.org/wtsi-npg/npg_ranger.svg)](https://david-dm.org/wtsi-npg/npg_ranger)
+
 ## Introduction
 
 This project is a contribution towards development of the streaming API and servers under the
@@ -20,4 +23,3 @@ the http transfer encoding protocol to stream sequencing data.
  package.json - npm package definition
  Gruntfile.js - grunt runner specification
 ```
-
