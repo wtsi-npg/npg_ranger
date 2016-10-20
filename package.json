@@ -33,14 +33,15 @@
     "README.md",
     "bin",
     "lib",
+    "lib/client",
     "lib/server",
     "lib/server/http",
-    "lib/client",
     "test",
     "test/client",
     "test/server/data",
     "test/server/data/fixtures",
-    "test/server/data/pipeline"
+    "test/server/data/pipeline",
+    "test/server/data/references/PhiX/all/fasta"
   ],
   "bin": {
     "npg_ranger_server": "bin/server.js",
