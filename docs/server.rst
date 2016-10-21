@@ -7,10 +7,19 @@ Running
 
 1. Connect to iRODs if not already connected
 
-2. Ensure that samtools v1.3 or higher is on your path
+2. Ensure you have bioinformatics tools in path
 
-3. Create a config.json file with url to running mongo db.
-   Alternatively, pass this url on the command line using option -m.
+   2.1 samtools v1.3 or higher
+
+   2.2 biobambam v2.0.50
+
+   2.3 freebayes `v1.0.2-npg-Aug2016
+   <https://github.com/wtsi-npg/freebayes/tree/v1.0.2-npg-Aug2016>`_
+
+3. Create `configuration file
+   <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_
+   with parameters needed e.g. mongo database url, path for reference root and
+   port
 
 4. Run server
 
@@ -32,11 +41,11 @@ file. An example configuration file can be found at docs/config.json.
   bin/server.js -c yourConfig.json
 
 
-Providing mongo database URL
-----------------------------
+Providing essential configuration
+---------------------------------
 
-A parameter which is essential is the mongo database url. You can set
-this parameter by creating a configuration file and passing it to the
+An essential parameter to start the server is the mongo database url. You can
+set this parameter by creating a configuration file and passing it to the
 server.
 
 ::
@@ -48,7 +57,7 @@ server.
  # from  a configuration file
  bin/server.js -c <...>/yourConfig.json
 
-Or by passing the parameter when starting the server.
+Or by passing the parameter when starting the server with the -m option.
 
 ::
 
@@ -58,6 +67,20 @@ Or by passing the parameter when starting the server.
  #providing path to unix socket
  bin/server.js -m 'mongodb:///tmp/mongodb-27017.sock/imetacache'
 
+If a reference root is required to resolve full reference paths from the entries
+in the database, the root path should be provided in the startup configuration.
+
+::
+
+ # in a configuration file
+
+ {
+   "mongourl":   "mongodb://<url of mongo server>:<port>/imetacache",
+   "references": "/path_to_ref_root/"
+ }
+
+ # as parameter
+ bin/server.js -r "/path_to_ref_root/"
 
 Other options
 -------------
@@ -142,7 +165,8 @@ multiple files found - an outcome of samtools merge
  curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/seq/18691&region=Zv9_scaffold3541&irods=1&name=18691_1%231.cram'
  curl -H "Content-type: application/octet-stream" -X "GET" 'localhost:9444/file?directory=/staging/path&region=Zv9_scaffold3541&name=18691_1%231.cram'
 
-The default output format is bam. Use 'format' option with value either 'SAM' or 'BAM' or 'CRAM' to change the output format.
+The default output format is BAM. Use 'format' option with value either 'SAM' or
+'BAM' or 'CRAM' to change the output format.
 
 nodejs client (this project)
 ----------------------------
@@ -152,12 +176,14 @@ A simple trailer header aware client that works with a socket server.
 Biodalliance
 ------------
 A custom npg_ranger track is added to the Biodalliance genome browser
-https://github.com/wtsi-npg/dalliance
+https://github.com/wtsi-npg/dalliance/tree/npg_ranger_master
 
 Authentication and authorisation
 ================================
 
-Authentication should be done by a front server. It is expected that the incoming request has X-Remote-User header set. The data will be served if the remote user has 'read' permission for alll files that have to be merged/served.
+Authentication should be done by a front server. It is expected that the
+incoming request has X-Remote-User header set. The data will be served if the
+remote user has 'read' permission for all files that have to be merged/served.
 
 APACHE REVERSE PROXY
 ====================
@@ -184,20 +210,37 @@ LDAP authorisation config
 
 ::
 
+ # Limit authentication to only GET and POST requests, auth will not be sent with OPTIONS
  <Location / >
-	AuthType Basic
-	AuthBasicProvider ldap
-	AuthName "LDAP Login For NPG Streaming"
-	AuthLDAPURL "sanger ldap string"
-	Require valid-user
-	AuthLDAPRemoteUserAttribute uid
-	RewriteEngine On
-        RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER},NS]
-	RequestHeader set X-Remote-User %{PROXY_USER}e
+   <Limit GET POST>
+     AuthType Basic
+     AuthBasicProvider ldap
+     AuthName "LDAP Login For NPG Streaming"
+     AuthLDAPURL "sanger ldap string"
+     Require valid-user
+     AuthLDAPRemoteUserAttribute uid
+     RewriteEngine On
+     RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER},NS]
+     RequestHeader set X-Remote-User %{PROXY_USER}e
+   </Limit>
   </Location>
 
 Reverse proxy configuration
 ---------------------------
+
+If a reverse proxy is set as an entry point for the application, the server will
+need to be aware of the reverse proxy addresses and paths mapped. The list of
+addresses and paths can be provided in the configuration file.
+
+::
+
+  {
+    "proxylist": {
+      "http://server:port": "http://server:port/mapped_path"
+    }
+  }
+
+Example configuration entries for an Apache reverse proxy can be found bellow:
 
 ::
 
@@ -215,22 +258,22 @@ Reverse proxy configuration
   RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:http]
   RewriteCond "%{HTTPS}" =on
   RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:https]
-  RequestHeader set X-Forwarded-Proto  %{XPROTOCOL}e
-  RequestHeader set X-Forwarded-Host-Suffix '/npg_ranger'
+  # Use ":" as suffix of protocol eg "http:"
+  RequestHeader set X-Forwarded-Proto  "%{XPROTOCOL}e:"
 
 CORS headers
 ------------
 
-::
-
- Header set Access-Control-Allow-Origin "SOME_SERVER_URL"
- Header set Access-Control-Allow-Methods "GET"
- Header set Access-Control-Allow-Credentials "true"
-
-Or, if no authentication is necessary,
+If the server needs to provide data for browser clients, CORS headers may need
+to be configured. A list of allowed origins can be passed as part of the
+configuration file.
 
 ::
 
- Header set Access-Control-Allow-Origin "*"
- Header set Access-Control-Allow-Methods "GET"
+ {
+   "originlist": ["http://one_origin.com", "http://other_origin.com"]
+ }
 
+If it is not possible to enumerate the origins to be allowed, the least secure
+option of allowing all origins can be configured at server startup with the
+--anyorigin option.
