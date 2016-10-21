@@ -15,7 +15,10 @@ const config = require('../lib/config.js');
 const options = config.provide(config.fromCommandLine, true);
 const RangerController = require('../lib/server/controller');
 
-if ( options.get('debug') ) {
+if ( options.get('version') ) {
+  console.log(require('../package.json').version);
+  process.exit(0);
+} else if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
 

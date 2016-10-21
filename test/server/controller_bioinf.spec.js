@@ -124,7 +124,7 @@ describe('server fetching', () => {
         console.log('Server wasn\'t ready: ' + reason);
       });
     });
-  });
+  }, 20000);
 
   afterAll( () => {
     server.close( function closed(err){
