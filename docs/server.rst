@@ -34,7 +34,8 @@ supported parameters.
   bin/server.js -h
 
 Parameters and extended configuration can be defined in a configuration
-file. An example configuration file can be found at docs/config.json.
+file. An example configuration file can be found at
+`docs/config.json <https://github.com/jmtcsngr/npg_ranger/blob/master/docs/config.json>`_.
 
 ::
 

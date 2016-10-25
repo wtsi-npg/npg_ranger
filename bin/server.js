@@ -48,32 +48,32 @@ const RangerServer = require('../lib/server.js');
 * Event emitted when a server starts. Usually bubbling up from RangerServer.
 * @type {String}
 */
-const SERVER_STARTED        = RangerServer.SERVER_STARTED;
+const SERVER_STARTED  = RangerServer.SERVER_STARTED;
 /**
 * Event emitted when a server closes. Usually bubbling up from RangerServer.
 * @type {String}
 */
-const SERVER_CLOSED         = RangerServer.SERVER_CLOSED;
+const SERVER_CLOSED   = RangerServer.SERVER_CLOSED;
 /**
 * Emitted when cluster starts
 * @type {String}
 */
-const CLUSTER_STARTED       = 'cluster_started';
+const CLUSTER_STARTED = 'cluster_started';
 /**
 * Emitted each time the worker starts
 * @type {String}
 */
-const WORKER_STARTED        = 'worker_started';
+const WORKER_STARTED  = 'worker_started';
 /**
 * Emitted each time the cluster forks a new worker
 * @type {String}
 */
-const WORKER_FORKED         = 'worker_forked';
+const WORKER_FORKED   = 'worker_forked';
 /**
 * Emitted when the cluster notices a worker has gone down
 * @type {String}
 */
-const WORKER_CLOSED         = 'worker_closed';
+const WORKER_CLOSED   = 'worker_closed';
 /**
 * Emitted when the cluster identifies too many workers has died in a short span
 * of time. The cluster will stop forking after this event is emitted. Short
