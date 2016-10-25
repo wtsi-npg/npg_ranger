@@ -1,6 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
 release 0.4.1
+  - allow for email in the remote user value
   - server/client version from package.json
   - updated docs for 0.4.x
   - increase timouts for some tests
