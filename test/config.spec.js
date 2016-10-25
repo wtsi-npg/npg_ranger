@@ -108,16 +108,18 @@ describe('Creating temp file path', function() {
 
 describe('Listing config options', function() {
   it('Options listing', function() {
-    config.provide( () => {return {mongourl: 'mymongourl',
-                                   hostname: 'myhost',
-                                   tempdir:  '/tmp/mydir',
-                                   port:     9999,
-                                   debug:    true,
-                                   help:     true
+    config.provide( () => {return {mongourl:    'mymongourl',
+                                   hostname:    'myhost',
+                                   tempdir:     '/tmp/mydir',
+                                   port:        9999,
+                                   debug:       true,
+                                   emaildomain: 'some.com',
+                                   help:        true
                                   };} );
     let a = ['anyorigin=undefined',
              'configfile=undefined',
              'debug=true',
+             'emaildomain="some.com"',
              'hostname="myhost"',
              'mongourl="mymongourl"',
              'multiref=undefined',

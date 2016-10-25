@@ -15,7 +15,10 @@ const config = require('../lib/config.js');
 const options = config.provide(config.fromCommandLine, true);
 const RangerController = require('../lib/server/controller');
 
-if ( options.get('debug') ) {
+if ( options.get('version') ) {
+  console.log(require('../package.json').version);
+  process.exit(0);
+} else if ( options.get('debug') ) {
   LOGGER.level = 'debug';
 }
 
@@ -34,7 +37,6 @@ LOGGER.info(config.logOpts());
  *  3. There are some defaults, which can be found in lib/config.js
  */
 
-assert(process.env.USER, 'User environment variable is not defined');
 const server = http.createServer();
 
 // Exit gracefully on a signal to quit
