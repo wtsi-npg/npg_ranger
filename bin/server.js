@@ -37,7 +37,6 @@ LOGGER.info(config.logOpts());
  *  3. There are some defaults, which can be found in lib/config.js
  */
 
-assert(process.env.USER, 'User environment variable is not defined');
 const server = http.createServer();
 
 // Exit gracefully on a signal to quit
