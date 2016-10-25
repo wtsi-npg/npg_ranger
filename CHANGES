@@ -4,6 +4,7 @@ release 0.4.1
   - server/client version from package.json
   - updated docs for 0.4.x
   - increase timouts for some tests
+  - remove assert for process.env.USER in bin/server
 
 release 0.4.0
   - set node recomended to >= 4.5.0 in package.json
