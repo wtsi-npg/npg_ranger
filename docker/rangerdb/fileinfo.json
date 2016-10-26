@@ -1,0 +1,4 @@
+[
+{"filepath_by_host" : { "*" : "/npg_ranger/test/server/data/20818_1#888.bam" }, "avh" : { "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20818", "data_object" : "20818_1#888.bam" },
+
+{"filepath_by_host" : { "*" : "/npg_ranger/test/server/data/20907_1#888.bam" }, "avh" : { "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" }]
