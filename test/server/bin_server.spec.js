@@ -212,6 +212,123 @@ describe('Cluster limit consecutive forks at start', () => {
   }, 10000);
 });
 
+describe('Sockets are cleaned', () => {
+  let spawn    = require('child_process').spawn;
+  let execSync = require('child_process').execSync;
+
+  let child;
+  let tmp_dir;
+  let serverCommand = 'bin/server.js';
+
+  let BASE_PORT  = 1400;
+  let PORT_RANGE = 200;
+  let PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+
+  beforeAll(() => {
+    let tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
+    tmp_dir = tmpobj.name;
+    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
+    let out = execSync(command);
+    console.log(`Loaded data to MONGO DB: ${out}`);
+  });
+
+  afterAll(() => {
+    execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
+    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
+  });
+
+  afterEach( () => {
+    child.kill('SIGINT');
+  });
+
+  // 0 for single process and 2 for cluster
+  [0, 2].forEach(( numWorkers ) => {
+    it('fails if previous socket exists', ( done ) => {
+      // let fakePrevSocket;
+      let socketName = `previous_socket${numWorkers}.sock`;
+      let socketPath = `${tmp_dir}/${socketName}`;
+      fse.close(fse.openSync(socketPath, 'w'));
+      child = spawn(serverCommand,[
+        '-d',
+        `-mmongodb://localhost:${PORT}`,
+        '-k2', '-l1', // Max 2 deaths in 1 second
+        '-n', `${numWorkers}`,
+        '-p', `${socketPath}`]
+      );
+      child.stdout.on('data', ( data ) => { console.log(`${data}`); });
+      child.on('close', ( code ) => {
+        expect(code).toBe(11);
+        fse.removeSync(socketPath);
+        done();
+      });
+    });
+  });
+
+  it('removes socket after exiting when is single process', ( done ) => {
+    let socketName = 'single_proc_socket.sock';
+    let socketPath = `${tmp_dir}/${socketName}`;
+    fse.access(socketPath, fse.F_OK, (err) => {
+      // expect to fail access because the socket hasn't being created
+      expect(err).toBeDefined();
+    });
+    child = spawn(serverCommand,[
+      '-d',
+      `-mmongodb://localhost:${PORT}`,
+      `-n0`,
+      '-p', `${socketPath}`]
+    );
+    // child.stdout.on('data', ( data ) => { console.log(`${data}`); });
+    setTimeout( () => {
+      try {
+        fse.accessSync(socketPath, fse.F_OK);
+      } catch (e) {
+        // fail because socket is not there
+        fail();
+      }
+      child.kill('SIGINT');
+      setTimeout( () => {
+        fse.access(socketPath, fse.F_OK, (err) => {
+          // expect to fail because the socket is not there anymore
+          expect(err).toBeDefined();
+          done();
+        });
+      }, 2000);
+    }, 2000);
+  }, 10000);
+
+  it('removes socket after exiting when is cluster', ( done ) => {
+    let socketName = 'cluster_socket.sock';
+    let socketPath = `${tmp_dir}/${socketName}`;
+    fse.access(socketPath, fse.F_OK, (err) => {
+      // expect to fail access because the socket hasn't being created
+      expect(err).toBeDefined();
+    });
+    child = spawn(serverCommand,[
+      '-d',
+      `-mmongodb://localhost:${PORT}`,
+      `-n5`,
+      '-p', `${socketPath}`]
+    );
+    // child.stdout.on('data', ( data ) => { console.log(`${data}`); });
+    setTimeout( () => {
+      try {
+        fse.accessSync(socketPath, fse.F_OK);
+      } catch (e) {
+        // fail because socket is not there
+        fail();
+      }
+      child.kill('SIGINT');
+      setTimeout( () => {
+        fse.access(socketPath, fse.F_OK, (err) => {
+          // expect to fail because the socket is not there anymore
+          expect(err).toBeDefined();
+          done();
+        });
+      }, 2000);
+    }, 4000);
+  }, 10000);
+});
+
 describe('Cluster limit consecutive forks', () => {
   let spawn    = require('child_process').spawn;
   let exec     = require('child_process').exec;
@@ -341,8 +458,8 @@ describe('Cluster limit consecutive forks', () => {
       '-n5',
       '-p33000']
     );
-    //child.stderr.on('data', (d) => {console.log(d.toString());});
-    //child.stdout.on('data', (d) => {console.log(d.toString());});
+    // child.stderr.on('data', (d) => {console.log(d.toString());});
+    // child.stdout.on('data', (d) => {console.log(d.toString());});
     child.on('close', (code) => {
       expect(killing).toBe(true);
       expect(code).toEqual(210);

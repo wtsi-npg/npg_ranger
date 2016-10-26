@@ -158,12 +158,17 @@ class ClusteredBroker extends Broker {
     let self = this;
     if ( cluster.isMaster ) {
       LOGGER.info(config.logOpts());
-      for (let i = 0; i < this.numWorkers; i++) {
-        cluster.fork();
-        self.emit(WORKER_FORKED);
-      }
+
       let consec = 0;
       let exiting = false;
+
+      cluster.disconnect(() => {
+        LOGGER.debug('Cluster disconnect');
+        if (typeof self.serverFactory.cleanup === 'function' ) {
+          LOGGER.debug('Delegating cleanup to factory');
+          self.serverFactory.cleanup();
+        }
+      });
 
       cluster.on('exit', (worker, code, signal) => {
         consec += 1;
@@ -186,6 +191,11 @@ class ClusteredBroker extends Broker {
           }, this.waitingConsec * 1000 );
         }
       });
+
+      for (let i = 0; i < this.numWorkers; i++) {
+        cluster.fork();
+        self.emit(WORKER_FORKED);
+      }
       self.emit(CLUSTER_STARTED, cluster);
     } else {
       if ( cluster.isWorker ) {
@@ -213,7 +223,6 @@ class ClusteredBroker extends Broker {
  * });
  */
 class BrokerFactory {
-
   constructor(numWorkers, maxConsec, waitingConsec) {
     this.numWorkers    = numWorkers;
     this.maxConsec     = maxConsec;
@@ -237,7 +246,6 @@ class BrokerFactory {
  * Application's main method.
  */
 if ( require.main === module ) {
-
   const options = config.provide(config.fromCommandLine);
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
@@ -254,6 +262,8 @@ if ( require.main === module ) {
 
   sf.on(SERVER_STARTED, () => { LOGGER.debug('Server factory started server'); });
   sf.on(SERVER_CLOSED,  () => { LOGGER.debug('Server factory server closed'); });
+
+  sf.verifySocket();
 
   let broker = bf.buildBroker(sf);
 
