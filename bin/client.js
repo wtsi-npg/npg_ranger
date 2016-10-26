@@ -62,7 +62,7 @@ const RangerRequest = require('../lib/client/rangerRequest');
  */
 
 cline
-  .version('0.3.0')
+  .version(require('../package.json').version)
   .description('Command line client for GA4GH data streaming')
   .arguments('<url> [output]')
   .option('--debug', 'Show debug output')

@@ -1,3 +1,5 @@
 {
-  "mongourl": "mongodb://localhost:27017/imetacache"
+  "mongourl": "mongodb://localhost:27017/imetacache",
+  "originlist": ["http://www.your-server.com"],
+  "proxylist": {"http://proxy.your-server.com:proxy-port": "http://proxy.your-server.com:proxy-port/npg_ranger"}
 }
