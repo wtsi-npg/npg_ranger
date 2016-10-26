@@ -116,6 +116,7 @@ class Broker extends EventEmitter {
 class FlatBroker extends Broker {
   start() {
     super.start();
+    this.serverFactory.verifySocket();
     this.serverFactory.startServer();
   }
 }
@@ -157,17 +158,22 @@ class ClusteredBroker extends Broker {
     const cluster = require('cluster');
     let self = this;
     if ( cluster.isMaster ) {
-      LOGGER.info(config.logOpts());
+      this.serverFactory.verifySocket();
 
       let consec = 0;
       let exiting = false;
 
-      cluster.disconnect(() => {
-        LOGGER.debug('Cluster disconnect');
-        if (typeof self.serverFactory.cleanup === 'function' ) {
-          LOGGER.debug('Delegating cleanup to factory');
-          self.serverFactory.cleanup();
-        }
+      [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
+        process.on(sig, () => {
+          cluster.disconnect(() => {
+            LOGGER.debug('Cluster disconnect');
+            if (typeof self.serverFactory.cleanup === 'function' ) {
+              LOGGER.debug('Delegating cleanup to factory');
+              self.serverFactory.cleanup();
+            }
+            process.exit(0);
+          });
+        });
       });
 
       cluster.on('exit', (worker, code, signal) => {
@@ -262,8 +268,6 @@ if ( require.main === module ) {
 
   sf.on(SERVER_STARTED, () => { LOGGER.debug('Server factory started server'); });
   sf.on(SERVER_CLOSED,  () => { LOGGER.debug('Server factory server closed'); });
-
-  sf.verifySocket();
 
   let broker = bf.buildBroker(sf);
 

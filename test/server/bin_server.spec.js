@@ -15,11 +15,14 @@ class EmptyServerFactory extends EventEmitter {
   startServer() {
     this.emit(BinServer.SERVER_STARTED);
   }
+
+  verifySocket() { }
 }
 
 let tmpDir = config.tempFilePath('npg_ranger_server_test_');
 config.provide(() => { return {
   tempdir: tmpDir,
+  port:    `${tmpDir}/npg_ranger.sock`
 };});
 
 describe('Broker creation constructor validation', () => {
@@ -61,6 +64,7 @@ describe('Flat server', () => {
   let testConfBuilder = () => {
     return {
       tempdir: tmpDir,
+      port:    `${tmpDir}/npg_ranger.sock`
     };
   };
   let content = 'some chars';
@@ -76,6 +80,8 @@ describe('Flat server', () => {
         this.emit(BinServer.SERVER_STARTED);
       });
     }
+
+    verifySocket() { }
   }
 
   beforeAll( () => {
@@ -128,6 +134,7 @@ describe('Cluster creation', () => {
   let testConfBuilder = () => {
     return {
       tempdir: tmpDir,
+      port:    `${tmpDir}/npg_ranger.sock`
     };
   };
 
@@ -202,7 +209,7 @@ describe('Cluster limit consecutive forks at start', () => {
   // timeout to kill workers, it will not recognise that consecutive
   // forks are dying, so will not kill the sever within the jasmine timeout.
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -k10 -l3 -n10 -m mongodb://loclhost:27017/imc', (error) => {
+    child = exec('bin/server.js -k10 -l3 -n10 -m mongodb://loclhost:27017/imc -p33000', (error) => {
       expect(error).not.toBe(null);
       if ( !!error ) {
         expect(error.code).toEqual(210);
@@ -242,7 +249,7 @@ describe('Sockets are cleaned', () => {
   });
 
   // 0 for single process and 2 for cluster
-  [0, 2].forEach(( numWorkers ) => {
+  [0, 1, 2].forEach(( numWorkers ) => {
     it('fails if previous socket exists', ( done ) => {
       // let fakePrevSocket;
       let socketName = `previous_socket${numWorkers}.sock`;
@@ -310,6 +317,7 @@ describe('Sockets are cleaned', () => {
       '-p', `${socketPath}`]
     );
     // child.stdout.on('data', ( data ) => { console.log(`${data}`); });
+    // child.stderr.on('data', ( data ) => { console.log(`${data}`); });
     setTimeout( () => {
       try {
         fse.accessSync(socketPath, fse.F_OK);
