@@ -239,7 +239,10 @@ class BrokerFactory {
 if ( require.main === module ) {
 
   const options = config.provide(config.fromCommandLine);
-  if ( options.get('debug') ) {
+  if ( options.get('version') ) {
+    console.log(require('../package.json').version);
+    process.exit(0);
+  } else if ( options.get('debug') ) {
     LOGGER.level = 'debug';
   }
   let numWorkers    = options.get('numworkers');

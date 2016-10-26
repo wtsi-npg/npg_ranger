@@ -9,6 +9,7 @@ const tmp         = require('tmp');
 const fse         = require('fs-extra');
 
 const DataAccess  = require('../../lib/server/auth.js');
+const config      = require('../../lib/config.js');
 
 const BASE_PORT  = 1100;
 const PORT_RANGE = 200;
@@ -21,8 +22,10 @@ describe('Authorisation', function() {
   console.log(`MONGO data directory: ${tmp_dir}`);
   var db_name = 'npg_ranger_test';
   var url = `mongodb://localhost:${PORT}/${db_name}`;
-
+  var noemail_conf = function() { return {emaildomain: null}; };
+  var email_conf   = function() { return {emaildomain: 'boom.co.uk'}; };
   beforeAll( () => {
+    config.provide(noemail_conf);
     let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
     console.log(`\nCommand to start MONGO DB daemon: ${command}`);
     let out = child.execSync(command);
@@ -53,33 +56,68 @@ describe('Authorisation', function() {
     }).toThrowError(Error, 'Access groups array is not available');
   });
 
-  it('Authorisation failed - access_control_group_id value is missing', function(done) {
+  it('Authorisation failed - username is all whitespace', function(done) {
+    var da = new DataAccess({});
+    da.on('failed', (username, reason) => {
+      expect(username).toBe('   ');
+      expect(reason).toBe('Invalid user "   "');
+      done();
+    });
+    da.authorise('   ', ["9", "6", "10"]);
+  });
+
+  it('Authorisation failed - email is expected', function(done) {
+    config.provide(email_conf);
     var da = new DataAccess({});
     da.on('failed', (username, reason) => {
       expect(username).toBe('alice');
+      expect(reason).toBe('Invalid user "alice"');
+      done();
+    });
+    da.authorise('alice', ["9", "6", "10"]);
+  });
+
+  it('Authorisation failed - email is incorrect', function(done) {
+    config.provide(email_conf);
+    var da = new DataAccess({});
+    da.on('failed', (username, reason) => {
+      expect(username).toBe('alice@boom.com');
+      expect(reason).toBe('Invalid user "alice@boom.com"');
+      done();
+    });
+    da.authorise('alice@boom.com', ["9", "6", "10"]);
+  });
+
+  it('Authorisation failed - access_control_group_id value is missing', function(done) {
+    config.provide(email_conf);
+    var da = new DataAccess({});
+    da.on('failed', (username, reason) => {
+      expect(username).toBe('alice@boom.co.uk');
       expect(reason).toBe(
         'Some access group ids are not defined');
       done();
     });
-    da.authorise('alice', ["9", "", "10"]);
+    da.authorise('alice@boom.co.uk', ["9", "", "10"]);
   });
 
   it('Authorised - files belong to the same auth group', function(done) {
+    config.provide(email_conf);
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       var da = new DataAccess(db);
       da.on('authorised', (username) => {
-         expect(username).toBe('alice');
+         expect(username).toBe('alice@boom.co.uk');
          done();
       });
       // We are not interested in what happens on fail.
       // If 'authorised' event is not processed withing the set
       // time limit, the test will fail.
-      da.authorise('alice', ["6", "6"]);
+      da.authorise('alice@boom.co.uk', ["6", "6"]);
     });
   });
 
   it('Authorised - files belong to different auth group', function(done) {
+    config.provide(noemail_conf);
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       var da = new DataAccess(db);
@@ -92,6 +130,7 @@ describe('Authorisation', function() {
   });
 
   it('Authorisation failed - no auth for some of the files', function(done) {
+    config.provide(noemail_conf);
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       var da = new DataAccess(db);
@@ -105,6 +144,7 @@ describe('Authorisation', function() {
   });
 
   it('Authorisation failed - no auth for any of the files', function(done) {
+    config.provide(noemail_conf);
     MongoClient.connect(url, function(err, db) {
       assert.equal(err, null);
       var da = new DataAccess(db);

@@ -108,15 +108,16 @@ describe('Creating temp file path', function() {
 
 describe('Listing config options', function() {
   it('Options listing', () => {
-    config.provide( () => {return {mongourl: 'mymongourl',
-                                   hostname: 'myhost',
-                                   tempdir:  '/tmp/mydir',
-                                   port:     9999,
-                                   debug:    true,
-                                   help:     true,
-                                   clustertimeout: 1,
+    config.provide( () => {return {mongourl:         'mymongourl',
+                                   hostname:         'myhost',
+                                   tempdir:          '/tmp/mydir',
+                                   port:             9999,
+                                   debug:            true,
+                                   emaildomain:      'some.com',
+                                   help:             true,
+                                   clustertimeout:   1,
                                    clustermaxdeaths: 2,
-                                   numworkers: 3
+                                   numworkers:       3
                                   };} );
     console.log(config.logOpts());
     let expectedAsArray = [
@@ -125,6 +126,7 @@ describe('Listing config options', function() {
       'clustertimeout=1',
       'configfile=undefined',
       'debug=true',
+      'emaildomain="some.com"',
       'hostname="myhost"',
       'mongourl="mymongourl"',
       'multiref=undefined',
