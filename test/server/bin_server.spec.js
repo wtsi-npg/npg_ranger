@@ -262,7 +262,7 @@ describe('Sockets are cleaned', () => {
         '-n', `${numWorkers}`,
         '-p', `${socketPath}`]
       );
-      child.stdout.on('data', ( data ) => { console.log(`${data}`); });
+      // child.stdout.on('data', ( data ) => { console.log(`${data}`); });
       child.on('close', ( code ) => {
         expect(code).toBe(11);
         fse.removeSync(socketPath);
@@ -413,7 +413,7 @@ describe('Cluster limit consecutive forks', () => {
             expect(grandchildrenAfter.indexOf(victim)).toEqual(-1);
             done();
           });
-        }, 500);
+        }, 1500);
       });
     }, 5000);
   }, 10000);
