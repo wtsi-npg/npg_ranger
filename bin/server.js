@@ -169,11 +169,8 @@ class ClusteredBroker extends Broker {
       [ 'SIGTERM', 'SIGINT', 'SIGHUP' ].forEach( ( sig ) => {
         process.on(sig, () => {
           cluster.disconnect(() => {
-            LOGGER.debug('Cluster disconnect');
-            if (typeof self.serverFactory.cleanup === 'function' ) {
-              LOGGER.debug('Delegating cleanup to factory');
-              self.serverFactory.cleanup();
-            }
+            LOGGER.debug('Cluster disconnect - delegating cleanup to factory');
+            self.serverFactory.cleanup();
             process.exit(0);
           });
         });
