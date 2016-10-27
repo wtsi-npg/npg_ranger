@@ -116,6 +116,7 @@ class Broker extends EventEmitter {
 class FlatBroker extends Broker {
   start() {
     super.start();
+    LOGGER.info(config.logOpts());
     this.serverFactory.verifySocket();
     this.serverFactory.startServer();
   }
@@ -158,6 +159,8 @@ class ClusteredBroker extends Broker {
     const cluster = require('cluster');
     let self = this;
     if ( cluster.isMaster ) {
+      LOGGER.info(config.logOpts());
+
       this.serverFactory.verifySocket();
 
       let consec = 0;
