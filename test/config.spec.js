@@ -97,38 +97,47 @@ describe('Creating temp file path', function() {
   it('Without prefix', function() {
     let temppath = config.tempFilePath();
     expect( temppath.startsWith(os.tmpdir()) ).toBe(true);
-    expect( temppath ).toMatch(/\/\d{8}_\d{8}$/);
+    expect( temppath ).toMatch(/\/\d{8}_\d{8}_\d{1,4}$/);
   });
   it('With prefix', function() {
     let temppath = config.tempFilePath('npg_ranger_config_test_');
     expect( temppath.startsWith(path.join(os.tmpdir(), 'npg_ranger_config_test_')) ).toBe(true);
-    expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{8}$/);
+    expect( temppath ).toMatch(/\/npg_ranger_config_test_\d{8}_\d{8}_\d{1,4}$/);
   });
 });
 
 describe('Listing config options', function() {
-  it('Options listing', function() {
-    config.provide( () => {return {mongourl:    'mymongourl',
-                                   hostname:    'myhost',
-                                   tempdir:     '/tmp/mydir',
-                                   port:        9999,
-                                   debug:       true,
-                                   emaildomain: 'some.com',
-                                   help:        true
+  it('Options listing', () => {
+    config.provide( () => {return {mongourl:         'mymongourl',
+                                   hostname:         'myhost',
+                                   tempdir:          '/tmp/mydir',
+                                   port:             9999,
+                                   debug:            true,
+                                   emaildomain:      'some.com',
+                                   help:             true,
+                                   clustertimeout:   1,
+                                   clustermaxdeaths: 2,
+                                   numworkers:       3
                                   };} );
-    let a = ['anyorigin=undefined',
-             'configfile=undefined',
-             'debug=true',
-             'emaildomain="some.com"',
-             'hostname="myhost"',
-             'mongourl="mymongourl"',
-             'multiref=undefined',
-             'port=9999',
-             'references=undefined',
-             'skipauth=undefined',
-             "tempdir=\"\\/tmp\\/mydir\"",
-             'timeout=3'];
-    let expected = "^\n" + a.join("\n");
+    console.log(config.logOpts());
+    let expectedAsArray = [
+      'anyorigin=undefined',
+      'clustermaxdeaths=2',
+      'clustertimeout=1',
+      'configfile=undefined',
+      'debug=true',
+      'emaildomain="some.com"',
+      'hostname="myhost"',
+      'mongourl="mymongourl"',
+      'multiref=undefined',
+      'numworkers=3',
+      'port=9999',
+      'references=undefined',
+      'skipauth=undefined',
+      "tempdir=\"\\/tmp\\/mydir\"",
+      'timeout=3'
+    ];
+    let expected = "^\n" + expectedAsArray.join("\n");
     let re = new RegExp(expected);
     let o = config.logOpts();
     expect(o).not.toMatch(/help=/);
