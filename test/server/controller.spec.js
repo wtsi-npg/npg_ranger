@@ -297,6 +297,53 @@ describe('Handling requests - error responses', function() {
   });
 });
 
+describe('Sample reference', () => {
+  const server = http.createServer();
+  let   socket = tmp.tmpNameSync();
+  let   id     = 'EGA45678';
+
+  afterAll(function() {
+    server.close();
+    try { fs.unlinkSync(socket); } catch (e) {}
+    fse.removeSync(tmpDir);
+  });
+
+  beforeAll( (done) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  [
+    '/sample//reference',
+    '/sample/-/reference',
+    '/sample/%20/reference', // Encoded blank space
+    `/sample/${id}/reference/something`
+  ].forEach( ( thisPath ) => {
+    it(`returns error response for invalid url '${thisPath}'`, ( done ) => {
+      http.get({socketPath: socket, path: thisPath}, ( response ) => {
+        var body = '';
+        response.on('data', function(d) { body += d;});
+        response.on('end', function() {
+          expect(response.headers['content-type']).toEqual('application/json');
+          expect(response.statusCode).toEqual(404);
+          expect(response.statusMessage).toEqual(`URL not found : ${thisPath}`);
+          done();
+        });
+      });
+    });
+  });
+
+  
+});
+
 describe('Redirection in json response', function() {
   const server = http.createServer();
   var socket = tmp.tmpNameSync();
@@ -663,7 +710,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Bypassing proxy server is not allowed');
-      done();   
+      done();
     });
     req.end();
   });
@@ -679,7 +726,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Bypassing proxy server is not allowed');
-      done();   
+      done();
     });
     req.end();
   });
@@ -695,7 +742,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Unknown proxy http://myserver.com:9090');
-      done();   
+      done();
     });
     req.end();
   });
@@ -715,7 +762,7 @@ describe('redirection when running behind a proxy', () => {
       res.on('end', () => {
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
-      });   
+      });
     });
     req.end();
   });
@@ -735,7 +782,7 @@ describe('redirection when running behind a proxy', () => {
       res.on('end', () => {
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
-      });   
+      });
     });
     req.end();
   });
