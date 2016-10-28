@@ -49,14 +49,15 @@
   },
   "main": "./lib/main.js",
   "dependencies": {
-    "winston":      "2.2.0",
-    "moment" :      "2.15.2",
-    "fs-extra":     "^0.30.0",
-    "mongodb":      "2.2.11",
-    "node-getopt":  "^0.2.3",
-    "config-chain": "1.1.11",
-    "commander":    "2.9.0",
-    "js-md5" :      "0.4.1"
+    "winston":       "2.2.0",
+    "moment" :       "2.15.2",
+    "fs-extra":      "^0.30.0",
+    "mongodb":       "2.2.11",
+    "node-getopt":   "^0.2.3",
+    "config-chain":  "1.1.11",
+    "commander":     "2.9.0",
+    "js-md5" :       "0.4.1",
+    "http-shutdown": "1.1.0"
   },
   "devDependencies": {
     "decache": "4.1.0",

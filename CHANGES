@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+  - add cluster support
+  - faster server shutdown with http-shutdown
+
 release 0.5.0
   - allow for email in the remote user value
   - server/client version from package.json
