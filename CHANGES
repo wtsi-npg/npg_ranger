@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+release 0.6.0
+  - example apache.conf in docs
+  - badges in README.md
   - add cluster support
   - faster server shutdown with http-shutdown
 
