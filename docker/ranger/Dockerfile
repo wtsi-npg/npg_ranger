@@ -76,6 +76,8 @@ RUN apt-get update -qq \
 WORKDIR /npg_ranger
 
 COPY ./config.json /npg_ranger/config.json
-COPY ./wait-for-it/wait-for-it.sh /wait-for-it.sh
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
+
+RUN chmod 0500 /wait-for-it.sh
 
 EXPOSE 5050
