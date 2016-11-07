@@ -1,7 +1,7 @@
 <html>
 <head>
   <script language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-  <script language="javascript" src="//www.biodalliance.org/release-0.13/dalliance-compiled.js"></script>
+  <script language="javascript" src="build/dalliance-all.js"></script>
   <script language="javascript" src="build/uiclient.js"></script>
 </head>
 <body>
@@ -25,9 +25,7 @@
         $('#linking').empty();
         $('#svgHolder').empty();
         $('#linking').append('<p>Accession: ' + accession + '</p>');
-        $('#linking').append('<p>reference ' + referencePath + '</p>');
-        $('#linking').append('<p>index ' + indexPath + '</p>');
-        $('#linking').append('<p>Chromosome: <select id=chrSelect></select></p>');
+        $('#linking').append("<p>Chromosome: <select id='chrSelect'></select></p>");
         $(chrData).each(function (i, chrRow) {
           $('#chrSelect').append(
             '<option value="' +
@@ -73,12 +71,11 @@
                 tier_type:            'sequence'
               },
               {
-                name:                 'Genes',
-                desc:                 'Gene structures from GENCODE 19',
-                bwgURI:               'http://www.biodalliance.org/datasets/gencode.bb',
-                stylesheet_uri:       'http://www.biodalliance.org/stylesheets/gencode.xml',
-                collapseSuperGroups:  true,
-                trixURI:              'http://www.biodalliance.org/datasets/geneIndex.ix'
+                name:         data.accession,
+                desc:         'Data for ' + data.accession,
+                serviceType:  'ga4gh', //
+                reqAuth:      false,
+                bamRangerURI: rangerUrl + '/ga4gh/v.0.1/get/sample/' + data.accession,
               },
             ],
         });
