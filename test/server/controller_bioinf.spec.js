@@ -28,10 +28,7 @@ describe('server fetching', () => {
   let socket = tmp.tmpNameSync();
   let expectedMd5s = {
     'single file': {
-      //'SAM' : ['16b3d79daec1da26d98a4e1b63e800b0'],
-      'BAM' : ['16b3d79daec1da26d98a4e1b63e800b0'],
-      //'CRAM': ['16b3d79daec1da26d98a4e1b63e800b0'],
-      //'VCF' : ['832d2abee762681e6f025ca0df1f38ad']
+      'BAM' : ['16b3d79daec1da26d98a4e1b63e800b0']
     },
     'multiple (merged) files': {
       'SAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
