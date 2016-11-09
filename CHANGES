@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade fs-extra to 1.0.0 from ^0.30.0
+  - upgrade winston to 2.3.0 from 2.2.0
+
 release 0.6.0
   - example apache.conf in docs
   - badges in README.md
