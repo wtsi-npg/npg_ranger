@@ -49,9 +49,9 @@
   },
   "main": "./lib/main.js",
   "dependencies": {
-    "winston":       "2.2.0",
+    "winston":       "2.3.0",
     "moment" :       "2.15.2",
-    "fs-extra":      "^0.30.0",
+    "fs-extra":      "1.0.0",
     "mongodb":       "2.2.11",
     "node-getopt":   "^0.2.3",
     "config-chain":  "1.1.11",
