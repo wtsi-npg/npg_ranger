@@ -35,21 +35,19 @@
     "lib",
     "lib/client",
     "lib/server",
-    "lib/uiclient",
     "lib/server/http",
+    "lib/uiclient",
     "test",
     "test/client",
     "test/server/data",
     "test/server/data/fixtures",
     "test/server/data/pipeline",
-    "test/server/data/references/PhiX/all/fasta"
+    "test/server/data/references/PhiX/all/fasta",
+    "test/uiclient"
   ],
   "bin": {
     "npg_ranger_server": "bin/server.js",
     "npg_ranger_client": "bin/client.js"
-  },
-  "scripts" : {
-    "postinstall": "mkdir -p build && ./node_modules/.bin/browserify lib/uiclient/*.js -d -s uiclient -o build/uiclient.js"
   },
   "main": "./lib/main.js",
   "dependencies": {
