@@ -246,7 +246,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        console.log(code || signal);
+        fail(code || signal);
       }
       done();
     });
@@ -279,7 +279,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        console.log(code || signal);
+        fail(code || signal);
       }
       done();
     });
@@ -307,6 +307,41 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
+  it('sample url returning vcf', (done) => {
+    let serv = spawn(serverCommand, [
+      '-s',
+      '-d',
+      '-n0',
+      `-p${SERV_PORT}`,
+      `-m${mongourl}`]);
+    serv.on('close', (code, signal) => {
+      if (code || signal) {
+        fail(code || signal);
+      }
+      done();
+    });
+
+    serv.stdout.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let body = '';
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=VCF`]);
+        client.stdout.on('data', (data) => {
+          body += data;
+        });
+        let hash = crypto.createHash('md5');
+        client.stdout.on('end', () => {
+          let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
+                               .digest('hex');
+          expect(hashDigest).toBe('832d2abee762681e6f025ca0df1f38ad');
+          serv.kill();
+        });
+      }
+    });
+  }, 20000);
+
+
   it('redirect url is followed', (done) => {
     let serv = spawn(serverCommand, [
       '-s',
@@ -316,7 +351,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        console.log(code || signal);
+        fail(code || signal);
       }
       done();
     });
