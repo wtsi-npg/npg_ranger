@@ -1,4 +1,4 @@
-/* globals describe, xdescribe, expect, it, fail, beforeAll, afterAll */
+/* globals describe, xdescribe, expect, it, fail, beforeAll, afterAll, jasmine */
 
 "use strict";
 
@@ -148,7 +148,7 @@ xdescribe('Testing high level', () => {
   }, 5000);
 });
 
-describe('Running with ranger server', () => {
+describe('Running with ranger server with a', () => {
   let spawn    = child.spawn;
   let execSync = child.execSync;
 
@@ -208,6 +208,25 @@ describe('Running with ranger server', () => {
         done();
       });
     });
+
+    // add a custom matcher to test if 'actual' is in the array 'expected'
+    // https://jasmine.github.io/2.0/custom_matcher.html
+    jasmine.addMatchers({
+      toBeOneOf: function() {
+        return {
+          compare: function(actual, expected) {
+            let result = {};
+            expected.forEach(function(value) {
+              if (actual === value) {
+                result.pass = true;
+              }
+            });
+            result.pass = result.pass || false;
+            return result;
+          }
+        };
+      }
+    });
   });
 
   afterAll( (done) => {
@@ -218,13 +237,13 @@ describe('Running with ranger server', () => {
     }, 1000);
   });
 
-  it('Running with ranger client', (done) => {
+  it('file url', (done) => {
     let serv = spawn(serverCommand, [
       '-s',
       '-d',
       '-n0',
       `-p${SERV_PORT}`,
-      `${mongourl}`]);
+      `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
         console.log(code || signal);
@@ -245,6 +264,43 @@ describe('Running with ranger server', () => {
         });
         bamseqchksum.on('exit', () => {
           expect(hash.digest('hex')).toBe('16b3d79daec1da26d98a4e1b63e800b0');
+          serv.kill();
+        });
+      }
+    });
+  }, 20000);
+
+  it('sample url', (done) => {
+    let serv = spawn(serverCommand, [
+      '-s',
+      '-d',
+      '-n0',
+      `-p${SERV_PORT}`,
+      `-m${mongourl}`]);
+    serv.on('close', (code, signal) => {
+      if (code || signal) {
+        console.log(code || signal);
+      }
+      done();
+    });
+
+    serv.stdout.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=SAM`]);
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        client.stdout.pipe(bamseqchksum.stdin);
+        let hash = crypto.createHash('md5');
+        bamseqchksum.stdout.on('data', (data) => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', () => {
+          let chksums = [
+            '79cb05e3fe428da52da346e7d4f6324a',
+            '9b123c8f3a3e8a59584c2193976d1226'
+          ];
+          expect(hash.digest('hex')).toBeOneOf(chksums);
           serv.kill();
         });
       }
