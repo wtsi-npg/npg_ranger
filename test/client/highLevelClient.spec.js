@@ -246,7 +246,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        fail(code || signal);
+        fail('Server failed with error' + (code || signal));
       }
       done();
     });
@@ -279,7 +279,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        fail(code || signal);
+        fail('Server failed with error' + (code || signal));
       }
       done();
     });
@@ -316,7 +316,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        fail(code || signal);
+        fail('Server failed with error' + (code || signal));
       }
       done();
     });
@@ -351,7 +351,7 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        fail(code || signal);
+        fail('Server failed with error' + (code || signal));
       }
       done();
     });
