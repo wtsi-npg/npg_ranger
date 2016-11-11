@@ -163,6 +163,30 @@ If installed globally
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
 
+available urls
+==============
+
+There are three different url paths recognised by the server:
+
+::
+
+ /file?name=$NAME[&directory=$DIR]
+ /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ /ga4gh/v.0.1/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ # $REG is in format <referenceName>:<startLoc>-<endLoc>
+
+Each will provide a response in a different way:
+
+/file will search the database for a file with matching name, then will stream that file to you. This url can only return one file, so if there is more than one file with $NAME, you will be prompted to also provide a directory $DIR. This url supports byte-range serving using the Content-Range header.
+
+/sample will search for content files with given accession, merge them, then stream the file (or specified region) in BAM format (unless overridden).
+
+/ga4gh/v.0.1/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
+
+.. _Biodall: https://github.com/wtsi-npg/dalliance
+
+__ Biodall_
+
 curl
 ====
 
