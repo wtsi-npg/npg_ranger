@@ -1,0 +1,27 @@
+version: "2"
+services:
+
+  rangerdb:
+    image: mongo:3.2.10
+    volumes:
+      - ./rangerdb/volume:/data/db
+
+  ranger:
+    build: ./ranger
+    volumes:
+      - ./ranger:/data/ranger
+    command: /npg_ranger/bin/server.js -sdp5050 -mmongodb://rangerdb/imetacache -r /npg_ranger -c /data/ranger/config.json
+    entrypoint: /wait-for-it.sh rangerdb:27017 --
+    links:
+      - rangerdb
+    depends_on:
+      - rangerdb
+
+  rangerproxy:
+    build: ./rangerproxy
+    ports:
+      - "9090:9090"
+    links:
+      - ranger
+    depends_on:
+      - ranger

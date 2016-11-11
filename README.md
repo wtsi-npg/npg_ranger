@@ -1,5 +1,11 @@
 # npg_ranger project
 
+This branch is locked at the 0.6.0 release. It includes proof of concept Dockerfiles and
+docker-compose.yml to bring up a mongodb container, an npg_ranger container and an apache
+container to act as a reverse proxy. Instructions to do this are included in
+[docker/README.md](docker/README.md). Further work will be necessary to bring these files
+up-to-date with new changes to npg_ranger and how we are configuring apache.
+
 [![Build Status](https://travis-ci.org/wtsi-npg/npg_ranger.svg?branch=master)](https://travis-ci.org/wtsi-npg/npg_ranger)
 [![NPM dependencies](https://david-dm.org/wtsi-npg/npg_ranger.svg)](https://david-dm.org/wtsi-npg/npg_ranger)
 
