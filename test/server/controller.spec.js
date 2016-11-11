@@ -300,7 +300,6 @@ describe('Handling requests - error responses', function() {
 describe('Sample reference', () => {
   const server = http.createServer();
   let   socket = tmp.tmpNameSync();
-  // let   id     = 'EGA45678';
   let   id     = 'XYZ120923';
 
   const child       = require('child_process');
