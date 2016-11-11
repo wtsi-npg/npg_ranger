@@ -59,7 +59,6 @@
     "config-chain":  "1.1.11",
     "commander":     "2.9.0",
     "js-md5" :       "0.4.1",
-    "browserify":    "13.1.1",
     "http-shutdown": "1.1.0"
   },
   "devDependencies": {
@@ -76,6 +75,7 @@
     "grunt-jsonlint": "^1.0.7",
     "grunt-browserify": "5.0.0",
     "load-grunt-tasks": "3.5.2",
-    "tmp": "0.0.29"
+    "tmp": "0.0.29",
+    "browserify": "13.1.1"
   }
 }
