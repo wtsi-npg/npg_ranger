@@ -1,6 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
   - use npg_ranger server for roundtrip tests
+  - add prototype for reference resolve
   - upgrade fs-extra to 1.0.0 from ^0.30.0
   - upgrade winston to 2.3.0 from 2.2.0
 

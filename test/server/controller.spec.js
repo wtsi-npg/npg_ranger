@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll */
+/* globals describe, it, expect, beforeAll, afterAll, jasmine */
 
 "use strict";
 
@@ -297,10 +297,130 @@ describe('Handling requests - error responses', function() {
   });
 });
 
+describe('Sample reference', () => {
+  const server = http.createServer();
+  let   socket = tmp.tmpNameSync();
+  let   id     = 'XYZ120923';
+
+  const child       = require('child_process');
+  const MongoClient = require('mongodb').MongoClient;
+
+  const BASE_PORT  = 1400;
+  const PORT_RANGE = 200;
+  const PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+  const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
+
+  afterAll( () => {
+    server.close();
+
+    child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
+    console.log('\nMONGODB server has been shut down');
+
+    try { fse.unlinkSync(socket); } catch (e) {}
+  });
+
+  beforeAll( (done) => {
+    options = config.provide(dummy);
+    fse.ensureDirSync(tmpDir);
+
+    console.log(`MONGO data directory: ${tmpDir}`);
+    let db_name = 'npg_ranger_test';
+    let url = `mongodb://localhost:${PORT}/${db_name}`;
+
+    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmpDir} --pidfilepath ${tmpDir}/mpid --logpath ${tmpDir}/dbserver.log`;
+    console.log(`\nCommand to start MONGO DB daemon: ${command}`);
+    let out = child.execSync(command);
+    console.log(`Started MONGO DB daemon: ${out}`);
+    command = `mongoimport --port ${PORT} --db ${db_name} --collection fileinfo --jsonArray --file ${FIXTURES}`;
+    out = child.execSync(command);
+    console.log(`Loaded data to MONGO DB: ${out}`);
+
+    MongoClient.connect(url, (err, db) => {
+      assert.equal(err, null);
+      server.on('request', (request, response) => {
+        let c = new RangerController(request, response, db);
+        c.handleRequest();
+      });
+      server.listen(socket, () => {
+        console.log(`Server listening on socket ${socket}`);
+        done();
+      });
+    });
+  });
+
+  [
+    '/sample//reference',
+    '/sample/-/reference',
+    '/sample/%20/reference', // Encoded blank space
+    `/sample/${id}/reference/something`
+  ].forEach( ( thisPath ) => {
+    it(`returns error response for invalid url '${thisPath}'`, ( done ) => {
+      http.get({
+        socketPath: socket,
+        path:       thisPath
+      }, ( response ) => {
+        let body = '';
+        response.on('data', ( d ) => { body += d;});
+        response.on('end',  ()    => {
+          expect(response.headers['content-type']).toEqual('application/json');
+          expect(response.statusCode).toEqual(404);
+          expect(response.statusMessage).toEqual(`URL not found : ${thisPath}`);
+          done();
+        });
+      });
+    });
+  });
+
+  it('gets reference for existing accession', ( done ) => {
+    let thisPath = `/sample/${id}/reference`;
+    http.get({
+      socketPath: socket,
+      path:       thisPath
+    }, ( response ) => {
+      let body = '';
+      response.on('data', ( d ) => {
+        body += d;
+      });
+      response.on('end',  ()    => {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(`OK`);
+        expect(JSON.parse(body)).toEqual(
+          jasmine.objectContaining({
+            reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa',
+            accession: 'XYZ120923'
+          })
+        );
+        done();
+      });
+    });
+  });
+
+  it('gets 404 when accession does not exist', ( done ) => {
+    let missingAcc = 'NONE';
+    let thisPath   = `/sample/${missingAcc}/reference`;
+    http.get({
+      socketPath: socket,
+      path:       thisPath
+    }, ( response ) => {
+      let body = '';
+      response.on('data', ( d ) => { body += d;});
+      response.on('end',  ()    => {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(404);
+        expect(response.statusMessage).toEqual(
+          `No files for sample accession ${missingAcc}`
+        );
+        done();
+      });
+    });
+  });
+});
+
 describe('Redirection in json response', function() {
   const server = http.createServer();
-  var socket = tmp.tmpNameSync();
-  let id          = 'EGA45678';
+  var socket   = tmp.tmpNameSync();
+  let id       = 'EGA45678';
   let server_path_basic = '/ga4gh/v.0.1/get/sample';
   let server_path = server_path_basic + '/' + id;
 
@@ -663,7 +783,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Bypassing proxy server is not allowed');
-      done();   
+      done();
     });
     req.end();
   });
@@ -679,7 +799,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Bypassing proxy server is not allowed');
-      done();   
+      done();
     });
     req.end();
   });
@@ -695,7 +815,7 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(403);
       expect(res.statusMessage).toEqual(
         'Unknown proxy http://myserver.com:9090');
-      done();   
+      done();
     });
     req.end();
   });
@@ -715,7 +835,7 @@ describe('redirection when running behind a proxy', () => {
       res.on('end', () => {
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
-      });   
+      });
     });
     req.end();
   });
@@ -735,7 +855,7 @@ describe('redirection when running behind a proxy', () => {
       res.on('end', () => {
         expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
         done();
-      });   
+      });
     });
     req.end();
   });
