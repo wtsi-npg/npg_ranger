@@ -92,6 +92,9 @@ module.exports = function(grunt) {
       'client_tests': {
         specs: [ "test/client/*.js" ]
       },
+      'uiclient_tests': {
+        specs: [ "test/uiclient/*.js" ]
+      }
     },
 
     browserify: {
