@@ -187,16 +187,16 @@ describe('Running with ranger server with a', () => {
       let collection = db.collection('fileinfo');
 
       let updatePromises = ['20818_1#888.bam', '20907_1#888.bam']
-        .map(function(dataObj) {
+        .map( (dataObj) => {
           return collection.findOne({'data_object': dataObj})
-          .then(function(doc) {
+          .then( (doc) => {
             collection.findOneAndUpdate(
               {'data_object': dataObj},
               {'$set':
                 {'filepath_by_host.*': path.join(cwd, doc.filepath_by_host['*'])}
               }
             );
-          }, function MongoDocNotFound(reason) {
+          }, (reason) => {
             console.log('Document for ' + dataObj + ' was not found: ' + reason);
           });
         });
@@ -237,7 +237,7 @@ describe('Running with ranger server with a', () => {
     }, 1000);
   });
 
-  it('file url', (done) => {
+  let startServer = ( myDone, myFail ) => {
     let serv = spawn(serverCommand, [
       '-s',
       '-d',
@@ -246,10 +246,15 @@ describe('Running with ranger server with a', () => {
       `-m${mongourl}`]);
     serv.on('close', (code, signal) => {
       if (code || signal) {
-        fail('Server failed with error' + (code || signal));
+        myFail('Server failed with error: ' + (code || signal));
       }
-      done();
+      myDone();
     });
+    return serv;
+  };
+
+  it('file url', (done) => {
+    let serv = startServer( done, fail );
 
     serv.stdout.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
@@ -271,18 +276,7 @@ describe('Running with ranger server with a', () => {
   }, 20000);
 
   it('sample url', (done) => {
-    let serv = spawn(serverCommand, [
-      '-s',
-      '-d',
-      '-n0',
-      `-p${SERV_PORT}`,
-      `-m${mongourl}`]);
-    serv.on('close', (code, signal) => {
-      if (code || signal) {
-        fail('Server failed with error' + (code || signal));
-      }
-      done();
-    });
+    let serv = startServer( done, fail );
 
     serv.stdout.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
@@ -308,18 +302,7 @@ describe('Running with ranger server with a', () => {
   }, 20000);
 
   it('sample url returning vcf', (done) => {
-    let serv = spawn(serverCommand, [
-      '-s',
-      '-d',
-      '-n0',
-      `-p${SERV_PORT}`,
-      `-m${mongourl}`]);
-    serv.on('close', (code, signal) => {
-      if (code || signal) {
-        fail('Server failed with error' + (code || signal));
-      }
-      done();
-    });
+    let serv = startServer( done, fail );
 
     serv.stdout.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
@@ -341,20 +324,8 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
-
-  it('redirect url is followed', (done) => {
-    let serv = spawn(serverCommand, [
-      '-s',
-      '-d',
-      '-n0',
-      `-p${SERV_PORT}`,
-      `-m${mongourl}`]);
-    serv.on('close', (code, signal) => {
-      if (code || signal) {
-        fail('Server failed with error' + (code || signal));
-      }
-      done();
-    });
+  it('GA4GH url and the redirect is followed', (done) => {
+    let serv = startServer( done, fail );
 
     serv.stdout.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
