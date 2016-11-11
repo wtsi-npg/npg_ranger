@@ -1,7 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
+release 0.7.0
   - use npg_ranger server for roundtrip tests
   - add prototype for reference resolve
+  - upgrade moment to 2.16.0 from 2.15.2
+  - upgrade tmp to 0.0.30 from 0.0.29
   - upgrade fs-extra to 1.0.0 from ^0.30.0
   - upgrade winston to 2.3.0 from 2.2.0
 

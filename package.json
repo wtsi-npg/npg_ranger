@@ -1,7 +1,7 @@
 {
   "name": "npg_ranger",
   "title": "npg_ranger",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Streaming service for bioinformatics data.",
   "homepage": "https://github.com/wtsi-npg/npg_ranger",
   "license": "SEE LICENSE IN LICENSE",
@@ -52,7 +52,7 @@
   "main": "./lib/main.js",
   "dependencies": {
     "winston":       "2.3.0",
-    "moment" :       "2.15.2",
+    "moment" :       "2.16.0",
     "fs-extra":      "1.0.0",
     "mongodb":       "2.2.11",
     "node-getopt":   "^0.2.3",
@@ -75,7 +75,7 @@
     "grunt-jsonlint": "^1.0.7",
     "grunt-browserify": "5.0.0",
     "load-grunt-tasks": "3.5.2",
-    "tmp": "0.0.29",
+    "tmp": "0.0.30",
     "browserify": "13.1.1"
   }
 }
