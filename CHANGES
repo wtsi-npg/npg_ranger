@@ -11,6 +11,7 @@ release 0.7.0
   - upgrade tmp to 0.0.30 from 0.0.29
   - upgrade fs-extra to 1.0.0 from ^0.30.0
   - upgrade winston to 2.3.0 from 2.2.0
+  - /file url now serves files of all formats without processing
 
 release 0.6.0
   - example apache.conf in docs
