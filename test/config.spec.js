@@ -420,6 +420,51 @@ describe('Secure server options', () => {
     };
   });
 
+  ['http:', 'https:'].forEach( ( init_protocol ) => {
+    it('validates protocol is changed automatically', () => {
+      let tmpDir = config.tempFilePath();
+      let private_pem = `${tmpDir}/private-key.pem`;
+      let cert_pem    = `${tmpDir}/server-cert.pem`;
+      fs.ensureDirSync(tmpDir);
+      fs.writeFileSync(private_pem, '');
+      fs.writeFileSync(cert_pem, '');
+      conf.startssl    = true;
+      conf.protocol    = init_protocol;
+      conf.secure_key  = private_pem;
+      conf.secure_cert = cert_pem;
+      let opts = config.provide( () => {
+        return conf;
+      });
+      expect(opts.get('protocol')).toBe('https:');
+      fs.unlinkSync(private_pem);
+      fs.unlinkSync(cert_pem);
+      fs.rmdirSync(tmpDir);
+    });
+
+    it('validates protocol is changed automatically even with immutable', () => {
+      let tmpDir = config.tempFilePath();
+      let private_pem = `${tmpDir}/private-key.pem`;
+      let cert_pem    = `${tmpDir}/server-cert.pem`;
+      fs.ensureDirSync(tmpDir);
+      fs.writeFileSync(private_pem, '');
+      fs.writeFileSync(cert_pem, '');
+      conf.startssl    = true;
+      conf.protocol    = init_protocol;
+      conf.secure_key  = private_pem;
+      conf.secure_cert = cert_pem;
+      let opts = config.provide( () => {
+        return conf;
+      }, true);
+      expect(opts.get('config_ro')).toBe(true);
+      expect(opts.get('protocol')).toBe('https:');
+      fs.unlinkSync(private_pem);
+      fs.unlinkSync(cert_pem);
+      fs.rmdirSync(tmpDir);
+      decache('../lib/config.js');
+      config = require('../lib/config.js');
+    });
+  });
+
   it('validates required secure options', () => {
     expect( () => {
       conf.startssl = true;
