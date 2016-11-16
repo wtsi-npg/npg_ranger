@@ -2,6 +2,7 @@
 
 "use strict";
 const assert  = require('assert');
+const fs      = require('fs-extra');
 const os      = require('os');
 const path    = require('path');
 var   config  = require('../lib/config.js');
@@ -133,7 +134,10 @@ describe('Listing config options', function() {
       'numworkers=3',
       'port=9999',
       'references=undefined',
+      'secure_cert=""',
+      'secure_key=""',
       'skipauth=undefined',
+      'startssl=undefined',
       "tempdir=\"\\/tmp\\/mydir\"",
       'timeout=3'
     ];
@@ -400,6 +404,79 @@ describe('Validating CORS options', function() {
                                    originlist: []
                                   };});
     expect(config.provide().get('originlist')).toBeNull('empty array converted to null');
+  });
+});
+
+describe('Secure server options', () => {
+  let conf;
+
+  beforeEach( () => {
+    conf = {
+      mongourl:   'mymongourl',
+      hostname:   'myhost',
+      port:       9999,
+      debug:      true,
+      help:       true
+    };
+  });
+
+  it('validates required secure options', () => {
+    expect( () => {
+      conf.startssl = true;
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError(`secure_key is required when using 'startssl' option`);
+
+    let tmpDir = config.tempFilePath();
+    let private_pem = `${tmpDir}/private-key.pem`;
+    fs.ensureDirSync(tmpDir);
+    fs.writeFileSync(private_pem, '');
+    expect( () => {
+      conf.secure_key = private_pem;
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError(`secure_cert is required when using 'startssl' option`);
+    fs.unlinkSync(private_pem);
+  });
+
+  it('validates access to paths if secure options are provided', () => {
+    let tmpDir = config.tempFilePath();
+    let private_pem = `${tmpDir}/private-key.pem`;
+    fs.ensureDirSync(tmpDir);
+
+    conf.startssl = true;
+    conf.secure_key = 'somepath';
+
+    expect( () => {
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError(new RegExp(`Error when checking read access for file ${conf.secure_key}`));
+
+    fs.writeFileSync(private_pem, '');
+    conf.secure_key = private_pem;
+    conf.secure_cert = 'someotherpath';
+
+    expect( () => {
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError(new RegExp(`Error when checking read access for file ${conf.secure_cert}`));
+
+    fs.unlinkSync(private_pem);
+  });
+
+  ['secure_key', 'secure_cert', 'secure_passphrase'].forEach( ( optname ) => {
+    it(`validates unused secure option ${optname}`, () => {
+      expect( () => {
+        conf[optname] = 'somevalue';
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(`Unused option ${optname}`);
+    });
   });
 });
 
