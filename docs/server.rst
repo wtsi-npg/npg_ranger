@@ -35,7 +35,7 @@ supported parameters.
 
 Parameters and extended configuration can be defined in a configuration
 file. An example configuration file can be found at
-`docs/config.json <https://github.com/jmtcsngr/npg_ranger/blob/master/docs/config.json>`_.
+`docs/config.json <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_.
 
 ::
 
@@ -82,6 +82,19 @@ in the database, the root path should be provided in the startup configuration.
 
  # as parameter
  bin/server.js -r "/path_to_ref_root/"
+
+Running a secure server using HTTPS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run an https server at least a certificate and a private key must be provided
+in PEM format. If the server private key was generated with a passphrase, the
+passphrase must be profided as part of the configuration. Paths to the pem
+files with the private key and the certificate can be passed as start up
+options using ``--secure_key`` and ``--secure_cert`` or by configuration file
+using ``secure_key`` and ``secure_cert`` entries. If a passphrase is needed, it
+can only be provided in the configuration file under the ``secure_passphrase``
+entry. For security reasons both .pem files and the server configuration file
+must have proper access permissions, e.g. ``chmod 400 config.json``.
 
 Other options
 -------------
