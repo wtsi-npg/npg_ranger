@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll, fail */
+/* globals describe, it, expect, beforeAll, afterAll, afterEach, fail */
 
 "use strict";
 
@@ -12,13 +12,13 @@ const config = require('../../lib/config.js');
 
 var tmpDir = config.tempFilePath('npg_ranger_ssl_test_');
 
-describe('https server', () => {
+describe('test running https server', () => {
 
-  const BASE_PORT  = 14000;
+  const BASE_PORT  = 1400;
   const PORT_RANGE = 100;
   const MONGO_PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
   const SERV_PORT  = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT + PORT_RANGE;
-  const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
+  const FIXTURES   = 'test/server/data/fixtures/fileinfo_secure_server.json';
 
   let serverCommand = 'bin/server.js';
   let dbName        = 'npg_ranger_test';
@@ -27,7 +27,7 @@ describe('https server', () => {
   let private_pem = tmpDir + '/server_key.pem';
   let cert_pem    = tmpDir + '/server_cert.pem';
 
-  let spawn    = child.spawn;
+  let spawn = child.spawn;
 
   let serv;
 
@@ -46,10 +46,13 @@ describe('https server', () => {
       if (code || signal) {
         myDone.fail('Server failed with error: ' + (code || signal));
       }
-      myDone();
     });
     return s;
   };
+
+  afterEach( () => {
+    serv.kill();
+  });
 
   afterAll( ( done ) => {
     child.execSync(`mongo 'mongodb://localhost:${MONGO_PORT}/admin' --eval 'db.shutdownServer()'`);
@@ -116,26 +119,34 @@ describe('https server', () => {
         options.agent = new https.Agent(options);
 
         let req = https.request(options, (res) => {
-          // Check expected errors from a self signed cert
-          expect(res.client.authorized).toBe(false);
-          expect(res.client.authorizationError).toBe('DEPTH_ZERO_SELF_SIGNED_CERT');
-          // Check it was encrypted
-          expect(res.client.encrypted).toBe(true);
           expect(res.statusCode).toBe(200);
-          expect(res.headers['content-type']).toEqual('application/json');
+          try {
+            // Check expected errors from a self signed cert
+            expect(res.client.authorized).toBe(false);
+            expect(res.client.authorizationError).toBe('DEPTH_ZERO_SELF_SIGNED_CERT');
+            // Check it was encrypted
+            expect(res.client.encrypted).toBe(true);
+            expect(res.headers['content-type']).toEqual('application/json');
+          } catch (e) {
+            fail(e);
+          }
 
           let body ='';
           res.on('data', (d) => {
-            body += d;
+            try { body += d; } catch (e) { fail(e); }
           });
 
           res.on('end', () => {
-            let jsonData = JSON.parse(body);
-            expect(jsonData.accession).toBeDefined();
-            expect(jsonData.reference).toBeDefined();
-            expect(jsonData.accession).toEqual(acc);
-            expect(jsonData.reference).toEqual('/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa');
-            serv.kill();
+            try {
+              let jsonData = JSON.parse(body);
+              expect(jsonData.accession).toBeDefined();
+              expect(jsonData.reference).toBeDefined();
+              expect(jsonData.accession).toEqual(acc);
+              expect(jsonData.reference).toEqual('/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa');
+              done();
+            } catch (e) {
+              fail(e);
+            }
           });
         });
         req.on('error', (e) => {

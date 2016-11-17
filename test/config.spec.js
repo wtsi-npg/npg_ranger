@@ -441,7 +441,7 @@ describe('Secure server options', () => {
       fs.rmdirSync(tmpDir);
     });
 
-    it('validates protocol is changed automatically even with immutable', () => {
+    it('validates protocol is changed before immutable takes effect', () => {
       let tmpDir = config.tempFilePath();
       let private_pem = `${tmpDir}/private-key.pem`;
       let cert_pem    = `${tmpDir}/server-cert.pem`;
