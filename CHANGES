@@ -1,6 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
   - show error in log when controller tests fail to cleanup
+  - bring back test for unknown server, keep external servers as pending tests
 
 release 0.7.0
   - use npg_ranger server for roundtrip tests
