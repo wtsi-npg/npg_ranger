@@ -118,6 +118,7 @@ describe('Listing config options', function() {
                                    help:             true,
                                    clustertimeout:   1,
                                    clustermaxdeaths: 2,
+                                   passphrase:       'XYZ',
                                    numworkers:       3
                                   };} );
     console.log(config.logOpts());
@@ -132,6 +133,7 @@ describe('Listing config options', function() {
       'mongourl="mymongourl"',
       'multiref=undefined',
       'numworkers=3',
+      'passphrase=\\*+',
       'port=9999',
       'references=undefined',
       'secure_cert=""',
@@ -145,7 +147,7 @@ describe('Listing config options', function() {
     let re = new RegExp(expected);
     let o = config.logOpts();
     expect(o).not.toMatch(/help=/);
-    expect(o.match(re)).not.toBeNull();
+    expect(re.test(o)).not.toBeNull();
     re = new RegExp('mongourl="mymongourl"');
     expect(o.match(re)).not.toBeNull();
     re = new RegExp('config_ro=false');
