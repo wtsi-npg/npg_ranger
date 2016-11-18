@@ -110,11 +110,11 @@ describe('test running https server', () => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let options = {
-          hostname: 'localhost',
-          port:     SERV_PORT,
-          path:     `/sample/${acc}/reference`,
-          method:   'GET',
-          rejectUnauthorized: false,
+          hostname:           'localhost',
+          port:               SERV_PORT,
+          path:               `/sample/${acc}/reference`,
+          method:             'GET',
+          rejectUnauthorized: false // so the client disregards self signed cert
         };
         options.agent = new https.Agent(options);
 
@@ -123,7 +123,9 @@ describe('test running https server', () => {
           try {
             // Check expected errors from a self signed cert
             expect(res.client.authorized).toBe(false);
-            expect(res.client.authorizationError).toBe('DEPTH_ZERO_SELF_SIGNED_CERT');
+            expect(res.client.authorizationError).toBe(
+              'DEPTH_ZERO_SELF_SIGNED_CERT'
+            );
             // Check it was encrypted
             expect(res.client.encrypted).toBe(true);
             expect(res.headers['content-type']).toEqual('application/json');
@@ -142,7 +144,9 @@ describe('test running https server', () => {
               expect(jsonData.accession).toBeDefined();
               expect(jsonData.reference).toBeDefined();
               expect(jsonData.accession).toEqual(acc);
-              expect(jsonData.reference).toEqual('/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa');
+              expect(jsonData.reference).toEqual(
+                '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
+              );
               done();
             } catch (e) {
               fail(e);

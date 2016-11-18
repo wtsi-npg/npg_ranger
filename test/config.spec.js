@@ -420,48 +420,33 @@ describe('Secure server options', () => {
     };
   });
 
-  ['http:', 'https:'].forEach( ( init_protocol ) => {
-    it('validates protocol is changed automatically', () => {
-      let tmpDir = config.tempFilePath();
-      let private_pem = `${tmpDir}/private-key.pem`;
-      let cert_pem    = `${tmpDir}/server-cert.pem`;
-      fs.ensureDirSync(tmpDir);
-      fs.writeFileSync(private_pem, '');
-      fs.writeFileSync(cert_pem, '');
-      conf.startssl    = true;
-      conf.protocol    = init_protocol;
-      conf.secure_key  = private_pem;
-      conf.secure_cert = cert_pem;
-      let opts = config.provide( () => {
-        return conf;
+  [ true, false ].forEach( ( immutable ) => {
+    ['http:', 'https:'].forEach( ( init_protocol ) => {
+      let conditions = `immutable:${immutable} and starting protocol:${init_protocol}`;
+      it(`validates protocol is changed automatically with ${conditions}`, () => {
+        let tmpDir = config.tempFilePath();
+        let private_pem = `${tmpDir}/private-key.pem`;
+        let cert_pem    = `${tmpDir}/server-cert.pem`;
+        fs.ensureDirSync(tmpDir);
+        fs.writeFileSync(private_pem, '');
+        fs.writeFileSync(cert_pem, '');
+        conf.startssl    = true;
+        conf.protocol    = init_protocol;
+        conf.secure_key  = private_pem;
+        conf.secure_cert = cert_pem;
+        let opts = config.provide( () => {
+          return conf;
+        }, immutable );
+        expect(opts.get('config_ro')).toBe(immutable);
+        expect(opts.get('protocol')).toBe('https:');
+        fs.unlinkSync(private_pem);
+        fs.unlinkSync(cert_pem);
+        fs.rmdirSync(tmpDir);
+        if ( immutable ) {
+          decache('../lib/config.js');
+          config = require('../lib/config.js');
+        }
       });
-      expect(opts.get('protocol')).toBe('https:');
-      fs.unlinkSync(private_pem);
-      fs.unlinkSync(cert_pem);
-      fs.rmdirSync(tmpDir);
-    });
-
-    it('validates protocol is changed before immutable takes effect', () => {
-      let tmpDir = config.tempFilePath();
-      let private_pem = `${tmpDir}/private-key.pem`;
-      let cert_pem    = `${tmpDir}/server-cert.pem`;
-      fs.ensureDirSync(tmpDir);
-      fs.writeFileSync(private_pem, '');
-      fs.writeFileSync(cert_pem, '');
-      conf.startssl    = true;
-      conf.protocol    = init_protocol;
-      conf.secure_key  = private_pem;
-      conf.secure_cert = cert_pem;
-      let opts = config.provide( () => {
-        return conf;
-      }, true);
-      expect(opts.get('config_ro')).toBe(true);
-      expect(opts.get('protocol')).toBe('https:');
-      fs.unlinkSync(private_pem);
-      fs.unlinkSync(cert_pem);
-      fs.rmdirSync(tmpDir);
-      decache('../lib/config.js');
-      config = require('../lib/config.js');
     });
   });
 
@@ -471,7 +456,7 @@ describe('Secure server options', () => {
       config.provide( () => {
         return conf;
       });
-    }).toThrowError(`secure_key is required when using 'startssl' option`);
+    }).toThrowError(`'secure_key' is required when using 'startssl' option`);
 
     let tmpDir = config.tempFilePath();
     let private_pem = `${tmpDir}/private-key.pem`;
@@ -482,7 +467,7 @@ describe('Secure server options', () => {
       config.provide( () => {
         return conf;
       });
-    }).toThrowError(`secure_cert is required when using 'startssl' option`);
+    }).toThrowError(`'secure_cert' is required when using 'startssl' option`);
     fs.unlinkSync(private_pem);
   });
 
@@ -498,7 +483,7 @@ describe('Secure server options', () => {
       config.provide( () => {
         return conf;
       });
-    }).toThrowError(new RegExp(`Error when checking read access for file ${conf.secure_key}`));
+    }).toThrowError(new RegExp(`File '${conf.secure_key}' is not readable for option 'secure_key'`));
 
     fs.writeFileSync(private_pem, '');
     conf.secure_key = private_pem;
@@ -508,7 +493,7 @@ describe('Secure server options', () => {
       config.provide( () => {
         return conf;
       });
-    }).toThrowError(new RegExp(`Error when checking read access for file ${conf.secure_cert}`));
+    }).toThrowError(new RegExp(`File '${conf.secure_cert}' is not readable for option 'secure_cert'`));
 
     fs.unlinkSync(private_pem);
   });
@@ -520,7 +505,7 @@ describe('Secure server options', () => {
         config.provide( () => {
           return conf;
         });
-      }).toThrowError(`Unused option ${optname}`);
+      }).toThrowError(`'${optname}' option requires startssl to be true`);
     });
   });
 });
