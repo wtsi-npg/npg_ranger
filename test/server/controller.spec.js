@@ -22,8 +22,8 @@ describe('Creating object instance - synch', function() {
     fse.ensureDirSync(tmpDir);
   });
 
-  afterAll(function() {
-    fse.removeSync(tmpDir);
+  afterAll( () => {
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('request object is not given - error', function() {
@@ -62,10 +62,10 @@ describe('set error response', function() {
 
   // This tidy-up callback is not called when the spec exits early
   // due to an error. Seems to be a bug in jasmine.
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch ( e ) { console.log(e); }
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('db object is not given or is not an object - error', function(done) {
@@ -119,10 +119,10 @@ describe('Handling requests - error responses', function() {
     });
   });
 
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('Method not allowed error', function(done) {
@@ -316,7 +316,7 @@ describe('Sample reference', () => {
     child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
     console.log('\nMONGODB server has been shut down');
 
-    try { fse.unlinkSync(socket); } catch (e) {}
+    try { fse.unlinkSync(socket); } catch (e) { console.log(e); }
   });
 
   beforeAll( (done) => {
@@ -437,10 +437,10 @@ describe('Redirection in json response', function() {
     });
   });
 
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('invalid url - no id - error response', function(done) {
@@ -766,10 +766,10 @@ describe('redirection when running behind a proxy', () => {
     });
   });
 
-  afterAll(() => {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('direct access is not allowed - GA4GH url', (done) => {
@@ -873,10 +873,10 @@ describe('content type', function() {
       done();
     });
   });
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('data format driven content type', function(done) {
@@ -911,10 +911,10 @@ describe('trailers in response', function() {
       done();
     });
   });
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('no trailers without TE header', function(done) {
@@ -968,10 +968,10 @@ describe('CORS in response', function() {
     server = http.createServer();
     server.listen(socket, () => { console.log('listening'); done();});
   });
-  afterAll(function() {
+  afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) {}
-    fse.removeSync(tmpDir);
+    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
   it('no CORS in a response to a standart request', function(done) {
