@@ -1,0 +1,132 @@
+<html>
+<head>
+  <script language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script language="javascript" src="build/dalliance-all.js"></script>
+</head>
+<body>
+  <form method="GET">
+    Accession: <input type=text id='accession' size='20' maxlength='20'>
+  </form>
+  <div id='linking'></div>
+  <div id="svgHolder"></div>
+  <script>
+    $( function() {
+      var lastSearched = '';
+      var webUrl       = window.location.origin;
+      var rangerUrl    = window.location.origin + '/npg_ranger';
+
+      function showAccData ( data ) {
+        var accession     = data.accession;
+        var referencePath = data.reference;
+        var indexPath     = data.indexPath;
+        var chrData       = data.chrData;
+
+        $('#linking').empty();
+        $('#svgHolder').empty();
+        $('#linking').append('<p>Accession: ' + accession + '</p>');
+        $('#linking').append("<p>Chromosome: <select id='chrSelect'></select></p>");
+        $(chrData).each(function (i, chrRow) {
+          $('#chrSelect').append(
+            '<option value="' +
+            chrRow[0] +
+            '">' +
+            chrRow[0] +
+            '</option>')
+        });
+        $('#linking').append(
+          "<p id=showBrowserCtrl>Show in browser</p>"
+        );
+        $('#showBrowserCtrl').click(function() {
+          showBrowser( data );
+        });
+      }
+
+      function showBrowser ( data ) {
+        var chr = $('#chrSelect').val();
+        var range = uiclient.getRange(data.chrData, chr, 200);
+
+        new Browser({
+          chr:          chr,
+          viewStart:    range.from,
+          viewEnd:      range.to,
+          noPersist:    true,
+          maxWorkers:   0,
+          noLeapButtons: true,
+
+
+          coordSystem: {
+            speciesName: data.referenceInfo.speciesName,
+            taxon: 9606,
+            auth: '',
+            version: '',
+            ucscName: data.referenceInfo.referenceName
+          },
+
+          sources:
+            [
+              {
+                name:                 'Genome',
+                twoBitURI:            '/' + data.referenceInfo.twoBitPath,
+                tier_type:            'sequence'
+              },
+              {
+                name:         data.accession,
+                desc:         'Data for ' + data.accession,
+                serviceType:  'ga4gh', //
+                reqAuth:      false,
+                bamRangerURI: rangerUrl + '/ga4gh/v.0.1/get/sample/' + data.accession,
+              },
+            ],
+        });
+      }
+
+      function procReferenceResp( data, textStatus, jqXHR ) {
+        if ( jqXHR.status == 200 ) {
+          var result = {};
+          result.accession = data.accession;
+          result.reference = data.reference;
+
+          result.referenceInfo = uiclient.getReferenceInfo(result.reference);
+          var indexPath = uiclient.buildIndexPath(result.reference);
+          if (indexPath != null) {
+            result.indexPath = indexPath;
+
+            $.when(
+              $.ajax( webUrl + '/' + indexPath )
+            ).always( function ( r2Data, r2TestStatus, r2jqXHR ) {
+              if ( r2jqXHR.status == 200 ) {
+                result.chrData = uiclient.parseIndexData(r2Data);
+                showAccData(result);
+              } else {
+                $('#linking').empty();
+                $('#linking').append('<p>No reference index data for accession.</p>');
+                $('#svgHolder').empty();
+              }
+            });
+          }
+        } else {
+          $('#linking').empty();
+          $('#linking').append('<p>No data for accession.</p>');
+          $('#svgHolder').empty();
+        }
+      }
+
+      $('#accession').val('');
+      $('#accession').on('change paste keyup', function() {
+        var accessionText = $('#accession').val().trim().toUpperCase();
+        if ( accessionText != lastSearched ) {
+          $('#linking').empty();
+          lastSearched = accessionText;
+          $('#accession').val(lastSearched);
+          $.when(
+            $.ajax(
+              rangerUrl + '/sample/' +
+              lastSearched + '/reference'
+            )
+          ).always( procReferenceResp );
+        }
+      });
+    });
+  </script>
+</body>
+</html>
