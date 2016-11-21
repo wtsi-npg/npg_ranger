@@ -109,17 +109,18 @@ describe('Creating temp file path', function() {
 
 describe('Listing config options', function() {
   it('Options listing', () => {
-    config.provide( () => {return {mongourl:         'mymongourl',
-                                   hostname:         'myhost',
-                                   tempdir:          '/tmp/mydir',
-                                   port:             9999,
-                                   debug:            true,
-                                   emaildomain:      'some.com',
-                                   help:             true,
-                                   clustertimeout:   1,
-                                   clustermaxdeaths: 2,
-                                   passphrase:       'XYZ',
-                                   numworkers:       3
+    config.provide( () => {return {mongourl:          'mymongourl',
+                                   hostname:          'myhost',
+                                   tempdir:           '/tmp/mydir',
+                                   port:              9999,
+                                   debug:             true,
+                                   emaildomain:       'some.com',
+                                   help:              true,
+                                   clustertimeout:    1,
+                                   clustermaxdeaths:  2,
+                                   secure_cert:       '',
+                                   secure_key:        '',
+                                   numworkers:        3
                                   };} );
     console.log(config.logOpts());
     let expectedAsArray = [
@@ -133,7 +134,6 @@ describe('Listing config options', function() {
       'mongourl="mymongourl"',
       'multiref=undefined',
       'numworkers=3',
-      'passphrase=\\*+',
       'port=9999',
       'references=undefined',
       'secure_cert=""',
@@ -147,7 +147,7 @@ describe('Listing config options', function() {
     let re = new RegExp(expected);
     let o = config.logOpts();
     expect(o).not.toMatch(/help=/);
-    expect(re.test(o)).not.toBeNull();
+    expect(o.match(re)).not.toBeNull();
     re = new RegExp('mongourl="mymongourl"');
     expect(o.match(re)).not.toBeNull();
     re = new RegExp('config_ro=false');
@@ -432,15 +432,19 @@ describe('Secure server options', () => {
         fs.ensureDirSync(tmpDir);
         fs.writeFileSync(private_pem, '');
         fs.writeFileSync(cert_pem, '');
-        conf.startssl    = true;
-        conf.protocol    = init_protocol;
-        conf.secure_key  = private_pem;
-        conf.secure_cert = cert_pem;
+        conf.startssl          = true;
+        conf.protocol          = init_protocol;
+        conf.secure_key        = private_pem;
+        conf.secure_cert       = cert_pem;
+        conf.secure_passphrase = 'XYZ';
         let opts = config.provide( () => {
           return conf;
         }, immutable );
         expect(opts.get('config_ro')).toBe(immutable);
         expect(opts.get('protocol')).toBe('https:');
+        let o = config.logOpts();
+        expect(o).toMatch(/secure_passphrase=\*+/);
+        expect(o).not.toMatch(/secure_passphrase=XYZ/);
         fs.unlinkSync(private_pem);
         fs.unlinkSync(cert_pem);
         fs.rmdirSync(tmpDir);
