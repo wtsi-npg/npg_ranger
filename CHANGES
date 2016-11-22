@@ -1,8 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
+release 1.0.0
   - show error in log when controller tests fail to cleanup
   - bring back test for unknown server, keep external servers as pending tests
   - security option for server start (TLS)
+  - /file url now serves files of all formats without processing
 
 release 0.7.0
   - use npg_ranger server for roundtrip tests
@@ -11,7 +13,6 @@ release 0.7.0
   - upgrade tmp to 0.0.30 from 0.0.29
   - upgrade fs-extra to 1.0.0 from ^0.30.0
   - upgrade winston to 2.3.0 from 2.2.0
-  - /file url now serves files of all formats without processing
 
 release 0.6.0
   - example apache.conf in docs
