@@ -13,8 +13,7 @@ const MongoClient = require('mongodb').MongoClient;
 const config        = require('../../lib/config.js');
 const RangerRequest = require('../../lib/client/rangerRequest');
 
-// TODO remove these tests when finished building new
-xdescribe('Testing high level', () => {
+xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
     var req = new RangerRequest();
     // Google
@@ -127,10 +126,11 @@ xdescribe('Testing high level', () => {
 
     req.send('');
   }, 5000);
+});
 
+describe('Testing error for unknown server', () => {
   it('Not success with wrong server', ( done ) => {
     var req = new RangerRequest();
-    // Google
     var url = 'http://127.0.0./someData';
 
     req.open('GET', url);
