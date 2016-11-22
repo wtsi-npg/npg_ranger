@@ -38,7 +38,7 @@ describe('server fetching', () => {
     }
   };
   let testRuns = {
-    'single file':             '/file?name=20818_1%23888.bam&format=',
+    'single file':             '/file?name=20818_1%23888.bam',
     'multiple (merged) files': '/sample?accession=ABC123456&format='
   };
 
@@ -152,10 +152,12 @@ describe('server fetching', () => {
             }
             return matched;
           }
+          let useFormat = testRuns[description].endsWith('format=');
           http.get(
               {
                 socketPath: socket,
-                path: testRuns[description] + format,
+                path: useFormat ? testRuns[description] + format
+                                : testRuns[description],
                 headers: {TE: 'trailers'}
               }, ( res ) => {
 
