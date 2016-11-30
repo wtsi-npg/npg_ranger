@@ -1,5 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade moment to 2.17.0 from 2.16.0
+  - upgrade mongodb to 2.2.12 from 2.2.11
+  - upgrade pem to 1.9.2 from 1.8.3
+  - upgrade tmp to 0.0.31 from 0.0.30
+
 release 1.0.0
   - show error in log when controller tests fail to cleanup
   - bring back test for unknown server, keep external servers as pending tests
