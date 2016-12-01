@@ -59,13 +59,8 @@ RUN apt-get update -qq \
   && cd .. \
   && rm -rf freebayes \
 
-
 # Get Ranger
-  && git clone --branch $NPG_RANGER_VERSION https://github.com/wtsi-npg/npg_ranger.git npg_ranger \
-  && cd npg_ranger \
-  && npm install -g grunt-cli \
-  && npm install \
-  && ex +g/process\.env\.USER/d -cwq bin/server.js \
+  && npm install -g npg_ranger@${NPG_RANGER_VERSION} \
 
 # Remove build-time dependencies
   && apt-get remove -qq $APT_DEPENDENCIES \
@@ -73,9 +68,6 @@ RUN apt-get update -qq \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /npg_ranger
-
-COPY ./config.json /npg_ranger/config.json
 ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
 
 RUN chmod 0500 /wait-for-it.sh
