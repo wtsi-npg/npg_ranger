@@ -10,7 +10,9 @@ services:
     build: ./ranger
     volumes:
       - ./ranger:/data/ranger
-    command: npg_ranger_server -sdp5050 -mmongodb://rangerdb/imetacache -r /npg_ranger -c /data/ranger/config.json
+      - ../test/server/data/references:/references
+      - ../test/server/data:/seqdata
+    command: npg_ranger_server -sdp5050 -mmongodb://rangerdb/imetacache -r /references -c /data/ranger/config.json
     entrypoint: /wait-for-it.sh rangerdb:27017 --
     links:
       - rangerdb
