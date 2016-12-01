@@ -12,6 +12,7 @@ LIST OF CHANGES for npg_ranger project
   - do not allow query strings containing multiple attribute-value pairs
     for the same attribute
   - upgrade Freebayes to 1.1.0 from 1.0.2-npg-Aug2016 in TravisCI and docs
+  - include docker configuration to deploy with containers
 
 release 1.0.0
   - show error in log when controller tests fail to cleanup
