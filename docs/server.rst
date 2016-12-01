@@ -296,8 +296,6 @@ Example configuration entries for an Apache reverse proxy can be found bellow:
   RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:http]
   RewriteCond "%{HTTPS}" =on
   RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:https]
-  # Use ":" as suffix of protocol eg "http:"
-  RequestHeader set X-Forwarded-Proto  "%{XPROTOCOL}e:"
 
 CORS headers
 ------------
