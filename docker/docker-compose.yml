@@ -1,6 +1,11 @@
 version: "2"
 services:
 
+  appconf:
+    image: ubuntu:16.04
+    volumes:
+      - ../docs/apache:/apache:ro
+
   rangerdb:
     image: mongo:3.2.10
     volumes:
@@ -25,5 +30,10 @@ services:
       - "9090:9090"
     links:
       - ranger
+    volumes_from:
+      - appconf
     depends_on:
       - ranger
+
+volumes:
+  appconf:
