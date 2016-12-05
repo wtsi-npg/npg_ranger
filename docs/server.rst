@@ -35,7 +35,7 @@ supported parameters.
 
 Parameters and extended configuration can be defined in a configuration
 file. An example configuration file can be found at
-`docs/config.json <https://github.com/jmtcsngr/npg_ranger/blob/master/docs/config.json>`_.
+`docs/config.json <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_.
 
 ::
 
@@ -82,6 +82,19 @@ in the database, the root path should be provided in the startup configuration.
 
  # as parameter
  bin/server.js -r "/path_to_ref_root/"
+
+Running a secure server using HTTPS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run an https server at least a certificate and a private key must be provided
+in PEM format. If the server private key was generated with a passphrase, the
+passphrase must be profided as part of the configuration. Paths to the pem
+files with the private key and the certificate can be passed as start up
+options using ``--secure_key`` and ``--secure_cert`` or by configuration file
+using ``secure_key`` and ``secure_cert`` entries. If a passphrase is needed, it
+can only be provided in the configuration file under the ``secure_passphrase``
+entry. For security reasons both .pem files and the server configuration file
+must have proper access permissions, e.g. ``chmod 400 config.json``.
 
 Other options
 -------------
@@ -149,6 +162,30 @@ If installed globally
 
 EXAMPLES AND COMPATIBLE CLIENTS
 ===============================
+
+available urls
+==============
+
+There are three different url paths recognised by the server:
+
+::
+
+ /file?name=$NAME[&directory=$DIR]
+ /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ /ga4gh/v.0.1/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ # $REG is in format <referenceName>:<startLoc>-<endLoc>
+
+Each will provide a response in a different way:
+
+/file will search the database for a file with matching name, then will stream that file to you. This url can only return one file, so if there is more than one file with $NAME, you will be prompted to also provide a directory $DIR. This url supports byte-range serving using the Content-Range header.
+
+/sample will search for content files with given accession, merge them, then stream the file (or specified region) in BAM format (unless overridden).
+
+/ga4gh/v.0.1/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
+
+.. _Biodall: https://github.com/wtsi-npg/dalliance
+
+__ Biodall_
 
 curl
 ====
@@ -252,15 +289,6 @@ Example configuration entries for an Apache reverse proxy can be found bellow:
   # To a local URL
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
-
-  # Additional headers to forward
-  RewriteEngine On
-  RewriteCond "%{HTTPS}" =off
-  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:http]
-  RewriteCond "%{HTTPS}" =on
-  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:https]
-  # Use ":" as suffix of protocol eg "http:"
-  RequestHeader set X-Forwarded-Proto  "%{XPROTOCOL}e:"
 
 CORS headers
 ------------

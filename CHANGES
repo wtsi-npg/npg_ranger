@@ -1,6 +1,26 @@
 LIST OF CHANGES for npg_ranger project
 
   - added more filters for /sample url
+  - remove forwarding protocol from proxy, use protocol only from conf
+  - upgrade moment to 2.17.0 from 2.16.0
+  - upgrade mongodb to 2.2.12 from 2.2.11
+  - upgrade pem to 1.9.2 from 1.8.3
+  - upgrade tmp to 0.0.31 from 0.0.30
+
+release 1.0.0
+  - show error in log when controller tests fail to cleanup
+  - bring back test for unknown server, keep external servers as pending tests
+  - security option for server start (TLS)
+  - /file url now serves files of all formats without processing
+
+release 0.7.0
+  - use npg_ranger server for roundtrip tests
+  - add prototype for reference resolve
+  - upgrade moment to 2.16.0 from 2.15.2
+  - upgrade tmp to 0.0.30 from 0.0.29
+  - upgrade fs-extra to 1.0.0 from ^0.30.0
+  - upgrade winston to 2.3.0 from 2.2.0
+>>>>>>> wtsi/devel
 
 release 0.6.0
   - example apache.conf in docs
