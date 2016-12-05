@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - remove forwarding protocol from proxy, use protocol only from conf
   - upgrade moment to 2.17.0 from 2.16.0
   - upgrade mongodb to 2.2.12 from 2.2.11
   - upgrade pem to 1.9.2 from 1.8.3

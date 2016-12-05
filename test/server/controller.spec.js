@@ -808,7 +808,7 @@ describe('redirection when running behind a proxy', () => {
     let options = {
       socketPath: socket,
       path:       serverPath,
-      headers:    {'X-Forwarded-Host': 'myserver.com:9090', 'X-Forwarded-Proto': 'http:'},
+      headers:    {'X-Forwarded-Host': 'myserver.com:9090'},
       method:    'GET'};
     let req = http.request(options);
     req.on('response', (res) => {
@@ -845,7 +845,7 @@ describe('redirection when running behind a proxy', () => {
     let options = {
       socketPath: socket,
       path:       serverPath,
-      headers:    {'X-Forwarded-Host': 'myserver.com', 'X-Forwarded-Proto': 'http:'},
+      headers:    {'X-Forwarded-Host': 'myserver.com'},
       method:    'GET'};
     let req = http.request(options);
     req.on('response', (res) => {
