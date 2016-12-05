@@ -340,9 +340,9 @@ WARNING:
 
 The default filter values should work for the majority of cases. Not using the default values will dramatically increase the chance of errors occurring; either through attempts to access forbidden data, or by attempting to merge files with non-matching references.
 
-Each filter can take value 'undef' to search for files where given filter does not exist. Each filter can take value '' (empty string) to search for files, ignoring given filter.
+Each filter can take value 'undef' to search for files where the attribute corresponding to given filter does not exist. Each filter can take value '' (empty string) to search for files, ignoring given filter.
 
-Each filter can be suffixed with '_not' to search for files with anything *except* given filter. Giving value 'undef' to this form of the filter will return all files where given filter exists, regardless of value.
+Each filter can be suffixed with '_not' to search for files with any value of the attribute *except* the given filter value. Giving value 'undef' to this form of the filter will return all files where teh attribute corresponding to the filter exists, regardless of value.
 
 Not specifying a filter in the query will filter by the default value if it exists, or otherwise will ignore that filter (the same as giving an empty string, above)
 
@@ -362,9 +362,9 @@ Not specifying a filter in the query will filter by the default value if it exis
 +------------------+-----------+---------------+
 | alignment        | 1         | 1, 0          |
 +------------------+-----------+---------------+
-| alt_target       | undefined | 1             |
+| alt_target       | n/a       | 1             |
 +------------------+-----------+---------------+
-| alt_process      | undefined |               |
+| alt_process      | n/a       |               |
 +------------------+-----------+---------------+
-| alignment_filter | undefined |               |
+| alignment_filter | n/a       | phix,human,...|
 +------------------+-----------+---------------+
