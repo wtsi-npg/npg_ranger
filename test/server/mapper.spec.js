@@ -133,9 +133,14 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data).toEqual(
-            [{file: 'target0 mqc1 align1', accessGroup : '2136',
-              reference : '/test/reference/path.fa'}]
+          expect(data.length).toBe(2);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
           );
           done();
         });
@@ -152,7 +157,7 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data.length).toBe(3);
+          expect(data.length).toBe(4);
           expect(data).toContain(
             {file: 'target0 mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
@@ -163,6 +168,10 @@ describe('Data info retrieval', function() {
           );
           expect(data).toContain(
             {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           done();
@@ -200,13 +209,17 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data.length).toBe(2);
+          expect(data.length).toBe(3);
           expect(data).toContain(
             {file: 'targetu mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           expect(data).toContain(
             {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           done();
@@ -224,13 +237,17 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data.length).toBe(2);
+          expect(data.length).toBe(3);
           expect(data).toContain(
             {file: 'target1 mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           expect(data).toContain(
             {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           done();
@@ -248,7 +265,7 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data.length).toBe(3);
+          expect(data.length).toBe(4);
           expect(data).toContain(
             {file: 'target0 mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
@@ -259,6 +276,10 @@ describe('Data info retrieval', function() {
           );
           expect(data).toContain(
             {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           done();
@@ -276,8 +297,8 @@ describe('Data info retrieval', function() {
           expect(reason).toBe('No files for sample accession JKL987654');
           done();
         });
-        dm.once('data', () => {
-          fail('should return no data');
+        dm.once('data', (data) => {
+          fail('should return no data but returned ' + data.toString());
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', alignment_filter: '1'}, 'localhost');
@@ -289,19 +310,35 @@ describe('Data info retrieval', function() {
         assert.equal(err, null);
         let dm = new DataMapper(db);
         dm.once('nodata', (reason) => {
-          // Expect no data because nothing has alignment_filter=1
+          // Expect no data because only file with alignment_filter=phix
+          // also has target=1, which must be explicitly defined
+          expect(reason).toBe('No files for sample accession JKL987654');
+          done();
+        });
+        dm.once('data', (data) => {
+          fail('should return no data but returned ' + data.toString());
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', alignment_filter: 'phix'}, 'localhost');
+      });
+    });
+
+    it('target=1, alignment_filter=phix', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
           fail(reason);
           done();
         });
         dm.once('data', (data) => {
-          expect(data.length).toBe(1);
           expect(data).toContain(
-            {file: 'target1 mqc1 align1 afphix', accessGroup : '2136',
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
           done();
         });
-        dm.getFileInfo({accession: 'JKL987654', alignment_filter: 'phix'}, 'localhost');
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: 'phix'}, 'localhost');
       });
     });
   });

@@ -29,5 +29,5 @@
 
 {"filepath_by_host" : { "*" : "targetu mqc1 align1" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "alignment" : "1", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} },
 
-{"filepath_by_host" : { "*" : "target1 mqc1 align1 afphix" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "1", "alignment" : "1", "alignment_filter" : "phix", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} }
+{"filepath_by_host" : { "*" : "target0 mqc1 align1 afphix" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "0", "alignment" : "1", "alignment_filter" : "phix", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} }
 ]
