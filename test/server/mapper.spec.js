@@ -31,6 +31,24 @@ const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
  * ***************************************************************************
  */
 
+describe('Static function', function() {
+  it('getFilterNames', function() {
+    let filterNames = DataMapper.getFilterNames();
+    let expectedFilterNames = [
+      'target', 'target_not',
+      'alignment', 'alignment_not',
+      'manual_qc', 'manual_qc_not',
+      'alignment_filter', 'alignment_filter_not',
+      'alt_target', 'alt_target_not',
+      'alt_process', 'alt_process_not'
+    ];
+    expect(filterNames.length).toBe(12);
+    expectedFilterNames.forEach( (filter) => {
+      expect(filterNames).toContain(filter);
+    });
+  });
+});
+
 describe('Data info retrieval', function() {
   var tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
   var tmp_dir = tmpobj.name;
@@ -104,7 +122,25 @@ describe('Data info retrieval', function() {
     });
   });
 
-  describe('Test filters work correctly when', function() {
+  describe('Test filters', function() {
+    it('invalid combination', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          // Expect failure because both target and target_not are specified,
+          // which is not allowed
+          expect(reason).toBe('Invalid query');
+          done();
+        });
+        dm.on('data', (data) => {
+          fail('Should have received no data, but instead received ' + data.toString());
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '1', target_not: '0'}, 'localhost');
+      });
+    });
+
     it('all defaults', function(done) {
       MongoClient.connect(url, function(err, db) {
         assert.equal(err, null);
@@ -148,7 +184,7 @@ describe('Data info retrieval', function() {
       });
     });
 
-    it('target=\'\'', function(done) {
+    it('target=', function(done) {
       MongoClient.connect(url, function(err, db) {
         assert.equal(err, null);
         let dm = new DataMapper(db);
@@ -256,7 +292,7 @@ describe('Data info retrieval', function() {
       });
     });
 
-    it('target_not=\'\'', function(done) {
+    it('target_not=', function(done) {
       MongoClient.connect(url, function(err, db) {
         assert.equal(err, null);
         let dm = new DataMapper(db);
@@ -323,7 +359,7 @@ describe('Data info retrieval', function() {
       });
     });
 
-    it('target=1, alignment_filter=phix', function(done) {
+    it('target=0, alignment_filter=phix', function(done) {
       MongoClient.connect(url, function(err, db) {
         assert.equal(err, null);
         let dm = new DataMapper(db);
@@ -332,16 +368,64 @@ describe('Data info retrieval', function() {
           done();
         });
         dm.once('data', (data) => {
-          expect(data).toContain(
-            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
-              reference : '/test/reference/path.fa'}
+          expect(data.length).toBe(1);
+          expect(data).toEqual(
+            [{file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}]
           );
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: 'phix'}, 'localhost');
       });
     });
+
+    it('target=0, alignment_filter_not=phix', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(1);
+          expect(data).toEqual(
+            [{file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}]
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter_not: 'phix'}, 'localhost');
+      });
+    });
+
+    it('target=0, alignment_filter=', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(2);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: ''}, 'localhost');
+      });
+    });
+
+
   });
+
 
   it('Input validation', function() {
     expect( () => {new DataMapper();} ).toThrowError(ReferenceError,
