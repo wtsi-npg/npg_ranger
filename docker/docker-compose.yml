@@ -1,27 +1,27 @@
 version: "2"
+
 services:
-
-  appconf:
-    image: ubuntu:16.04
-    volumes:
-      - ../docs/apache:/apache:ro
-
   rangerdb:
     image: mongo:3.2.10
     volumes:
       - ./rangerdb/volume:/data/db
+      - ../:/appconf
 
   ranger:
     build: ./ranger
+    environment:
+      - REF_CACHE=/references/cram_cache/%2s/%2s/%s
     volumes:
       - ./ranger:/data/ranger
-      - ../test/server/data/references:/references
+      - ../../../../references:/references
       - ../test/server/data:/seqdata
     command: npg_ranger_server -sdp5050 -mmongodb://rangerdb/imetacache -r /references -c /data/ranger/config.json
     entrypoint: /wait-for-it.sh rangerdb:27017 --
     links:
       - rangerdb
     depends_on:
+      - rangerdb
+    volumes_from:
       - rangerdb
 
   rangerproxy:
@@ -31,9 +31,5 @@ services:
     links:
       - ranger
     volumes_from:
-      - appconf
-    depends_on:
-      - ranger
+      - rangerdb
 
-volumes:
-  appconf:
