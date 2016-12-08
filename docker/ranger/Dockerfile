@@ -12,7 +12,7 @@ ENV NODE_VERSION=4.5.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-gnutls-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl
+  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl
 
 RUN mkdir -p /root
 COPY ./s3cfg /root/.s3cfg
@@ -48,9 +48,8 @@ RUN apt-get update -qq \
   && wget -q -o /dev/null -O acinclude.m4/ax_with_curses.m4 "http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_with_curses.m4;hb=0351b066631215b4fdc3c672a8ef90b233687655" \
   && aclocal -I acinclude.m4 && autoreconf -fi \
   && git reset --hard \
-  && ./configure --with-htslib=/usr/local LDFLAGS='-lcurl' --without-curses \
+  && LIBS='-lcurl -lcrypto -lssl' ./configure --with-htslib=/htslib --without-curses \
   && make && make install \
-  && ldconfig \
   && cd .. \
   && rm -rf samtools \
   
@@ -68,8 +67,7 @@ RUN apt-get update -qq \
   && cd .. \
   
 # Get Ranger
-  && npm install -g npg_ranger@${NPG_RANGER_VERSION} \
-  && ls
+  && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
 # Remove build-time dependencies
 RUN apt-get remove -qq $APT_DEPENDENCIES \
