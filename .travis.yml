@@ -2,6 +2,10 @@ sudo: false
 language: node_js
 node_js :
   - "4.5.0"
+addons:
+  apt:
+    packages:
+      - libssl-dev
 cache:
   directories:
   - /tmp/htslib
@@ -12,8 +16,8 @@ env:
     - MONGODB_VERSION=3.2.4
     - FREEBAYES_VERSION="v1.0.2-npg-Aug2016"
     - BIOBAMBAM_VERSION="2.0.50-release-20160705161609"
-    - HTSLIB_VERSION="1.3.1-npg-Apr2016"
-    - SAMTOOLS1_VERSION="1.3.1-npg-May2016"
+    - HTSLIB_VERSION="1.3.2"
+    - SAMTOOLS1_VERSION="1.3.1-npg-Sep2016"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"
@@ -22,4 +26,3 @@ before_install:
   - npm install -g grunt-cli
 script:
   - grunt -v
-
