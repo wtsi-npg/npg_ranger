@@ -613,6 +613,42 @@ describe('Redirection in json response', function() {
     });
   });
 
+  it('successful redirection, filter given', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?target=0&manual_qc=&alignment_not=undef'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=BAM&target=0&manual_qc=&alignment_not=undef`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });
+    });
+  });
+
+  it('successful redirection, unknown filter ignored', function(done) {
+    http.get(
+      { socketPath: socket,
+        path: server_path + '?not_a_filter=1'}, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=BAM`;
+        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        done();
+      });
+    });
+  });
+
   it('redirection error, range is given, reference is missing', function(done) {
     http.get(
       { socketPath: socket,

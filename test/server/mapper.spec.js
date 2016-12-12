@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll */
+/* globals describe, it, fail, expect, beforeAll, afterAll */
 
 "use strict";
 
@@ -30,6 +30,24 @@ const FIXTURES   = 'test/server/data/fixtures/fileinfo.json';
  *           /seq/10000/10000_7#92.bam  access_control_group_id - zero
  * ***************************************************************************
  */
+
+describe('Static function', function() {
+  it('getFilterNames', function() {
+    let filterNames = DataMapper.getFilterNames();
+    let expectedFilterNames = [
+      'target', 'target_not',
+      'alignment', 'alignment_not',
+      'manual_qc', 'manual_qc_not',
+      'alignment_filter', 'alignment_filter_not',
+      'alt_target', 'alt_target_not',
+      'alt_process', 'alt_process_not'
+    ];
+    expect(filterNames.length).toBe(12);
+    expectedFilterNames.forEach( (filter) => {
+      expect(filterNames).toContain(filter);
+    });
+  });
+});
 
 describe('Data info retrieval', function() {
   var tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
@@ -102,6 +120,310 @@ describe('Data info retrieval', function() {
         dm.getFileInfo({name: "10000_1#58_phix.bam"}, 'localhost');
       });
     });
+  });
+
+  describe('Test filters', function() {
+    it('invalid combination', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          // Expect failure because both target and target_not are specified,
+          // which is not allowed
+          expect(reason).toBe('Invalid query');
+          done();
+        });
+        dm.on('data', (data) => {
+          fail('Should have received no data, but instead received ' + data.toString());
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '1', target_not: '0'}, 'localhost');
+      });
+    });
+
+    it('all defaults', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.on('data', (data) => {
+          expect(data).toEqual(
+            [{file: 'target1 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}]
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654'}, 'localhost');
+      });
+    });
+
+    it('target=0', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(2);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0'}, 'localhost');
+      });
+    });
+
+    it('target=', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(4);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target1 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: ''}, 'localhost');
+      });
+    });
+
+    it('target=undef', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(1);
+          expect(data).toContain(
+            {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: 'undef'}, 'localhost');
+      });
+    });
+
+    it('target_not=1', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(3);
+          expect(data).toContain(
+            {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target_not: '1'}, 'localhost');
+      });
+    });
+
+    it('target_not=undef', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(3);
+          expect(data).toContain(
+            {file: 'target1 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target_not: 'undef'}, 'localhost');
+      });
+    });
+
+    it('target_not=', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(4);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target1 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'targetu mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target_not: ''}, 'localhost');
+      });
+    });
+
+    it('alignment_filter=1', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          // Expect no data because nothing has alignment_filter=1
+          expect(reason).toBe('No files for sample accession JKL987654');
+          done();
+        });
+        dm.once('data', (data) => {
+          fail('should return no data but returned ' + data.toString());
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', alignment_filter: '1'}, 'localhost');
+      });
+    });
+
+    it('alignment_filter=phix', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          // Expect no data because only file with alignment_filter=phix
+          // also has target=1, which must be explicitly defined
+          expect(reason).toBe('No files for sample accession JKL987654');
+          done();
+        });
+        dm.once('data', (data) => {
+          fail('should return no data but returned ' + data.toString());
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', alignment_filter: 'phix'}, 'localhost');
+      });
+    });
+
+    it('target=0, alignment_filter=phix', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(1);
+          expect(data).toEqual(
+            [{file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}]
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: 'phix'}, 'localhost');
+      });
+    });
+
+    it('target=0, alignment_filter_not=phix', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(1);
+          expect(data).toEqual(
+            [{file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}]
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter_not: 'phix'}, 'localhost');
+      });
+    });
+
+    it('target=0, alignment_filter=', function(done) {
+      MongoClient.connect(url, function(err, db) {
+        assert.equal(err, null);
+        let dm = new DataMapper(db);
+        dm.once('nodata', (reason) => {
+          fail(reason);
+          done();
+        });
+        dm.once('data', (data) => {
+          expect(data.length).toBe(2);
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          expect(data).toContain(
+            {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
+              reference : '/test/reference/path.fa'}
+          );
+          done();
+        });
+        dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: ''}, 'localhost');
+      });
+    });
+
+
   });
 
 
