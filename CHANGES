@@ -7,6 +7,8 @@ LIST OF CHANGES for npg_ranger project
   - upgrade mongodb to 2.2.12 from 2.2.11
   - upgrade pem to 1.9.2 from 1.8.3
   - upgrade tmp to 0.0.31 from 0.0.30
+  - do not allow query strings containing multiple attribute-value pairs
+    for the same attribute
 
 release 1.0.0
   - show error in log when controller tests fail to cleanup

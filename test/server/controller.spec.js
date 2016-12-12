@@ -217,6 +217,30 @@ describe('Handling requests - error responses', function() {
     req.end();
   });
 
+  it('Invalid input error for duplicate values for an attribute', ( done ) => {
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {one: "two"});
+      expect( () => {c.handleRequest();} ).not.toThrow();
+    });
+
+    http.get({socketPath: socket, path: '/sample?attr1=value1&attr2=value2&attr1=value3'},
+      ( response ) => {
+      var body = '';
+      response.on('data', ( d ) => { body += d;});
+      response.on('end', () => {
+        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.statusCode).toEqual(422);
+        let m = "Invalid request: multiple values for attribute 'attr1'";
+        expect(response.statusMessage).toEqual(m);
+        expect(JSON.parse(body)).toEqual(
+          {error: {type:    "InvalidInput",
+                   message: m}});
+        done();
+      });
+    });
+  });
+
 
   it('Invalid input error for a sample url', ( done ) => {
     server.removeAllListeners('request');
