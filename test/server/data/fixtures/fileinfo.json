@@ -23,6 +23,10 @@
 
 {"filepath_by_host" : { "*" : "test/server/data/20907_1#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" },
 
+{"filepath_by_host" : { "*" : "test/server/data/20781_1#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "DEF123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20781", "data_object" : "20781_1#888.bam" },
+
+{"filepath_by_host" : { "*" : "test/server/data/20781_2#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "DEF123456", "target" : "0", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20781", "data_object" : "20781_2#888.bam" },
+
 {"filepath_by_host" : { "*" : "target1 mqc1 align1" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "1", "alignment" : "1", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} },
 
 {"filepath_by_host" : { "*" : "target0 mqc1 align1" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "0", "alignment" : "1", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} },
