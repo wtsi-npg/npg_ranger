@@ -307,23 +307,23 @@ If it is not possible to enumerate the origins to be allowed, the least secure
 option of allowing all origins can be configured at server startup with the
 --anyorigin option.
 
-*****************
+
 Filtering results
-*****************
+=================
 Use query parameters to modify your results
 
 
 /sample route
-=============
+-------------
 
 Required:
----------
+~~~~~~~~~
 accession: Show files from given sample accession number::
 
   accession=ABC123456
 
 Optional:
----------
+~~~~~~~~~
 
 format: Return files, transforming data to given format::
 
@@ -334,7 +334,7 @@ region: Return files, showing only the given genomic region::
   region=chr13:1700000-1700200
 
 Filtering:
-----------
+~~~~~~~~~~
 
 WARNING:
 
@@ -368,3 +368,4 @@ Not specifying a filter in the query will filter by the default value if it exis
 +------------------+-----------+---------------+
 | alignment_filter | n/a       | phix,human,...|
 +------------------+-----------+---------------+
+
