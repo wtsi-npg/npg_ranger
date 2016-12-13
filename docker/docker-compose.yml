@@ -26,6 +26,8 @@ services:
 
   rangerproxy:
     build: ./rangerproxy
+    volumes:
+      - ../../../../references:/references:ro
     ports:
       - "9090:9090"
     links:

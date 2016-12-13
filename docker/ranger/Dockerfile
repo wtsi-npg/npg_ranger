@@ -14,9 +14,6 @@ ENV NODE_VERSION=4.5.0 \
 RUN apt-get update -qq \
   && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl
 
-RUN mkdir -p /root
-COPY ./s3cfg /root/.s3cfg
-
 RUN apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
 
@@ -69,6 +66,13 @@ RUN apt-get update -qq \
 # Get Ranger
   && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
+WORKDIR /npg_ranger
+
+RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
+COPY ./config.json /npg_ranger/config.json
+COPY ./s3cfg /home/apprunner/.s3cfg
+RUN chown -R apprunner:apprunner /npg_ranger /home/apprunner
+
 # Remove build-time dependencies
 RUN apt-get remove -qq $APT_DEPENDENCIES \
 #  && apt-get autoremove --purge -qq \
@@ -77,8 +81,10 @@ RUN apt-get remove -qq $APT_DEPENDENCIES \
 
 ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
 
-RUN chmod 0500 /wait-for-it.sh
+RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
+
+USER apprunner
 
 CMD [ "/bin/bash" ]
 

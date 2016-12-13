@@ -16,6 +16,7 @@ while (<>) {
     s{^LoadModule ssl_module}{\#LoadModule ssl_module};
     s{^LoadModule proxy_connect_module}{\#LoadModule proxy_connect_module};
 
+    s{^Define REF_REPOSITORY(.*)$}{Define REF_REPOSITORY "/references"};
     s{^Define RSOCKET_PATH(.*)$}{Define NPG_DOCKER 1};
     next if (m{^<(.*?)Location(.*)}
           or m{^( *)<(.*?)Limit(.*)}
