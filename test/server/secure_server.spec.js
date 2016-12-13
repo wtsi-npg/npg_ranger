@@ -35,6 +35,7 @@ describe('test running https server', () => {
     let s = spawn(serverCommand, [
       '-s',
       '-d',
+      '--logconsole',
       '--startssl',
       '--secure_key', private_pem,
       '--secure_cert', cert_pem,

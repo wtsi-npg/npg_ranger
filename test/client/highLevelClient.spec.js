@@ -241,6 +241,7 @@ describe('Running with ranger server with a', () => {
     let serv = spawn(serverCommand, [
       '-s',
       '-d',
+      '--logconsole',
       '-n0',
       `-p${SERV_PORT}`,
       `-m${mongourl}`]);
