@@ -256,9 +256,8 @@ if ( require.main === module ) {
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
     process.exit(0);
-  } else if ( options.get('debug') ) {
-    LOGGER.level = 'debug';
   }
+  LOGGER.level      = options.get('debug') ? 'debug' : options.get('loglevel');
   let numWorkers    = options.get('numworkers');
   let waitingConsec = options.get('clustertimeout');
   let maxConsec     = options.get('clustermaxdeaths');
