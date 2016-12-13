@@ -131,6 +131,8 @@ describe('Listing config options', function() {
       'debug=true',
       'emaildomain="some.com"',
       'hostname="myhost"',
+      'logconsole=undefined',
+      'loglevel="error"',
       'mongourl="mymongourl"',
       'multiref=undefined',
       'numworkers=3',

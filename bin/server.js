@@ -253,6 +253,7 @@ class BrokerFactory {
  */
 if ( require.main === module ) {
   const options = config.provide(config.fromCommandLine);
+  LOGGER.setup();
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
     process.exit(0);
