@@ -107,7 +107,7 @@ describe('test running https server', () => {
   it('can reply with a reference from a https requests', ( done ) => {
     serv = startServer( done );
     let acc  = 'XYZ120923';
-    serv.stdout.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let options = {

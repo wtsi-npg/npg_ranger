@@ -257,7 +257,7 @@ describe('Running with ranger server with a', () => {
   it('file url', (done) => {
     let serv = startServer( done, fail );
 
-    serv.stdout.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [
@@ -279,7 +279,7 @@ describe('Running with ranger server with a', () => {
   it('sample url', (done) => {
     let serv = startServer( done, fail );
 
-    serv.stdout.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [
@@ -305,7 +305,7 @@ describe('Running with ranger server with a', () => {
   it('sample url returning vcf', (done) => {
     let serv = startServer( done, fail );
 
-    serv.stdout.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let body = '';
@@ -328,7 +328,7 @@ describe('Running with ranger server with a', () => {
   it('GA4GH url and the redirect is followed', (done) => {
     let serv = startServer( done, fail );
 
-    serv.stdout.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [
