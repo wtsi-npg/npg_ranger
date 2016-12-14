@@ -91,6 +91,7 @@ cline.on('--help', () => {
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
+LOGGER.setup(true);
 if ( !cline.debug ) {
   LOGGER.level = 'warn';
 } else {

@@ -253,12 +253,15 @@ class BrokerFactory {
  */
 if ( require.main === module ) {
   const options = config.provide(config.fromCommandLine);
-  LOGGER.setup();
+
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
     process.exit(0);
+  } else {
+    LOGGER.setup(options.get('logconsole'));
+    LOGGER.level = options.get('debug') ? 'debug' : options.get('loglevel');
   }
-  LOGGER.level      = options.get('debug') ? 'debug' : options.get('loglevel');
+
   let numWorkers    = options.get('numworkers');
   let waitingConsec = options.get('clustertimeout');
   let maxConsec     = options.get('clustermaxdeaths');
