@@ -11,6 +11,7 @@ LIST OF CHANGES for npg_ranger project
   - upgrade tmp to 0.0.31 from 0.0.30
   - do not allow query strings containing multiple attribute-value pairs
     for the same attribute
+  - added flags to server to change logging level and enable logging to console
 
 release 1.0.0
   - show error in log when controller tests fail to cleanup
