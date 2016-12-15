@@ -13,8 +13,8 @@ Running
 
    2.2 biobambam v2.0.50
 
-   2.3 freebayes `v1.0.2-npg-Aug2016
-   <https://github.com/wtsi-npg/freebayes/tree/v1.0.2-npg-Aug2016>`_
+   2.3 freebayes `v1.1.0
+   <https://github.com/ekg/freebayes/tree/v1.1.0>`_
 
 3. Create `configuration file
    <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_
