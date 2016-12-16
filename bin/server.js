@@ -247,6 +247,21 @@ class BrokerFactory {
       : new FlatBroker(serverFactory);
   }
 }
+function setLogLevel(options) {
+  if (options.get('debug')) {
+    LOGGER.level = 'debug';
+    return;
+  }
+  let logLevel = options.get('loglevel');
+  let knownLevels = ['error', 'warn', 'info', 'debug', 'silly'];
+  if (knownLevels.indexOf(logLevel) !== -1) {
+    LOGGER.level = logLevel;
+    return;
+  }
+  // --loglevel was given an invalid parameter - leave at default and log error
+  LOGGER.error('configuration: loglevel expects one of ' + knownLevels.join(',') + '; but received ' + logLevel);
+  process.exit(1);
+}
 
 /**
  * Application's main method.
@@ -259,7 +274,7 @@ if ( require.main === module ) {
     process.exit(0);
   } else {
     LOGGER.setup(options.get('logconsole'));
-    LOGGER.level = options.get('debug') ? 'debug' : options.get('loglevel');
+    setLogLevel(options);
   }
 
   let numWorkers    = options.get('numworkers');

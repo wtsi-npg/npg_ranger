@@ -65,7 +65,7 @@ cline
   .version(require('../package.json').version)
   .description('Command line client for GA4GH data streaming')
   .arguments('<url> [output]')
-  .option('--debug', 'Show debug output')
+  .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'warn')
   .option('--accept-trailers', 'Request trailers from server')
   .parse(process.argv);
 
@@ -92,11 +92,8 @@ if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
 LOGGER.setup(true);
-if ( !cline.debug ) {
-  LOGGER.level = 'warn';
-} else {
-  LOGGER.level = 'debug';
-}
+
+LOGGER.level = cline.loglevel;
 
 var url    = cline.args[0];
 var output = cline.args.length == 2 ? cline.args[1] : undefined;
