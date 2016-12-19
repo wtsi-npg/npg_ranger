@@ -42,10 +42,10 @@ tar xzf biobambam2.tar.gz -C biobambam2 --strip-components 1
 
 # freebayes
 if [ ! "$(ls -A freebayes)" ]; then
-git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/wtsi-npg/freebayes.git freebayes
+git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/ekg/freebayes.git freebayes
 pushd freebayes
 git submodule update --init --recursive
-make BAMTOOLS_ARGS="-DEnableNodeJS=true"
+make
 popd
 fi
 

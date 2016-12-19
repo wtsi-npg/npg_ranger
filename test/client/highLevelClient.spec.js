@@ -318,7 +318,7 @@ describe('Running with ranger server with a', () => {
         client.stdout.on('end', () => {
           let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
                                .digest('hex');
-          expect(hashDigest).toBe('832d2abee762681e6f025ca0df1f38ad');
+          expect(hashDigest).toBe('78efac4e7b81a714d2930f8febd3a4d5');
           serv.kill();
         });
       }

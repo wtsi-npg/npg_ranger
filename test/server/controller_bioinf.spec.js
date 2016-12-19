@@ -31,7 +31,7 @@ let expectedMd5s = {
     'SAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
     'BAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
     'CRAM': ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
-    'VCF' : ['832d2abee762681e6f025ca0df1f38ad']
+    'VCF' : ['78efac4e7b81a714d2930f8febd3a4d5']
   }
 };
 
