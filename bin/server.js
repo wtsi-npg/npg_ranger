@@ -256,9 +256,22 @@ if ( require.main === module ) {
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
     process.exit(0);
-  } else if ( options.get('debug') ) {
-    LOGGER.level = 'debug';
   }
+
+  let loglevel = options.get('loglevel');
+  let knownLevels = ['error', 'warn', 'info', 'debug', 'silly'];
+  if (loglevel) {
+    if (knownLevels.indexOf(loglevel) !== -1) {
+      LOGGER.level = loglevel;
+    } else {
+      // --loglevel was given an invalid parameter - log error and quit
+      LOGGER.error('configuration error: loglevel flag expects one of ' +
+                   knownLevels.join(', ') + ', but actually received ' +
+                   loglevel);
+      process.exit(1);
+    }
+  }
+
   let numWorkers    = options.get('numworkers');
   let waitingConsec = options.get('clustertimeout');
   let maxConsec     = options.get('clustermaxdeaths');

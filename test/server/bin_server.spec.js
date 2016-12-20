@@ -256,7 +256,7 @@ describe('Sockets are cleaned', () => {
       let socketPath = `${tmp_dir}/${socketName}`;
       fse.close(fse.openSync(socketPath, 'w'));
       child = spawn(serverCommand,[
-        '-d',
+        '--loglevel=debug',
         `-mmongodb://localhost:${PORT}`,
         '-k2', '-l1', // Max 2 deaths in 1 second
         '-n', `${numWorkers}`,
@@ -279,7 +279,7 @@ describe('Sockets are cleaned', () => {
       expect(err).toBeDefined();
     });
     child = spawn(serverCommand,[
-      '-d',
+      '--loglevel=debug',
       `-mmongodb://localhost:${PORT}`,
       `-n0`,
       '-p', `${socketPath}`]
@@ -311,7 +311,7 @@ describe('Sockets are cleaned', () => {
       expect(err).toBeDefined();
     });
     child = spawn(serverCommand,[
-      '-d',
+      '--loglevel=debug',
       `-mmongodb://localhost:${PORT}`,
       `-n5`,
       '-p', `${socketPath}`]
