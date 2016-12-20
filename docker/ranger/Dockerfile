@@ -7,7 +7,7 @@ ENV NODE_VERSION=4.5.0 \
     HTSLIB_VERSION=1.3.2 \
     SAMTOOLS_VERSION=1.3.1-npg-Sep2016 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
-    FREEBAYES_VERSION=1.0.2-npg-Aug2016 \
+    FREEBAYES_VERSION=1.1.0 \
     NPG_RANGER_VERSION=1.0.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
@@ -56,10 +56,10 @@ RUN apt-get update -qq \
   && rm -r biobambam2.tar.gz \
 
 # Get Freebayes
-  && git clone --branch v$FREEBAYES_VERSION --depth 1 "https://github.com/wtsi-npg/freebayes.git" freebayes \
+  && git clone --branch v$FREEBAYES_VERSION --depth 1 "https://github.com/ekg/freebayes.git" freebayes \
   && cd ./freebayes \
   && git submodule update --init --recursive \
-  && make BAMTOOLS_ARGS="-DEnableNodeJS=true" \
+  && make \
   && make install \
   && cd .. \
   
