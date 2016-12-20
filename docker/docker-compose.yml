@@ -4,7 +4,7 @@ services:
   rangerdb:
     image: mongo:3.2.10
     volumes:
-      - ./rangerdb/volume:/data/db
+      - ../../../../data/mongo:/data/db
       - ../:/appconf
 
   ranger:
