@@ -1,0 +1,153 @@
+# Docker-compose containers
+This directory contains a collection of Dockerfiles, scripts, and a
+docker-compose.yml which will allow you to quickly set up a working ranger
+server.
+
+This configuration is locked at the 1.0.0 release in the ranger container. It
+includes proof of concept Dockerfiles and docker-compose.yml to bring up a
+mongodb container, an npg_ranger container and an apache container to act as a
+reverse proxy.
+
+## Preparing the instance
+Instance preparation may be covered by an existing image. Otherwise these steps
+should prepare the instance for the rest of the deployment.
+
+```
+export DEBIAN_FRONTEND=noninteractive
+sudo apt-get update
+
+sudo apt-get install htop s3cmd
+
+# To install docker packages signed with the key
+sudo apt-get -y install apt-transport-https ca-certificates
+sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+
+# cat /etc/issue to find ubuntu version for the correct ubuntu version in this case "ubuntu-xenial"
+echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual
+sudo apt-get -y install docker-engine
+sudo apt-get -y upgrade
+
+# add the user (ubuntu) to the docker group so sudo is not required for every docker command
+sudo usermod -a -G docker $USER
+
+sudo service docker start
+
+# get docker compose binary
+sudo curl -L https://github.com/docker/compose/releases/download/1.9.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+## References volume
+
+The deployment instructions assume there will be a **reference** root path to
+pass to the containers. If an existing volume with references is available then
+it may just need to be mounted.
+
+```
+# Find volume with references and attach to instance.
+# Then mount in the instance:
+sudo mkdir /references
+sudo chmod a+w /references
+# run lsblk to find references volume name then mount with something like:
+sudo mount /dev/xvdf /references
+```
+
+You may want to save these changes to the fstab file so they don't need to be
+repeated after stopping/starting the instance.
+
+**Warning:** Be specially careful when executing this instruction as it will
+prevent starting the instance in the future if wrong configuration is used.
+
+```
+# this line matches previous configuration, change if needed
+sudo echo -e "/dev/xvdf\t/references\text4\tdefaults\t0 2" | sudo tee --append /etc/fstab
+```
+
+## Configuration for s3cmd
+If data files are sourced from S3 (as in the sample data provided), s3cmd
+configuration needs to be set.
+
+```
+# interactive configuration to save s3cmd configuration at home
+s3cmd --configure
+```
+
+## Get a clone of the project
+
+```
+# use specific branch if needed
+git clone -b devel https://github.com/wtsi-npg/npg_ranger.git npg_ranger && pushd npg_ranger/docker
+```
+
+### Configuration for s3cmd
+Place the s3cmd configuration file generated in previous steps somewhere it can
+be used by docker. During container building phase this file will be passed to
+the container.
+
+```
+cp ~/.s3cfg ranger/s3cfg
+```
+
+## Working with temporary DNS hostname/IP
+If the instance gets a new IP/DNS hostname every time the it is started (e.g.
+AWS), set environment variables for containers to be aware if the current
+IP/hostname.
+
+```
+# Every time the intance is restarted and/or DNS/IP configuration changes
+
+git checkout ranger/config.json # Get original configuration file
+
+export PUBLIC_DNS=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname) # To get public DNS hostname
+export PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) # To get public IP
+
+sed -i "s/<%PUBLIC_DNS%>/$PUBLIC_DNS/g" ranger/config.json # Set dns hostname in configuration file
+sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
+```
+
+# Use docker-compose
+Use docker-compose to build and bring up containers.
+```
+docker-compose up -d --build
+```
+
+# Test data
+A sample data file is provided. It can be used to test the service but needs to
+be loaded.
+
+```
+# copy sample data to data mounting point
+cp ./rangerdb/fileinfo.json /data/mongo/fileinfo.json
+
+# Load some data (run only once! multiple times will create duplicate rows in database)
+docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo --jsonArray --file /data/mongo/fileinfo.json
+```
+
+# Stop and start apache server
+
+```
+# Every time the containers are brought down/up
+docker exec docker_rangerproxy_1 cp /appconf/docs/apache/httpd.conf /usr/local/apache2/httpd.conf
+docker exec docker_rangerproxy_1 perl docker_conf.pl
+docker exec docker_rangerproxy_1 mv /usr/local/apache2/httpd.conf /usr/local/apache2/conf/httpd.conf
+docker exec docker_rangerproxy_1 apachectl restart
+```
+
+# Test sample data
+
+```
+echo "03555f613ce1c9cba69a862137f13b76  temp.bam" >> test_data.md5
+echo "70b8f5f160e27210169ff50b013a75bb  temp.cram" >> test_data.md5
+echo "f03053c6a581f18f1eb41a259e31a9b0  temp.sam" >> test_data.md5
+
+curl "http://localhost:9090/npg_ranger/file?name=20818_1%23888.bam" -o temp.bam
+curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&region=chr22:16100000-16105000" -o temp.cram
+curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=sam&region=chr22:16100000-16105000" -o temp.sam
+
+md5sum -c test_data.md5 && rm temp.bam temp.cram temp.sam test_data.md5
+```
+
+These dockerfiles are a proof of concept only; no security has been enabled on
+them, and are obviously not production-ready.
