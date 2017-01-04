@@ -90,6 +90,12 @@ the container.
 cp ~/.s3cfg ranger/s3cfg
 ```
 
+### Base configuration for apache
+Place the httpd.conf in path where docker can see it.
+```
+cp ../docs/apache/httpd.conf rangerproxy/httpd.conf
+```
+
 ## Working with temporary DNS hostname/IP
 If the instance gets a new IP/DNS hostname every time the it is started (e.g.
 AWS), set environment variables for containers to be aware if the current
@@ -124,16 +130,6 @@ cp ./rangerdb/fileinfo.json /data/mongo/fileinfo.json
 # Load some data (run only once! multiple times will create duplicate rows in database)
 docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo --jsonArray --file /data/db/fileinfo.json --upsert --upsertFields data_object,filepath_by_host
 # This syntax will change in mongo 3.4 to something like --mode upsert --upsertFields data_object,filepath_by_host
-```
-
-# Stop and start apache server
-
-```
-# Every time the containers are brought down/up
-docker exec docker_rangerproxy_1 cp /appconf/docs/apache/httpd.conf /usr/local/apache2/httpd.conf
-docker exec docker_rangerproxy_1 perl docker_conf.pl
-docker exec docker_rangerproxy_1 mv /usr/local/apache2/httpd.conf /usr/local/apache2/conf/httpd.conf
-docker exec docker_rangerproxy_1 apachectl restart
 ```
 
 # Test sample data

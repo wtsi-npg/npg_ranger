@@ -5,23 +5,22 @@ services:
     image: mongo:3.2.10
     volumes:
       - ../../../../data/mongo:/data/db
-      - ../:/appconf
 
   ranger:
     build: ./ranger
+    # We are passing references to samtools explicitly.
+    # Setting REF_CACHE here to catch anything that might leak through.
     environment:
       - REF_CACHE=/references/cram_cache/%2s/%2s/%s
     volumes:
-      - ./ranger:/data/ranger
+      - ../test/server/data:/seqdata:ro # For access for phix bam files
+      - ./ranger:/appconf # For access to configuration files
       - ../../../../references:/references
-      - ../test/server/data:/seqdata
-    command: npg_ranger_server -sdp5050 -mmongodb://rangerdb/imetacache -r / -c /data/ranger/config.json
+    command: npg_ranger_server -sd -c /appconf/config.json
     entrypoint: /wait-for-it.sh rangerdb:27017 --
     links:
       - rangerdb
     depends_on:
-      - rangerdb
-    volumes_from:
       - rangerdb
 
   rangerproxy:
@@ -32,6 +31,4 @@ services:
       - "9090:9090"
     links:
       - ranger
-    volumes_from:
-      - rangerdb
 

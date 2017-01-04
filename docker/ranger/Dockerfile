@@ -12,9 +12,8 @@ ENV NODE_VERSION=4.5.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl
-
-RUN apt-get update -qq \
+  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
 
 # Get Node.js
@@ -69,7 +68,6 @@ RUN apt-get update -qq \
 WORKDIR /npg_ranger
 
 RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
-COPY ./config.json /npg_ranger/config.json
 COPY ./s3cfg /home/apprunner/.s3cfg
 RUN chown -R apprunner:apprunner /npg_ranger /home/apprunner
 
