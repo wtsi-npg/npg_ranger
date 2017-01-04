@@ -122,7 +122,7 @@ be loaded.
 cp ./rangerdb/fileinfo.json /data/mongo/fileinfo.json
 
 # Load some data (run only once! multiple times will create duplicate rows in database)
-docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo --jsonArray --file /data/mongo/fileinfo.json
+docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo --jsonArray --file /data/db/fileinfo.json --upsert --upsertFields data_object,filepath_by_host
 ```
 
 # Stop and start apache server
