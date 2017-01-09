@@ -12,6 +12,8 @@ release 1.1.0
   - upgrade tmp to 0.0.31 from 0.0.30
   - do not allow query strings containing multiple attribute-value pairs
     for the same attribute
+  - added flags to server to change logging level and enable logging to console
+  - all logging to console is now sent to stderr
   - upgrade Freebayes to 1.1.0 from 1.0.2-npg-Aug2016 in TravisCI and docs
   - include docker configuration to deploy with containers
 

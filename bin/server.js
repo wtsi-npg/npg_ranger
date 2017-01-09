@@ -247,18 +247,36 @@ class BrokerFactory {
       : new FlatBroker(serverFactory);
   }
 }
+function setLogLevel(options) {
+  if (options.get('debug')) {
+    LOGGER.level = 'debug';
+    return;
+  }
+  let logLevel = options.get('loglevel');
+  let knownLevels = ['error', 'warn', 'info', 'debug', 'silly'];
+  if (knownLevels.indexOf(logLevel) !== -1) {
+    LOGGER.level = logLevel;
+    return;
+  }
+  // --loglevel was given an invalid parameter - leave at default and log error
+  LOGGER.error('configuration: loglevel expects one of ' + knownLevels.join(',') + '; but received ' + logLevel);
+  process.exit(1);
+}
 
 /**
  * Application's main method.
  */
 if ( require.main === module ) {
   const options = config.provide(config.fromCommandLine);
+
   if ( options.get('version') ) {
     console.log(require('../package.json').version);
     process.exit(0);
-  } else if ( options.get('debug') ) {
-    LOGGER.level = 'debug';
+  } else {
+    LOGGER.setup(options.get('logconsole'));
+    setLogLevel(options);
   }
+
   let numWorkers    = options.get('numworkers');
   let waitingConsec = options.get('clustertimeout');
   let maxConsec     = options.get('clustermaxdeaths');
