@@ -1,0 +1,11 @@
+[
+
+{"filepath_by_host" : { "*" : "/seqdata/20818_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20818", "data_object" : "20818_1#888.bam" },
+
+{"filepath_by_host" : { "*" : "/seqdata/20907_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" },
+
+{"collection" : "CH", "data_object" : "NA12878.bam", "avh" : {"target" : "1","alignment" : "1", "reference" : "references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/fasta/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa", "sample_accession_number" : "NA12878", "manual_qc": "1", "type": "cram"}, "filepath_by_host" : { "*" : "s3://ga4gh/grch38/NA12878.cram"}},
+{"collection" : "CH", "data_object" : "NA12891.bam", "avh" : {"target" : "1","alignment" : "1", "reference" : "references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/fasta/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa", "sample_accession_number" : "NA12891", "manual_qc": "1", "type": "cram"}, "filepath_by_host" : { "*" : "s3://ga4gh/grch38/NA12891.cram"}},
+{"collection" : "CH", "data_object" : "NA12892.bam", "avh" : {"target" : "1","alignment" : "1", "reference" : "references/Homo_sapiens/GRCh38_full_analysis_set_plus_decoy_hla/all/fasta/Homo_sapiens.GRCh38_full_analysis_set_plus_decoy_hla.fa", "sample_accession_number" : "NA12892", "manual_qc": "1", "type": "cram"}, "filepath_by_host" : { "*" : "s3://ga4gh/grch38/NA12892.cram"}}
+
+]

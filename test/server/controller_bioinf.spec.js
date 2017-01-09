@@ -23,20 +23,21 @@ var tmpDir   = config.tempFilePath('npg_ranger_controller_bioinf_test_');
 let db_name  = 'imetacache';
 let mongourl = `mongodb://localhost:${PORT}/${db_name}`;
 
+let expectedMd5s = {
+  'single file': {
+    'BAM' : ['16b3d79daec1da26d98a4e1b63e800b0']
+  },
+  'multiple (merged) files': {
+    'SAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
+    'BAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
+    'CRAM': ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
+    'VCF' : ['78efac4e7b81a714d2930f8febd3a4d5']
+  }
+};
+
 describe('server fetching', () => {
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
-  let expectedMd5s = {
-    'single file': {
-      'BAM' : ['16b3d79daec1da26d98a4e1b63e800b0']
-    },
-    'multiple (merged) files': {
-      'SAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
-      'BAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
-      'CRAM': ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
-      'VCF' : ['832d2abee762681e6f025ca0df1f38ad']
-    }
-  };
   let testRuns = {
     'single file':             '/file?name=20818_1%23888.bam',
     'multiple (merged) files': '/sample?accession=ABC123456&format='
@@ -75,7 +76,12 @@ describe('server fetching', () => {
       let cwd = process.cwd();
       let collection = db.collection('fileinfo');
 
-      let updatePromises = ['20818_1#888.bam', '20907_1#888.bam']
+      let updatePromises = [
+        '20818_1#888.bam',
+        '20907_1#888.bam',
+        '20781_1#888.bam',
+        '20781_2#888.bam'
+      ]
         .map(function createUpdatePromise(dataObj) {
           return collection.findOne({'data_object': dataObj})
           .then(function docFound(doc) {
@@ -142,69 +148,95 @@ describe('server fetching', () => {
     describe(description, () => {
       Object.keys(expectedMd5s[description]).forEach( ( format ) => {
         it('run controller on ' + description + ' outputting ' + format, ( done ) => {
-          function isOneOf(subject, expecteds) {
-            let matched = false;
-            for (let i = 0; i < expecteds.length; i++) {
-              if (subject === expecteds[i]) {
-                matched = true;
-                break;
-              }
-            }
-            return matched;
-          }
-          let useFormat = testRuns[description].endsWith('format=');
-          http.get(
-              {
-                socketPath: socket,
-                path: useFormat ? testRuns[description] + format
-                                : testRuns[description],
-                headers: {TE: 'trailers'}
-              }, ( res ) => {
 
-            let hash = crypto.createHash('md5');
-
-            if (format !== 'VCF') {
-              // The header will change between runs, so use bamseqchksum.
-              // Bamseqchksum is hard to compare, so md5 it and compare that.
-              let bamseqchksum = child.spawn('bamseqchksum',
-                [
-                  'inputformat=' + format.toLowerCase(),
-                  'reference=test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa'
-                ]);
-              res.on('data', ( data ) => {
-                bamseqchksum.stdin.write(data);
-              });
-              bamseqchksum.stdout.on('data', ( data ) => {
-                hash.update(data);
-              });
-              res.on('end', () => {
-                bamseqchksum.stdin.end();
-              });
-              bamseqchksum.stdout.on('end', () => {
-                let hashDigest = hash.digest('hex');
-                let match = isOneOf(hashDigest, expectedMd5s[description][format]);
-                expect(match).toBe(true);
-                done();
-              });
-            } else {
-              let body = '';
-              res.on('data', ( data ) => {
-                body += data;
-              });
-              res.on('end', () => {
-                // in VCF file, header is unpredictable, so remove and md5 remaining data
-                let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
-                                     .digest('hex');
-                let match = isOneOf(hashDigest,
-                                    expectedMd5s[description][format]
-                                   );
-                expect(match).toBe(true);
-                done();
-              });
-            }
-          });
+          runTest(testRuns[description], format, socket, expectedMd5s[description][format], done);
         });
       });
     });
   });
+
+  describe('using filters', function() {
+    it('defaults', function(done) {
+      runTest('/sample?accession=DEF123456&format=', 'sam', socket, ['3db62042d1a08e786dab40490ecf3127'], done);
+    });
+
+    it('setting target=0', function (done) {
+      runTest('/sample?accession=DEF123456&target=0&format=', 'sam', socket, ['6a06ec45e987bc4a1c9b0e7927b5f944'], done);
+    });
+
+    it('setting target=', function(done) {
+      runTest('/sample?accession=DEF123456&target=&format=', 'sam', socket, ['173dd87220b347b312e9395f22a2aa8d', '40852cca166be9488927400c9183ea49'], done);
+    });
+
+    it('setting target=undef', function(done) {
+      runTest('/sample?accession=DEF123456&target=undef&format=', 'sam', socket, ['b1f851bdf0394da7cf610995370bc251'], done);
+      // b1f851bdf0394da7cf610995370bc251 is the md5 generated by an
+      // empty bamseqchksum, i.e. when there is an error beforehand.
+    });
+  });
+
 });
+
+function isOneOf(subject, expecteds) {
+  let matched = false;
+  for (let i = 0; i < expecteds.length; i++) {
+    if (subject === expecteds[i]) {
+      matched = true;
+      break;
+    }
+  }
+  return matched;
+}
+
+function runTest(urlpath, format, socket, expected, done) {
+  if (urlpath.endsWith('format=')) {
+    urlpath += format;
+  }
+  http.get(
+      {
+        socketPath: socket,
+        path: urlpath,
+        headers: {TE: 'trailers'}
+      }, ( res ) => {
+
+    let hash = crypto.createHash('md5');
+
+    if (format !== 'VCF') {
+      // The header will change between runs, so use bamseqchksum.
+      // Bamseqchksum is hard to compare, so md5 it and compare that.
+      let bamseqchksum = child.spawn('bamseqchksum',
+        [
+          'inputformat=' + format.toLowerCase(),
+          'reference=test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa'
+        ]);
+      res.on('data', ( data ) => {
+        bamseqchksum.stdin.write(data);
+      });
+      bamseqchksum.stdout.on('data', ( data ) => {
+        hash.update(data);
+      });
+      res.on('end', () => {
+        bamseqchksum.stdin.end();
+      });
+      bamseqchksum.stdout.on('end', () => {
+        let hashDigest = hash.digest('hex');
+        let match = isOneOf(hashDigest, expected);
+        expect(match).toBe(true);
+        done();
+      });
+    } else {
+      let body = '';
+      res.on('data', ( data ) => {
+        body += data;
+      });
+      res.on('end', () => {
+        // in VCF file, header is unpredictable, so remove and md5 remaining data
+        let hashDigest = hash.update(body.replace(/#.*?\n/g, ''))
+                             .digest('hex');
+        let match = isOneOf(hashDigest, expected);
+        expect(match).toBe(true);
+        done();
+      });
+    }
+  });
+}

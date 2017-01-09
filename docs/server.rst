@@ -13,8 +13,8 @@ Running
 
    2.2 biobambam v2.0.50
 
-   2.3 freebayes `v1.0.2-npg-Aug2016
-   <https://github.com/wtsi-npg/freebayes/tree/v1.0.2-npg-Aug2016>`_
+   2.3 freebayes `v1.1.0
+   <https://github.com/ekg/freebayes/tree/v1.1.0>`_
 
 3. Create `configuration file
    <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_
@@ -290,15 +290,6 @@ Example configuration entries for an Apache reverse proxy can be found bellow:
   #ProxyPass /        http://localhost:9030/
   #ProxyPassReverse / http://localhost:9030/
 
-  # Additional headers to forward
-  RewriteEngine On
-  RewriteCond "%{HTTPS}" =off
-  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:http]
-  RewriteCond "%{HTTPS}" =on
-  RewriteRule ^\/npg_ranger\/.* - [E=XPROTOCOL:https]
-  # Use ":" as suffix of protocol eg "http:"
-  RequestHeader set X-Forwarded-Proto  "%{XPROTOCOL}e:"
-
 CORS headers
 ------------
 
@@ -315,3 +306,66 @@ configuration file.
 If it is not possible to enumerate the origins to be allowed, the least secure
 option of allowing all origins can be configured at server startup with the
 --anyorigin option.
+
+
+Filtering results
+=================
+Use query parameters to modify your results
+
+
+/sample route
+-------------
+
+Required:
+~~~~~~~~~
+accession: Show files from given sample accession number::
+
+  accession=ABC123456
+
+Optional:
+~~~~~~~~~
+
+format: Return files, transforming data to given format::
+
+  format={sam,bam,cram,vcf}
+
+region: Return files, showing only the given genomic region::
+
+  region=chr13:1700000-1700200
+
+Filtering:
+~~~~~~~~~~
+
+WARNING:
+
+The default filter values should work for the majority of cases. Not using the default values will dramatically increase the chance of errors occurring; either through attempts to access forbidden data, or by attempting to merge files with non-matching references.
+
+Each filter can take value 'undef' to search for files where the attribute corresponding to given filter does not exist. Each filter can take an empty string as a value to search for files without querying by the attribute corresponding to that filter.
+
+Each filter can be suffixed with '_not' to search for files with any value of the attribute *except* the given filter value. Giving value 'undef' to this form of the filter will return all files where the attribute corresponding to the filter exists, regardless of value.
+
+Not specifying a filter in the query will filter by the default value if it exists, or otherwise will ignore that filter (the same as giving an empty string, above)
+
+| For Example:
+| ``target=1`` searches for files where target=1
+| ``target=`` searches for all files, does not query by target
+| ``target=undef`` searches for files where target has not been defined
+| ``target_not=X`` returns the inverse of ``target=X``
+
+
++------------------+-----------+---------------+
+| filter name      | default   | common values |
++==================+===========+===============+
+| target           | 1         | 1, 0, library |
++------------------+-----------+---------------+
+| manual_qc        | 1         | 1, 0          |
++------------------+-----------+---------------+
+| alignment        | 1         | 1, 0          |
++------------------+-----------+---------------+
+| alt_target       | n/a       | 1             |
++------------------+-----------+---------------+
+| alt_process      | n/a       |               |
++------------------+-----------+---------------+
+| alignment_filter | n/a       | phix,human,...|
++------------------+-----------+---------------+
+

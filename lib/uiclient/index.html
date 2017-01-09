@@ -2,11 +2,29 @@
 <head>
   <script language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <script language="javascript" src="build/dalliance-all.js"></script>
+  <style>
+    * {
+      font-family: sans-serif;
+    }
+    .button {
+      background-color: #008CBA; /* Blue */
+      border: none;
+      color: white;
+      padding: 5px 20px;
+      font-size: 12px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      margin: 4px 2px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <form method="GET">
     Accession: <input type=text id='accession' size='20' maxlength='20'>
   </form>
+  <div id='messages'></div>
   <div id='linking'></div>
   <div id="svgHolder"></div>
   <script>
@@ -21,6 +39,7 @@
         var indexPath     = data.indexPath;
         var chrData       = data.chrData;
 
+        $('#messages').empty();
         $('#linking').empty();
         $('#svgHolder').empty();
         $('#linking').append('<p>Accession: ' + accession + '</p>');
@@ -34,7 +53,7 @@
             '</option>')
         });
         $('#linking').append(
-          "<p id=showBrowserCtrl>Show in browser</p>"
+          "<p id=showBrowserCtrl class='button'>Show in browser &raquo;</p>"
         );
         $('#showBrowserCtrl').click(function() {
           showBrowser( data );
@@ -46,28 +65,29 @@
         var range = uiclient.getRange(data.chrData, chr, 200);
 
         new Browser({
-          chr:          chr,
-          viewStart:    range.from,
-          viewEnd:      range.to,
-          noPersist:    true,
-          maxWorkers:   0,
+          chr:           chr,
+          viewStart:     range.from,
+          viewEnd:       range.to,
+          noPersist:     true,
+          maxWorkers:    0,
+          maxViewWidth:  50000,
           noLeapButtons: true,
-
+          noTrackEditor: true,
 
           coordSystem: {
             speciesName: data.referenceInfo.speciesName,
-            taxon: 9606,
-            auth: '',
-            version: '',
-            ucscName: data.referenceInfo.referenceName
+            taxon:       9606,
+            auth:        '',
+            version:     '',
+            ucscName:    data.referenceInfo.referenceName
           },
 
           sources:
             [
               {
-                name:                 'Genome',
-                twoBitURI:            '/' + data.referenceInfo.twoBitPath,
-                tier_type:            'sequence'
+                name:      'Genome ref',
+                twoBitURI: '/' + data.referenceInfo.twoBitPath,
+                tier_type: 'sequence'
               },
               {
                 name:         data.accession,
@@ -81,7 +101,9 @@
       }
 
       function procReferenceResp( data, textStatus, jqXHR ) {
-        if ( jqXHR.status == 200 ) {
+        var expiredSessionText = '<span style="color:orange">Session expired please reload page to authenticate.</span>';
+
+        if ( jqXHR.status !== undefined && jqXHR.status === 200 ) { // success
           var result = {};
           result.accession = data.accession;
           result.reference = data.reference;
@@ -94,20 +116,38 @@
             $.when(
               $.ajax( webUrl + '/' + indexPath )
             ).always( function ( r2Data, r2TestStatus, r2jqXHR ) {
-              if ( r2jqXHR.status == 200 ) {
+              if ( r2jqXHR.status !== undefined && r2jqXHR.status === 200 ) {
                 result.chrData = uiclient.parseIndexData(r2Data);
                 showAccData(result);
+              } else if ( r2Data.status === 401 ) {
+                $('#messages').empty();
+                $('#messages').append( expiredSessionText );
               } else {
+                $('#messages').empty();
                 $('#linking').empty();
                 $('#linking').append('<p>No reference index data for accession.</p>');
                 $('#svgHolder').empty();
               }
             });
           }
-        } else {
-          $('#linking').empty();
-          $('#linking').append('<p>No data for accession.</p>');
-          $('#svgHolder').empty();
+        } else { // error
+          if ( data.status === 404 ) {
+            $('#messages').empty();
+            $('#linking').empty();
+            $('#linking').append('<p>No data for accession.</p>');
+            $('#svgHolder').empty();
+          } else if ( data.status === 401 ) {
+            $('#messages').empty();
+            $('#messages').append( expiredSessionText );
+          } else if ( data.status && data.statusText ) {
+            $('#messages').empty();
+            $('#messages').append('<p><span style="color:orange">Error: ' +
+                                  data.status + ', ' +
+                                  data.statusText +
+                                  '</span></p>');
+          } else {
+            console.log('Unknown error ' + JSON.stringify(data));
+          }
         }
       }
 
@@ -115,6 +155,7 @@
       $('#accession').on('change paste keyup', function() {
         var accessionText = $('#accession').val().trim().toUpperCase();
         if ( accessionText != lastSearched ) {
+          $('#messages').empty();
           $('#linking').empty();
           lastSearched = accessionText;
           $('#accession').val(lastSearched);
