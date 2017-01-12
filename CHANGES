@@ -1,5 +1,9 @@
 LIST OF CHANGES for npg_ranger project
 
+  - remove directly logging to file due to winston bug
+  - add flags to change logging level
+  - all logging output is now sent to stderr
+
 release 1.1.0
   - cwd before executing pipelines and cleaning after pipeline finishes
   - added more filters for /sample url
