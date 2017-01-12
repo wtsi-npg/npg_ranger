@@ -123,14 +123,21 @@ sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in conf
 
 # Use docker-compose
 Use docker-compose to build and bring up containers.
+
+In the generic form
 ```
 docker-compose up -d --build
+```
+
+Or supplying specific file for different platform:
+```
+# If needed, edit docker-compose_os.yml to add IPs for DNS servers
+docker-compose --file docker-compose_os.yml up -d --build
 ```
 
 # Test data
 A sample data file is provided. It can be used to test the service but needs to
 be loaded.
-
 ```
 # copy sample data to data mounting point
 cp ./rangerdb/fileinfo.json /data/mongo/fileinfo.json

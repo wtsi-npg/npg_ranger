@@ -1,0 +1,53 @@
+version: "2"
+
+services:
+  rangerdb:
+    image: mongo:3.2.10
+    volumes:
+      - ../../../../data/mongo:/data/db
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.10
+
+  ranger:
+    build: ./ranger
+    environment:
+      - REF_CACHE=/references/cram_cache/%2s/%2s/%s
+    volumes:
+      - ../test/server/data:/seqdata:ro # For access for phix bam files
+      - ./ranger:/appconf # For access to configuration files
+      - ../../../../references:/references
+    command: npg_ranger_server -sd -c /appconf/config.json
+    entrypoint: /wait-for-it.sh rangerdb:27017 --
+    links:
+      - rangerdb
+    depends_on:
+      - rangerdb
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.11
+    # dns:
+    #   - <dns list>
+
+  rangerproxy:
+    build: ./rangerproxy
+    volumes:
+      - ../../../../references:/references:ro
+    ports:
+      - "9090:9090"
+    links:
+      - ranger
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.12
+
+networks:
+  app_net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.99.238.0/24
+        gateway: 172.99.238.1
