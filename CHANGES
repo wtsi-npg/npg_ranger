@@ -1,5 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
+  - remove directly logging to file due to winston bug
+  - add flags to change logging level
+  - all logging output is now sent to stderr
+
+release 1.1.0
   - cwd before executing pipelines and cleaning after pipeline finishes
   - added more filters for /sample url
   - switch to htslib@1.3.2 with curl support and samtools@1.3.1-npg-Sep2016
@@ -12,9 +17,7 @@ LIST OF CHANGES for npg_ranger project
   - do not allow query strings containing multiple attribute-value pairs
     for the same attribute
   - upgrade Freebayes to 1.1.0 from 1.0.2-npg-Aug2016 in TravisCI and docs
-  - remove directly logging to file due to winston bug
-  - add flags to change logging level
-  - all logging output is now sent to stderr
+  - include docker configuration to deploy with containers
 
 release 1.0.0
   - show error in log when controller tests fail to cleanup

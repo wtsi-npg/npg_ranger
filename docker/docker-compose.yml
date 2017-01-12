@@ -1,0 +1,37 @@
+version: "2"
+
+services:
+  rangerdb:
+    image: mongo:3.2.10
+    volumes:
+      - ../../../../data/mongo:/data/db
+      - ../:/appconf
+
+  ranger:
+    build: ./ranger
+    environment:
+      - REF_CACHE=/references/cram_cache/%2s/%2s/%s
+    volumes:
+      - ./ranger:/data/ranger
+      - ../../../../references:/references
+      - ../test/server/data:/seqdata
+    command: npg_ranger_server -sdp5050 -mmongodb://rangerdb/imetacache -r / -c /data/ranger/config.json
+    entrypoint: /wait-for-it.sh rangerdb:27017 --
+    links:
+      - rangerdb
+    depends_on:
+      - rangerdb
+    volumes_from:
+      - rangerdb
+
+  rangerproxy:
+    build: ./rangerproxy
+    volumes:
+      - ../../../../references:/references:ro
+    ports:
+      - "9090:9090"
+    links:
+      - ranger
+    volumes_from:
+      - rangerdb
+
