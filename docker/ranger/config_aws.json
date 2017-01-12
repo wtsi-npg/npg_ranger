@@ -6,7 +6,7 @@
   "originlist": ["http://ngs.sanger.ac.uk"],
   "proxylist":  {
     "http://localhost:9090": "http://localhost:9090/npg_ranger",
-    "http://<%PUBLIC_DNS%>:9090": "http://<%PUBLIC_DNS%>:9090/npg_ranger",
+    "http://<%PUBLIC_DNS_HOSTNAME%>:9090": "http://<%PUBLIC_DNS_HOSTNAME%>:9090/npg_ranger",
     "http://<%PUBLIC_IP%>:9090": "http://<%PUBLIC_IP%>:9090/npg_ranger"
   }
 }

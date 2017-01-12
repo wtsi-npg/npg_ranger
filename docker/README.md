@@ -106,10 +106,10 @@ Every time the intance is restarted and/or DNS/IP configuration changes
 ```
 cp ranger/config_aws.json ranger/config.json # Get original configuration file
 
-export PUBLIC_DNS=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname) # To get public DNS hostname
+export PUBLIC_DNS_HOSTNAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname) # To get public DNS hostname
 export PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) # To get public IP
 
-sed -i "s/<%PUBLIC_DNS%>/$PUBLIC_DNS/g" ranger/config.json # Set dns hostname in configuration file
+sed -i "s/<%PUBLIC_DNS_HOSTNAME%>/$PUBLIC_DNS_HOSTNAME/g" ranger/config.json # Set dns hostname in configuration file
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
 
