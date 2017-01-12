@@ -97,19 +97,27 @@ cp ../docs/apache/httpd.conf rangerproxy/httpd.conf
 ```
 
 ## Working with temporary DNS hostname/IP
-If the instance gets a new IP/DNS hostname every time the it is started (e.g.
-AWS), set environment variables for containers to be aware if the current
-IP/hostname.
+If the instance gets a new IP/DNS hostname regularly set environment variables for containers
+to be aware if the current IP/hostname.
+
+### Using AWS meta data
+Every time the intance is restarted and/or DNS/IP configuration changes
 
 ```
-# Every time the intance is restarted and/or DNS/IP configuration changes
-
-git checkout ranger/config.json # Get original configuration file
+cp ranger/config_aws.json ranger/config.json # Get original configuration file
 
 export PUBLIC_DNS=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname) # To get public DNS hostname
 export PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) # To get public IP
 
 sed -i "s/<%PUBLIC_DNS%>/$PUBLIC_DNS/g" ranger/config.json # Set dns hostname in configuration file
+sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
+```
+
+### Openstack
+```
+cp ranger/config_os.json ranger/config.json # Get original configuration file
+
+export PUBLIC_IP=<floating IP> # The floating IP of the machine
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
 
