@@ -81,8 +81,10 @@ s3cmd --configure
 git clone -b devel https://github.com/wtsi-npg/npg_ranger.git npg_ranger && pushd npg_ranger/docker
 ```
 
+## Place configuration files in expected locations
+
 ### Configuration for s3cmd
-Place the s3cmd configuration file generated in previous steps somewhere it can
+Place the s3cmd configuration file generated in previous steps where it can
 be used by docker. During container building phase this file will be passed to
 the container.
 
@@ -96,11 +98,11 @@ Place the httpd.conf in path where docker can see it.
 cp ../docs/apache/httpd.conf rangerproxy/httpd.conf
 ```
 
-## Working with temporary DNS hostname/IP
+### Working with temporary DNS hostname/IP
 If the instance gets a new IP/DNS hostname regularly set environment variables for containers
 to be aware if the current IP/hostname.
 
-### Using AWS meta data
+#### Using AWS meta data
 Every time the intance is restarted and/or DNS/IP configuration changes
 
 ```
@@ -113,7 +115,7 @@ sed -i "s/<%PUBLIC_DNS_HOSTNAME%>/$PUBLIC_DNS_HOSTNAME/g" ranger/config.json # S
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
 
-### Openstack
+#### Openstack
 ```
 cp ranger/config_os.json ranger/config.json # Get original configuration file
 
@@ -121,7 +123,7 @@ export PUBLIC_IP=<floating IP> # The floating IP of the machine
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
 
-# Use docker-compose
+## Use docker-compose
 Use docker-compose to build and bring up containers.
 
 In the generic form
@@ -135,7 +137,7 @@ Or supplying specific file for different platform:
 docker-compose --file docker-compose_os.yml up -d --build
 ```
 
-# Test data
+## Test data
 A sample data file is provided. It can be used to test the service but needs to
 be loaded.
 ```
@@ -147,7 +149,7 @@ docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo 
 # This syntax will change in mongo 3.4 to something like --mode upsert --upsertFields data_object,filepath_by_host
 ```
 
-# Test sample data
+## Testing deploy with sample data
 
 ```
 echo "03555f613ce1c9cba69a862137f13b76  temp.bam" >> test_data.md5
