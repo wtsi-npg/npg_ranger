@@ -66,6 +66,17 @@ RUN apt-get update -qq \
 # Get Ranger
   && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
+COPY ./certs/*.pem /usr/share/ca-certificates/ranger/
+RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
+  then \
+    for i in /usr/share/ca-certificates/ranger/*.pem; \
+    do \
+      echo "$i"; \
+      echo "ranger/$(basename $i)" | tee -a /etc/ca-certificates.conf; \
+    done; \
+    update-ca-certificates -v; \
+  fi
+
 WORKDIR /npg_ranger
 
 RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
