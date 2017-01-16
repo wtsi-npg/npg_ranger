@@ -123,15 +123,24 @@ export PUBLIC_IP=<floating IP> # The floating IP of the machine
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
 
+### Add private CA certificates to ranger container
+Place CA certificates in individual **.pem** files at *ranger/certs*. The
+certificates will be copied into the ranger container and installed while it
+is being build.
+```
+# e.g.
+cp /usr/share/ca-certificates/local/my_cert.pem ranger/certs
+```
+
 ## Use docker-compose
 Use docker-compose to build and bring up containers.
 
-In the generic form
+In the generic form (AWS)
 ```
 docker-compose up -d --build
 ```
 
-Or supplying specific file for different platform:
+Or supplying file for specific platform (OpenStack):
 ```
 # If needed, edit docker-compose_os.yml to add IPs for DNS servers
 docker-compose --file docker-compose_os.yml up -d --build
