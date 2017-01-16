@@ -2,7 +2,7 @@
   "mongourl": "mongodb://rangerdb/imetacache",
   "protocol": "http:",
   "port": 5050,
-  "references": "/references/",
+  "references": "/",
   "originlist": ["http://ngs.sanger.ac.uk"],
   "proxylist":  {
     "http://localhost:9090": "http://localhost:9090/npg_ranger",
