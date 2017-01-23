@@ -1,5 +1,10 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade mongodb to 2.2.22 from 2.2.21
+  - upgrade js-md5 to 0.4.2 from 0.4.1
+  - upgrade winston to 2.3.1 from 2.3.0
+  - upgrade send to 0.14.2 from 0.14.1
+
 release 1.2.0
   - remove directly logging to file due to winston bug
   - add flags to change logging level
