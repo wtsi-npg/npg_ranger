@@ -286,7 +286,7 @@ describe('Running with ranger server with a', () => {
         let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
         client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', (data) => {
+        bamseqchksum.stdout.on('data', ( data ) => {
           hash.update(data.toString());
         });
         bamseqchksum.on('exit', () => {
