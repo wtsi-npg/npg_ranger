@@ -10,6 +10,8 @@ const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
 const config  = require('../../lib/config.js');
 
+const utils   = require('./test_utils.js');
+
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
 var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
@@ -64,7 +66,7 @@ describe('set error response', function() {
   // due to an error. Seems to be a bug in jasmine.
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -121,7 +123,15 @@ describe('Handling requests - error responses', function() {
 
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    try {
+      fs.access(socket, fs.constants.W_OK, ( err ) => {
+        if ( !err ) {
+          fs.unlinkSync(socket);
+        } else {
+          console.log( err );
+        }
+      });
+    } catch (e) { console.log(e); }
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -132,7 +142,7 @@ describe('Handling requests - error responses', function() {
       expect( () => {c.handleRequest();} ).not.toThrow();
     });
 
-    let options = {socketPath: socket, method:    'POST'};
+    let options = { socketPath: socket, method: 'POST' };
     let req = http.request(options);
     req.on('response', (response) => {
       expect(response.headers['content-type']).toEqual('application/json');
@@ -340,7 +350,7 @@ describe('Sample reference', () => {
     child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
     console.log('\nMONGODB server has been shut down');
 
-    try { fse.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
   });
 
   beforeAll( (done) => {
@@ -463,7 +473,7 @@ describe('Redirection in json response', function() {
 
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -828,7 +838,7 @@ describe('redirection when running behind a proxy', () => {
 
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -935,7 +945,7 @@ describe('content type', function() {
   });
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -973,7 +983,7 @@ describe('trailers in response', function() {
   });
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
@@ -1030,7 +1040,7 @@ describe('CORS in response', function() {
   });
   afterAll( () => {
     server.close();
-    try { fs.unlinkSync(socket); } catch (e) { console.log(e); }
+    utils.removeSocket(socket);
     try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
   });
 
