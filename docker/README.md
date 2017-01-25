@@ -49,7 +49,7 @@ it may just need to be mounted.
 # Find volume with references and attach to instance.
 # Then mount in the instance:
 sudo mkdir /references
-sudo chmod a+w /references
+sudo chmod a+r /references
 # run lsblk to find references volume name then mount with something like:
 sudo mount /dev/xvdf /references
 ```
@@ -64,15 +64,34 @@ prevent starting the instance in the future if wrong configuration is used.
 # this line matches previous configuration, change if needed
 sudo echo -e "/dev/xvdf\t/references\text4\tdefaults\t0 2" | sudo tee --append /etc/fstab
 ```
+## Data volume
+
+Similar to the case of the references, a data mounting point will be
+required as part of the configuration for the containers. Here is where
+db files will be saved.
+
+```
+# Find data volume attach to instance.
+# Then mount in the instance:
+sudo mkdir /data
+# run lsblk to find references volume name then mount with something like:
+sudo mount /dev/xvdg /data
+```
+Save changes to fstab if needed.
 
 ## Configuration for s3cmd
 If data files are sourced from S3 (as in the sample data provided), s3cmd
 configuration needs to be set.
 
+For **AWS** use s3cmd interactive configruation
+
 ```
 # interactive configuration to save s3cmd configuration at home
 s3cmd --configure
+
 ```
+
+For **OpenStack** use specific configuration file with internal entry points
 
 ## Get a clone of the project
 

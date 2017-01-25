@@ -12,11 +12,11 @@ services:
   ranger:
     build: ./ranger
     environment:
-      - REF_CACHE=/references/cram_cache/%2s/%2s/%s
+      - REF_CACHE=/tmp/cram_cache/%2s/%2s/%s
     volumes:
       - ../test/server/data:/seqdata:ro # For access for phix bam files
       - ./ranger:/appconf # For access to configuration files
-      - ../../../../references:/references
+      - ../../../../references:/references:ro
     command: npg_ranger_server -sd -c /appconf/config.json
     entrypoint: /wait-for-it.sh rangerdb:27017 --
     links:
