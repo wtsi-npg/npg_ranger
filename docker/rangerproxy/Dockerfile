@@ -14,8 +14,6 @@ RUN apt-get update -qq \
   && rm "node-v$NODE_VERSION-linux-x64.tar.xz" \
   && npm update -g npm
 
-COPY ./docker_conf.pl /usr/local/apache2/docker_conf.pl
-
 RUN git clone --branch npg_ranger_master --depth 1 https://github.com/wtsi-npg/dalliance.git dalliance \
   && cd dalliance \
   && npm install \
@@ -23,6 +21,12 @@ RUN git clone --branch npg_ranger_master --depth 1 https://github.com/wtsi-npg/d
   && ln -s node_modules/npg_ranger/lib/uiclient/index.html . \
   && cd ../htdocs \
   && ln -s ../dalliance .
+
+COPY ./docker_conf.pl /usr/local/apache2/docker_conf.pl
+COPY ./httpd.conf /usr/local/apache2/httpd.conf
+
+RUN perl docker_conf.pl \
+  && mv /usr/local/apache2/httpd.conf /usr/local/apache2/conf/httpd.conf
 
 RUN apt-get remove -qq $APT_DEPENDENCIES \
 #  && apt-get autoremove --purge -qq \
