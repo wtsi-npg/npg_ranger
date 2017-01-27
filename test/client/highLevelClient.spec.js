@@ -11,7 +11,7 @@ const path   = require('path');
 const MongoClient = require('mongodb').MongoClient;
 
 const config        = require('../../lib/config.js');
-const RangerRequest = require('../../lib/client/rangerRequest');
+const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {

@@ -4,7 +4,7 @@
 
 const http = require('http');
 
-const RangerRequest = require('../../lib/client/rangerRequest');
+const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 
 describe('Testing RangerRequest public functions', () => {
   it('open parameters', ( done ) => {

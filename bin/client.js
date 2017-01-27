@@ -5,7 +5,7 @@ const fs    = require('fs');
 const cline = require('commander');
 
 const LOGGER        = require('../lib/logsetup.js');
-const RangerRequest = require('../lib/client/rangerRequest');
+const RangerRequest = require('../lib/client/rangerRequest').RangerRequest;
 
 /**
  * @external fs
