@@ -114,7 +114,7 @@ if ( cline.args.length === 2 ) {
 
 var exitWithError = (message) => {
   LOGGER.error( message );
-  process.exit(1);
+  process.exit( 1 );
 };
 
 output.on('error', ( err ) => {
@@ -122,6 +122,7 @@ output.on('error', ( err ) => {
 });
 
 output.on('close', () => {
+  LOGGER.debug('Output stream has been closed. Exiting...');
   process.exit();
 });
 
@@ -151,14 +152,14 @@ var requestWorker = ( task, callback ) => {
     }
     let req = request(options);
     req.on('error', ( err ) => {
-      console.error('-> Got err ' + err);
+      LOGGER.error('Error on request ' + err);
       callback( err );
     }).on('response', ( res ) => {
       res.on('error', ( err ) => {
         callback( err );
       });
       if ( res.statusCode === 200 || res.statusCode === 206 ) {
-        console.error('statusCode for <' + task.uri + '>: ' + res.statusCode);
+        LOGGER.debug('Status code for <' + task.uri + '>: ' + res.statusCode);
         let contentType = res.headers['content-type'];
         contentType = contentType && contentType.toLowerCase ? contentType.toLowerCase()
                                                              : '';
@@ -173,7 +174,7 @@ var requestWorker = ( task, callback ) => {
               let q = async.queue( requestWorker, 1 );
 
               q.drain = () => {
-                console.error('all items have been processed in internal queue');
+                LOGGER.debug('All items have been processed in internal queue');
               };
 
               /* jshint -W083 */
@@ -183,10 +184,10 @@ var requestWorker = ( task, callback ) => {
                   uri:     uriData.uris[i],
                   headers: uriData.headers4uris[i]
                 };
-                console.error('pushing ' + JSON.stringify( newTask ));
+                LOGGER.debug('Pushing to queue: ' + JSON.stringify( newTask ));
                 q.push( newTask, ( err ) => {
                   if ( !err ) {
-                    console.error('Finished ' + JSON.stringify( newTask ));
+                    LOGGER.debug('Finished task: ' + JSON.stringify( newTask ));
                   } else {
                     callback( err );
                   }
@@ -199,14 +200,16 @@ var requestWorker = ( task, callback ) => {
           }
         } else {
           res.on('end', () => {
-            console.error('End of stream, all data processed');
+            LOGGER.debug('End of stream, all data processed');
             if ( acceptTrailers ) {
+              LOGGER.debug('Checking trailers');
               let trailerString = trailer.asString(res);
               if (trailerString) {
-                console.error('TRAILERS from ' + task.uri + ': ' + trailerString);
+                LOGGER.info('TRAILERS from ' + task.uri + ': ' + trailerString);
               }
               let dataOK = !trailer.isDataTruncated(options.headers, res);
               if (!dataOK) {
+                LOGGER.error('Trailer marked as truncated data. Exiting...');
                 callback('Incomplete or truncated data');
               }
             }
@@ -226,7 +229,7 @@ process.nextTick(() => {
     if ( err ) {
       exitWithError( err );
     } else {
-      console.error('No error, done');
+      LOGGER.debug('Success');
       process.exit(0);
     }
   });
