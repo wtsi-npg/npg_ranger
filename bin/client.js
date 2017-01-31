@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 "use strict";
 
-const fs    = require('fs');
-const cline = require('commander');
+const assert = require('assert');
+const fs     = require('fs');
+
+const cline   = require('commander');
+const async   = require("async");
+const request = require('request');
 
 const LOGGER        = require('../lib/logsetup.js');
-const RangerRequest = require('../lib/client/rangerRequest').RangerRequest;
+const rangerRequest = require('../lib/client/rangerRequest');
+const trailer       = require('../lib/server/http/trailer.js');
+const uriUtils      = require('../lib/client/uriUtils.js');
 
 /**
  * @external fs
@@ -91,77 +97,137 @@ cline.on('--help', () => {
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
+var acceptTrailers = cline.acceptTrailers;
+
 LOGGER.level = cline.loglevel;
 
-var url    = cline.args[0];
-var output = cline.args.length == 2 ? cline.args[1] : undefined;
-
-LOGGER.debug(`Preparing request for ${url}`);
-var req    = new RangerRequest( cline.acceptTrailers );
-req.open('GET', url);
+var url = cline.args[0];
+var output;
+if ( cline.args.length === 2 ) {
+  output = fs.createWriteStream(cline.args[1], {
+    flags:     'w',
+    autoClose: true
+  });
+} else {
+  output = process.stdout;
+}
 
 var exitWithError = (message) => {
-  LOGGER.error(message);
+  LOGGER.error( message );
   process.exit(1);
 };
 
-req.onreadystatechange = () => {
-  LOGGER.debug('readystatechange: ' + req.readyState);
-  if ( req.readyState === 4 ) {
-    LOGGER.info('Request done with status ' + req.status);
-    if ( req.status == 200 || req.status == 206 ) {
-      let numBytes = req.response ? req.response.byteLength : 0;
-      LOGGER.info(`Got ${numBytes} bytes`);
-      if ( output ) {
-        LOGGER.debug('Will write to ' + output);
-        fs.open(output, 'w', (err, fd) => {
-          if ( err ) {
-            exitWithError(`Failed to open ${output} for writing: ` + err);
-          }
-          let content = req.response || '';
-          fs.write(fd, content, 0, numBytes, (err, written) => {
-            if ( err ) {
-              exitWithError(`Failed to write to ${output}: ` + err);
-            } else {
-              LOGGER.debug('Wrote: ' + written + ' bytes to file.');
-              fs.close(fd, (err) => {
-                if ( err ) {
-                  LOGGER.error('Error while closing output file ' + err);
-                } else {
-                  LOGGER.debug('Closed output file');
-                }
-              });
-            }
-          });
-        });
-      } else {
-        if (numBytes) {
-          LOGGER.debug('Will write to stdout');
-          process.stdout.on('error', (err) => {
-            exitWithError('Failed to write complete data to stdout: ' + err);
-          });
-          process.stdout.write(req.response, () => {
-            LOGGER.info('Finished writing operation');
-          });
-        }
-      }
-    } else {
-      try {
-        LOGGER.debug('request: ' + JSON.stringify(req));
-      } finally {
-        let s = req.status;
-        let m = req.statusMessage;
-        exitWithError(`Request failed, status ${s}, message '${m}'`);
-      }
+output.on('error', ( err ) => {
+  exitWithError( err );
+});
+
+output.on('close', () => {
+  process.exit();
+});
+
+const RE_DATA_URI = /^data:/i;
+
+var requestWorker = ( task, callback ) => {
+  assert( task.uri, 'uri is required' );
+  assert( typeof callback === 'function', 'callback must be of type <function>');
+
+  if ( RE_DATA_URI.test( task.uri ) ) {
+    LOGGER.debug('Processing data URI');
+    try {
+      let buffer = uriUtils.procDataURI( task.uri );
+      output.write( buffer.toString() );
+      callback();
+    } catch ( err ) {
+      callback( err );
     }
+  } else {
+    let options = {
+      uri:    task.uri,
+      method: 'GET'
+    };
+    options.headers = task.headers ? task.headers : {};
+    if ( acceptTrailers ) {
+      options.headers.TE = 'trailers';
+    }
+    let req = request(options);
+    req.on('error', ( err ) => {
+      console.error('-> Got err ' + err);
+      callback( err );
+    }).on('response', ( res ) => {
+      res.on('error', ( err ) => {
+        callback( err );
+      });
+      if ( res.statusCode === 200 || res.statusCode === 206 ) {
+        console.error('statusCode for <' + task.uri + '>: ' + res.statusCode);
+        let contentType = res.headers['content-type'];
+        contentType = contentType && contentType.toLowerCase ? contentType.toLowerCase()
+                                                             : '';
+        if ( contentType.startsWith('application/json') ) {
+          try {
+            let body = '';
+            res.on('data', (data) => {
+              body += data;
+            });
+            res.on('end', () => {
+              let uriData = rangerRequest.procJSON( body );
+              let q = async.queue( requestWorker, 1 );
+
+              q.drain = () => {
+                console.error('all items have been processed in internal queue');
+              };
+
+              /* jshint -W083 */
+              // functions within a loop
+              for ( var i = 0; i < uriData.uris.length; i++ ) {
+                let newTask = {
+                  uri:     uriData.uris[i],
+                  headers: uriData.headers4uris[i]
+                };
+                console.error('pushing ' + JSON.stringify( newTask ));
+                q.push( newTask, ( err ) => {
+                  if ( !err ) {
+                    console.error('Finished ' + JSON.stringify( newTask ));
+                  } else {
+                    callback( err );
+                  }
+                });
+              }
+              /* jshint +W083 */
+            });
+          } catch ( e ) {
+            callback( e );
+          }
+        } else {
+          res.on('end', () => {
+            console.error('End of stream, all data processed');
+            if ( acceptTrailers ) {
+              let trailerString = trailer.asString(res);
+              if (trailerString) {
+                console.error('TRAILERS from ' + task.uri + ': ' + trailerString);
+              }
+              let dataOK = !trailer.isDataTruncated(options.headers, res);
+              if (!dataOK) {
+                callback('Incomplete or truncated data');
+              }
+            }
+            callback();
+          });
+          res.pipe(output);
+        }
+      } else {
+        callback('Non 200 status ' + res.statusCode);
+      }
+    });
   }
 };
 
-req.onerror = ( error ) => {
-  exitWithError('Error dealing with request: ' + error);
-};
-
-process.nextTick(() => { // All callbacks are set now
-  LOGGER.info('Sending request');
-  req.send('');
+process.nextTick(() => {
+  requestWorker({ uri: url }, ( err ) => {
+    if ( err ) {
+      exitWithError( err );
+    } else {
+      console.error('No error, done');
+      process.exit(0);
+    }
+  });
 });
