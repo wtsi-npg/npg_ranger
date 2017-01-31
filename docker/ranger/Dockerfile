@@ -8,7 +8,7 @@ ENV NODE_VERSION=4.5.0 \
     SAMTOOLS_VERSION=develop \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
-    NPG_RANGER_VERSION=1.1.0 \
+    NPG_RANGER_VERSION=1.2.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
