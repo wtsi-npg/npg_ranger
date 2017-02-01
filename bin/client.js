@@ -64,7 +64,7 @@ const uriUtils      = require('../lib/client/uriUtils.js');
  *
  * @author Marina Gourtovaia
  * @author Jaime Tovar
- * @copyright Genome Research Limited 2016
+ * @copyright Genome Research Limited 2017
  */
 
 cline
