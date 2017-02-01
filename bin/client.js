@@ -136,7 +136,7 @@ var requestWorker = ( task, callback ) => {
     LOGGER.debug('Processing data URI');
     try {
       let buffer = uriUtils.procDataURI( task.uri );
-      output.write( buffer.toString() );
+      output.write( buffer );
       callback();
     } catch ( err ) {
       callback( err );
