@@ -17,7 +17,7 @@ services:
       - ../test/server/data:/seqdata:ro # For access for phix bam files
       - ./ranger:/appconf # For access to configuration files
       - ../../../../references:/references:ro
-    command: npg_ranger_server -sd -c /appconf/config.json
+    command: npg_ranger_server -s --loglevel warn -c /appconf/config.json
     entrypoint: /wait-for-it.sh rangerdb:27017 --
     links:
       - rangerdb
