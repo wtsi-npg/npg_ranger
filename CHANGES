@@ -1,5 +1,15 @@
 LIST OF CHANGES for npg_ranger project
 
+release 1.2.0
+  - remove directly logging to file due to winston bug
+  - add flags to change logging level
+  - all logging output is now sent to stderr
+  - upgrade mongodb to 2.2.21 from 2.2.12
+  - upgrade browserify to 13.3.0 from 13.1.1
+  - upgrade moment to 2.17.1 from 2.17.0
+  - upgrade pem to 1.9.4 from 1.9.2
+  - upgrade fs-extra to 2.0.0 from 1.0.0
+
 release 1.1.0
   - cwd before executing pipelines and cleaning after pipeline finishes
   - added more filters for /sample url

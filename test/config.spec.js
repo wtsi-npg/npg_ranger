@@ -113,7 +113,7 @@ describe('Listing config options', function() {
                                    hostname:          'myhost',
                                    tempdir:           '/tmp/mydir',
                                    port:              9999,
-                                   debug:             true,
+                                   loglevel:          'debug',
                                    emaildomain:       'some.com',
                                    help:              true,
                                    clustertimeout:    1,
@@ -128,9 +128,9 @@ describe('Listing config options', function() {
       'clustermaxdeaths=2',
       'clustertimeout=1',
       'configfile=undefined',
-      'debug=true',
       'emaildomain="some.com"',
       'hostname="myhost"',
+      'loglevel="debug"',
       'mongourl="mymongourl"',
       'multiref=undefined',
       'numworkers=3',
@@ -164,7 +164,7 @@ describe('Validating CORS options', function() {
                                    hostname:  'myhost',
                                    tempdir:   '/tmp/yourdir',
                                    port:      9999,
-                                   debug:     true,
+                                   loglevel:  'debug',
                                    help:      true,
                                    anyorigin: 'true'
                                                   };});
@@ -179,7 +179,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       port - 1,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  true,
                                    originlist: ['url1','url2']
@@ -195,7 +195,7 @@ describe('Validating CORS options', function() {
                                    hostname:  'myhost',
                                    tempdir:   '/tmp/mydir',
                                    port:      9999,
-                                   debug:     true,
+                                   loglevel:  'debug',
                                    help:      true,
                                    anyorigin: true,
                                    skipauth:  false
@@ -210,7 +210,7 @@ describe('Validating CORS options', function() {
                                     hostname:    'myhost',
                                     tempdir:     '/tmp/mydir',
                                     port:        9999,
-                                    debug:       true,
+                                    loglevel:    'debug',
                                     help:        true,
                                     anyorigin:   false,
                                     originlist: 'some,urls'
@@ -223,7 +223,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['myurl']
@@ -235,7 +235,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['https://myurl']
@@ -247,7 +247,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['http://']
@@ -259,7 +259,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['http://server.com/foo']
@@ -271,7 +271,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['http://server.com/']
@@ -283,7 +283,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    anyorigin:  false,
                                    originlist: ['http://server.com//']
@@ -295,7 +295,7 @@ describe('Validating CORS options', function() {
                       hostname:   'myhost',
                       tempdir:    '/tmp/mydir',
                       port:       9999,
-                      debug:      true,
+                      loglevel:   'debug',
                       help:       true,
                       anyorigin:  false,
                       originlist: ['http://server.com/', ' ','http://server.org']
@@ -306,7 +306,7 @@ describe('Validating CORS options', function() {
                       hostname:   'myhost',
                       tempdir:    '/tmp/mydir',
                       port:       9999,
-                      debug:      true,
+                      loglevel:   'debug',
                       help:       true,
                       anyorigin:  false,
                       originlist: ['http://server.com:8080?foo=2']
@@ -317,7 +317,7 @@ describe('Validating CORS options', function() {
                       hostname:   'myhost',
                       tempdir:    '/tmp/mydir',
                       port:       9999,
-                      debug:      true,
+                      loglevel:   'debug',
                       help:       true,
                       anyorigin:  false,
                       originlist: ['http://server.com:8080?']
@@ -329,7 +329,7 @@ describe('Validating CORS options', function() {
                       hostname: 'myhost',
                       tempdir:  '/tmp/mydir',
                       port:     9999,
-                      debug:    true,
+                      loglevel: 'debug',
                       help:     true,
                       anyorigin: false,
                       originlist: ['http://localhost:9999#mttag']
@@ -340,7 +340,7 @@ describe('Validating CORS options', function() {
                       hostname:   'myhost',
                       tempdir:    '/tmp/mydir',
                       port:       9999,
-                      debug:      true,
+                      loglevel:   'debug',
                       help:       true,
                       anyorigin:  false,
                       originlist: ['http://server.com:9999#']
@@ -352,7 +352,7 @@ describe('Validating CORS options', function() {
                       hostname:  'myhost',
                       tempdir:   '/tmp/mydir',
                       port:      9999,
-                      debug:     true,
+                      loglevel:  'debug',
                       help:      true,
                       anyorigin: false,
                      originlist: ['http://server.com:9999/#tag']
@@ -365,7 +365,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    originlist: ['http://my.com']
                                   };});
@@ -378,7 +378,7 @@ describe('Validating CORS options', function() {
       hostname:   'myhost',
       tempdir:    '/tmp/mydir',
       port:       9999,
-      debug:      true,
+      loglevel:   'debug',
       help:       true,
       originlist: ['http://my.com:80','http://your.org']
                                   };});
@@ -390,7 +390,7 @@ describe('Validating CORS options', function() {
       hostname:   'myhost',
       tempdir:    '/tmp/mydir',
       port:       9999,
-      debug:      true,
+      loglevel:   'debug',
       help:       true,
       originlist: ['http://my.com:80','','http://your.org']
                                   };});
@@ -401,7 +401,7 @@ describe('Validating CORS options', function() {
                                    hostname:   'myhost',
                                    tempdir:    '/tmp/mydir',
                                    port:       9999,
-                                   debug:      true,
+                                   loglevel:   'debug',
                                    help:       true,
                                    originlist: []
                                   };});
@@ -417,7 +417,7 @@ describe('Secure server options', () => {
       mongourl:   'mymongourl',
       hostname:   'myhost',
       port:       9999,
-      debug:      true,
+      loglevel:   'debug',
       help:       true
     };
   });

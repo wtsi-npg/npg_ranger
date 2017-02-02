@@ -4,17 +4,16 @@ MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 # Hold versions in environment variables.
 ENV NODE_VERSION=4.5.0 \
     MONGODB_VERSION=3.2.4 \
-    HTSLIB_VERSION=1.3.2 \
-    SAMTOOLS_VERSION=1.3.1-npg-Sep2016 \
+    HTSLIB_VERSION=develop \
+    SAMTOOLS_VERSION=develop \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
-    NPG_RANGER_VERSION=1.0.0 \
+    NPG_RANGER_VERSION=1.2.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl
-
-RUN apt-get update -qq \
+  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
 
 # Get Node.js
@@ -29,16 +28,17 @@ RUN apt-get update -qq \
   && rm "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
 
 # Get HTSlib
-  && git clone --branch $HTSLIB_VERSION --depth 1 "https://github.com/samtools/htslib.git" htslib \
+  && git clone --branch $HTSLIB_VERSION "https://github.com/samtools/htslib.git" htslib \
   && cd ./htslib \
+  # && git checkout c8475e824906a914f3aeeacef89f555009af9f2b \
   && autoreconf -fi \
-  && git reset --hard \
+  && git reset --hard c8475e824906a914f3aeeacef89f555009af9f2b \
   && ./configure --enable-libcurl \
   && make && make install \
   && cd .. \
 
 # Get SAMtools
-  && git clone --branch $SAMTOOLS_VERSION --depth 1 "https://github.com/wtsi-npg/samtools.git" samtools \
+  && git clone --branch $SAMTOOLS_VERSION --depth 1 "https://github.com/samtools/samtools.git" samtools \
   && cd ./samtools \
   && mkdir -p acinclude.m4 \
   && wget -q -o /dev/null -O acinclude.m4/ax_with_htslib.m4 "https://github.com/samtools/samtools/files/62424/ax_with_htslib.m4.txt" \
@@ -66,10 +66,20 @@ RUN apt-get update -qq \
 # Get Ranger
   && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
+COPY ./certs/*.pem /usr/share/ca-certificates/ranger/
+RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
+  then \
+    for i in /usr/share/ca-certificates/ranger/*.pem; \
+    do \
+      echo "$i"; \
+      echo "ranger/$(basename $i)" | tee -a /etc/ca-certificates.conf; \
+    done; \
+    update-ca-certificates -v; \
+  fi
+
 WORKDIR /npg_ranger
 
 RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
-COPY ./config.json /npg_ranger/config.json
 COPY ./s3cfg /home/apprunner/.s3cfg
 RUN chown -R apprunner:apprunner /npg_ranger /home/apprunner
 

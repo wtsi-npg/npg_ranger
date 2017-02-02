@@ -5,11 +5,12 @@ services:
     image: mongo:3.2.10
     volumes:
       - ../../../../data/mongo:/data/db
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.10
 
   ranger:
     build: ./ranger
-    # We are passing references to samtools explicitly.
-    # Setting REF_CACHE here to catch anything that might leak through.
     environment:
       - REF_CACHE=/tmp/cram_cache/%2s/%2s/%s
     volumes:
@@ -22,6 +23,11 @@ services:
       - rangerdb
     depends_on:
       - rangerdb
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.11
+    # dns:
+    #   - <dns list>
 
   rangerproxy:
     build: ./rangerproxy
@@ -31,4 +37,17 @@ services:
       - "9090:9090"
     links:
       - ranger
+    networks:
+      app_net:
+        ipv4_address: 172.99.238.12
 
+networks:
+  app_net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.99.238.0/24
+        gateway: 172.99.238.1
