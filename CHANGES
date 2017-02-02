@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - use request library to support proxy env variables for CLI client
+  - switch to streaming for CLI client
   - upgrade mongodb to 2.2.22 from 2.2.21
   - upgrade js-md5 to 0.4.2 from 0.4.1
   - upgrade winston to 2.3.1 from 2.3.0
