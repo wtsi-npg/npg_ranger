@@ -161,8 +161,8 @@ var requestWorker = ( task, callback ) => {
       if ( res.statusCode === 200 || res.statusCode === 206 ) {
         LOGGER.debug('Status code for <' + task.uri + '>: ' + res.statusCode);
         let contentType = res.headers['content-type'];
-        contentType = contentType && contentType.toLowerCase ? contentType.toLowerCase()
-                                                             : '';
+        contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
+                                                          : '';
         if ( contentType.startsWith('application/json') ) {
           try {
             let body = '';
@@ -204,7 +204,7 @@ var requestWorker = ( task, callback ) => {
             if ( acceptTrailers ) {
               LOGGER.debug('Checking trailers');
               let trailerString = trailer.asString(res);
-              if (trailerString) {
+              if ( trailerString ) {
                 LOGGER.info('TRAILERS from ' + task.uri + ': ' + trailerString);
               }
               let dataOK = !trailer.isDataTruncated(options.headers, res);
@@ -218,7 +218,7 @@ var requestWorker = ( task, callback ) => {
           res.pipe(output);
         }
       } else {
-        callback('Non 200 status ' + res.statusCode);
+        callback('Non 200 status: ' + res.statusCode);
       }
     });
   }
