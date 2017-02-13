@@ -218,7 +218,9 @@ var requestWorker = ( task, callback ) => {
           res.pipe(output);
         }
       } else {
-        callback('Non 200 status: ' + res.statusCode);
+        let code = res.statusCode;
+        let msg  = res.statusMessage || '';
+        callback(`Non 200 status - ${code} ${msg}`);
       }
     });
   }
