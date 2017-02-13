@@ -11,7 +11,7 @@ const path   = require('path');
 const MongoClient = require('mongodb').MongoClient;
 
 const config        = require('../../lib/config.js');
-const RangerRequest = require('../../lib/client/rangerRequest');
+const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -286,7 +286,7 @@ describe('Running with ranger server with a', () => {
         let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
         client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', (data) => {
+        bamseqchksum.stdout.on('data', ( data ) => {
           hash.update(data.toString());
         });
         bamseqchksum.on('exit', () => {

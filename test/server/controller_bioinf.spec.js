@@ -14,6 +14,8 @@ const MongoClient = require('mongodb').MongoClient;
 const RangerController = require('../../lib/server/controller.js');
 const config           = require('../../lib/config.js');
 
+const utils = require('./test_utils.js');
+
 const BASE_PORT  = 1400;
 const PORT_RANGE = 200;
 const PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
@@ -138,7 +140,7 @@ describe('server fetching', () => {
       // the above shutdown command can return before server is
       // shut down, so set a short timeout to make sure
       setTimeout( () => {
-        try { fse.unlinkSync(socket); } catch (e) { console.log(e); }
+        utils.removeSocket(socket);
         fse.removeSync(tmpDir);
       }, 1000);
     });
