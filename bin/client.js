@@ -34,11 +34,9 @@ const uriUtils      = require('../lib/client/uriUtils.js');
  * <p>Command line client</p>
  *
  * <p>A command line client for sequencing data retrieval base on GA4GH data sharing
- * API. The client is implemented with parallel, asynchronous requests to every URL
- * listed in the initial JSON response of the GA4GH-compliant server. The clent
- * itself is synchronous, ie the data is returned to the caller only when all requests
- * successfully completed. Untill that moment all received chunks of data are
- * kept in memory, thus limiting the total amount of data this client can retrieve.</p>
+ * API. The client sequentially processes every URL listed in the initial
+ * JSON response of the GA4GH-compliant server. The responses are processed and
+ * data is streamed to the specified output (file or stdout).</p>
  *
  * <p>The client is also able to process direct HTTP GET requests.</p>
  *
