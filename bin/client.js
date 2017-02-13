@@ -175,6 +175,7 @@ var requestWorker = ( task, callback ) => {
                 LOGGER.debug('All items have been processed in internal queue');
               };
 
+              q.pause(); // To prevent run condition adding tasks vs processing queue
               /* jshint -W083 */
               // functions within a loop
               for ( var i = 0; i < uriData.uris.length; i++ ) {
@@ -192,6 +193,7 @@ var requestWorker = ( task, callback ) => {
                 });
               }
               /* jshint +W083 */
+              q.resume();
             });
           } catch ( e ) {
             callback( e );
