@@ -12,6 +12,7 @@ const LOGGER        = require('../lib/logsetup.js');
 const rangerRequest = require('../lib/client/rangerRequest');
 const trailer       = require('../lib/server/http/trailer.js');
 const uriUtils      = require('../lib/client/uriUtils.js');
+const constants     = require('../lib/constants');
 
 /**
  * @external fs
@@ -65,7 +66,7 @@ const uriUtils      = require('../lib/client/uriUtils.js');
  * @copyright Genome Research Limited 2017
  */
 
-const TOKEN_BEARER_KEY_NAME = 'npg_sentry_token_bearer';
+const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
 
 cline
   .version(require('../package.json').version)

@@ -14,6 +14,9 @@ const MongoClient = require('mongodb').MongoClient;
 
 const config        = require('../../lib/config.js');
 const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
+const constants     = require('../../lib/constants');
+
+const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -241,7 +244,7 @@ describe('token bearer', () => {
     it('does not send header when no configuration', (done) => {
       server.on('request', (req) => {
         let headers = req.headers;
-        expect(headers.hasOwnProperty('npg_sentry_token_bearer')).toBe(false);
+        expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
         done();
       });
 
@@ -254,16 +257,19 @@ describe('token bearer', () => {
     it('sends header when configuration available', ( done ) => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
+      let conf = {};
+      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
       fse.writeFileSync(
         configFile,
-        JSON.stringify({ 'npg_sentry_token_bearer': 'expectedtoken' })
+        JSON.stringify(conf)
       );
 
       server.on('request', (req, res) => {
         let headers = req.headers;
-        expect(headers).toEqual(jasmine.objectContaining({
-          npg_sentry_token_bearer: "expectedtoken"
-        }));
+        let myHeader = {};
+        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
         res.end();
         done();
       });
@@ -280,9 +286,12 @@ describe('token bearer', () => {
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
 
+      let conf = {};
+      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
       fse.writeFileSync(
         configFile,
-        JSON.stringify({ 'npg_sentry_token_bearer': 'expectedtoken' })
+        JSON.stringify(conf)
       );
 
       server.on('request', (req, res) => {
@@ -291,9 +300,10 @@ describe('token bearer', () => {
 
         totalReqs += 1;
 
-        expect(headers).toEqual(jasmine.objectContaining({
-          npg_sentry_token_bearer: "expectedtoken"
-        }));
+        let myHeader = {};
+        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
 
         if ( /json/.test(r1.pathname) ) {
           res.writeHead(200, {'Content-Type': 'application/json'});
