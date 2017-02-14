@@ -15,8 +15,23 @@ const uriUtils      = require('../lib/client/uriUtils.js');
 const constants     = require('../lib/constants');
 
 /**
+ * @external assert
+ * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/assert.html|assert}
+ */
+
+/**
  * @external fs
  * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/fs.html|fs}
+ */
+
+/**
+ * @external async
+ * @see      {@link https://www.npmjs.com/package/async|async}
+ */
+
+/**
+ * @external request
+ * @see      {@link https://www.npmjs.com/package/request|request}
  */
 
 /**
@@ -51,6 +66,12 @@ const constants     = require('../lib/constants');
  *
  * <p>If the response was empty, an empty file is created.</p>
  *
+ * <p>If a token is required to authorise access to resources, a path to the
+ * configuration file in <em>JSON</em> format can be provided with the
+ * <em>--token_config</em> option.</p>
+ *
+ * <code>$ client.js --token_config path/to/file.json "http://some_server..."</code>
+ *
  * <p>The client exits with an error code <em>1</em> if an error occured when
  * requesting/receiving the data. If <em>--accept-trailers</em> option is
  * enabled:</p>
@@ -60,6 +81,10 @@ const constants     = require('../lib/constants');
  *   <li>if any of the responses has <em>data-truncated</em> trailer set to
  *       true, the script exits with an error code <em>1</em></li>
  * </ol>
+ *
+ * <p>Please take into consideration the current implementation is recursive by
+ * design. Therefore, circular references in <em>JSON</em> resources will
+ * produce infinite (or very large number of) requests to the resources.</p>
  *
  * @author Marina Gourtovaia
  * @author Jaime Tovar
@@ -74,7 +99,7 @@ cline
   .arguments('<url> [output]')
   .option('--accept-trailers', 'Request trailers from server')
   .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
-  .option('--token_config <token_config_file>')
+  .option('--token_config <token_config_file>', 'path to file with token configuration in json format')
   .parse(process.argv);
 
 cline.on('--help', () => {
@@ -86,6 +111,13 @@ cline.on('--help', () => {
   console.log('    $ client.js "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
+  console.log('');
+  console.log('  If the server requires a token for authorisation you can use' +
+              ' --token_config <file>. To provide a path for the json file storing' +
+              ' the configuration.');
+  console.log('');
+  console.log('    $ client.js --token_config path/to/file.json "http://some_server_url/' +
+              'resources/AA0011?referenceName=1&start=500&end=1000&format=BAM');
   console.log('');
   console.log('  If you know the server supports trailers, we suggest you execute' +
               ' with "--accept-trailers" option to improve error control.');
