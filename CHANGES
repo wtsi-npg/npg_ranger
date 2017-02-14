@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - parameter in CLI for token configuration
   - use request library to support proxy env variables for CLI client
   - switch to streaming for CLI client
   - upgrade mongodb to 2.2.22 from 2.2.21

@@ -65,12 +65,15 @@ const uriUtils      = require('../lib/client/uriUtils.js');
  * @copyright Genome Research Limited 2017
  */
 
+const TOKEN_BEARER_KEY_NAME = 'npg_sentry_token_bearer';
+
 cline
   .version(require('../package.json').version)
   .description('Command line client for GA4GH data streaming')
   .arguments('<url> [output]')
-  .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
   .option('--accept-trailers', 'Request trailers from server')
+  .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
+  .option('--token_config <token_config_file>')
   .parse(process.argv);
 
 cline.on('--help', () => {
@@ -97,6 +100,9 @@ if ( !cline.args.length ||
 
 var acceptTrailers = cline.acceptTrailers;
 
+var token_config = cline.token_config;
+var token;
+
 LOGGER.level = cline.loglevel;
 
 var url = cline.args[0];
@@ -114,6 +120,20 @@ var exitWithError = (message) => {
   LOGGER.error( message );
   process.exit( 1 );
 };
+
+if ( token_config ) {
+  let tokenContentConfig;
+  try {
+    tokenContentConfig = JSON.parse(fs.readFileSync(token_config));
+    if ( !tokenContentConfig.hasOwnProperty(TOKEN_BEARER_KEY_NAME) ) {
+      throw(new Error('cannot find token key in configuration'));
+    }
+    token = tokenContentConfig[TOKEN_BEARER_KEY_NAME];
+  } catch ( e ) {
+    exitWithError(`parsing configuration file ${e}`);
+  }
+  LOGGER.debug(`using token from configuration file`);
+}
 
 output.on('error', ( err ) => {
   exitWithError( err );
@@ -147,6 +167,9 @@ var requestWorker = ( task, callback ) => {
     options.headers = task.headers ? task.headers : {};
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
+    }
+    if ( token ) {
+      options.headers[TOKEN_BEARER_KEY_NAME] = token;
     }
     let req = request(options);
     req.on('error', ( err ) => {
