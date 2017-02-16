@@ -125,6 +125,8 @@ describe('Listing config options', function() {
     console.log(config.logOpts());
     let expectedAsArray = [
       'anyorigin=undefined',
+      'authstrategy="old"',
+      'authurl=undefined',
       'clustermaxdeaths=2',
       'clustertimeout=1',
       'configfile=undefined',
