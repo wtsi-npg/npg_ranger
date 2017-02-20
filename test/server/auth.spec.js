@@ -1,66 +1,120 @@
-/* globals describe, it, expect, beforeAll, afterAll */
+/* globals describe, it, expect, beforeAll, afterAll, fail */
 
-"use strict";
+'use strict';
 
-const assert      = require('assert');
-const child       = require('child_process');
-const MongoClient = require('mongodb').MongoClient;
-const tmp         = require('tmp');
-const fse         = require('fs-extra');
+const http        = require('http');
+const url         = require('url');
 
 const DataAccess  = require('../../lib/server/auth.js');
 const config      = require('../../lib/config.js');
-
-const BASE_PORT  = 1100;
-const PORT_RANGE = 200;
-const PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
-const FIXTURES = 'test/server/data/fixtures/access_control_group.json';
+const constants   = require('../../lib/constants.js');
 
 describe('Authorisation', function() {
-  var tmpobj = tmp.dirSync({ prefix: 'npg_ranger_test_' });
-  var tmp_dir = tmpobj.name;
-  console.log(`MONGO data directory: ${tmp_dir}`);
-  var db_name = 'npg_ranger_test';
-  var url = `mongodb://localhost:${PORT}/${db_name}`;
-  var noemail_conf = function() { return {emaildomain: null}; };
-  var email_conf   = function() { return {emaildomain: 'boom.co.uk'}; };
+  let closeServ;
+  let dummyAuthServ;
+  var noemail_conf = function() {
+    return {
+      emaildomain: null,
+      authurl: 'http://localhost:9898/'
+    };
+  };
+  var email_conf = function() {
+    return {
+      emaildomain: 'boom.co.uk',
+      authurl: 'http://localhost:9898/'
+    };
+  };
+
+  var isSubset = function(arr1, arr2) {
+    return arr1.every(function(val) {
+      return arr2.indexOf(val) > -1;
+    });
+  };
+
   beforeAll( () => {
     config.provide(noemail_conf);
-    let command = `mongod -f test/server/data/mongodb_conf.yml --port ${PORT} --dbpath ${tmp_dir} --pidfilepath ${tmp_dir}/mpid --logpath ${tmp_dir}/dbserver.log`;
-    console.log(`\nCommand to start MONGO DB daemon: ${command}`);
-    let out = child.execSync(command);
-    console.log(`Started MONGO DB daemon: ${out}`);
-    command = `mongoimport --port ${PORT} --db ${db_name} --collection access_control_group --jsonArray --file ${FIXTURES}`;
-    out = child.execSync(command);
-    console.log(`Loaded data to MONGO DB: ${out}`);
+
+    // Provide a minimal standin for npg_sentry.
+    // Authorises user 'alice' or token 'abc' for groups 1, 2 and 3.
+    dummyAuthServ = http.createServer((req, res) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 404;
+        return res.end();
+      }
+      let body = '';
+      req.on('data', (chunk) => {
+        body += chunk;
+      });
+      let requrl = url.parse(req.url);
+      let ok;
+      req.on('end', () => {
+        let reqdata = JSON.parse(body);
+        if (requrl.pathname === constants.AUTH_URL_TOKEN) {
+          if (reqdata.token === 'abc' && isSubset(reqdata.groups, ['1', '2', '3'])) {
+            ok = true;
+          } else {
+            ok = false;
+          }
+          res.end(JSON.stringify({ok: ok}));
+        } else if (requrl.pathname === constants.AUTH_URL_USER) {
+          if (reqdata.user === 'alice' && isSubset(reqdata.groups, ['1', '2', '3'])) {
+            ok = true;
+          } else {
+            ok = false;
+          }
+          res.end(JSON.stringify({ok: ok}));
+        } else {
+          res.statusCode = 404;
+          res.end();
+        }
+      });
+    });
+    dummyAuthServ.listen(9898);
+    closeServ = dummyAuthServ.close;
   });
 
   it('Input validation', function() {
     expect( () => {new DataAccess();} ).toThrowError(ReferenceError,
-      'Database handle is required');
+      'Authorisation type is required');
+    expect( () => {new DataAccess('badauth');} ).toThrowError(ReferenceError,
+      'Unknown authorisation type');
+    expect( () => {new DataAccess(constants.AUTH_TYPE_USER);} ).not.toThrow();
+    expect( () => {new DataAccess(constants.AUTH_TYPE_TOKEN);} ).not.toThrow();
     expect( () => {
-      let da = new DataAccess({});
+      let da = new DataAccess(constants.AUTH_TYPE_USER);
       da.authorise();
-    }).toThrowError(ReferenceError, 'Username is required');
+    }).toThrowError(ReferenceError, 'Identifier is required');
     expect( () => {
-      let da=new DataAccess({});
+      let da = new DataAccess(constants.AUTH_TYPE_TOKEN);
+      da.authorise();
+    }).toThrowError(ReferenceError, 'Identifier is required');
+    expect( () => {
+      let da = new DataAccess(constants.AUTH_TYPE_USER);
       da.authorise('alice');
     }).toThrowError(Error, 'Access groups array is not available');
     expect( () => {
-      let da=new DataAccess({});
+      let da = new DataAccess(constants.AUTH_TYPE_USER);
       da.authorise('alice', 2);
     }).toThrowError(Error, 'Access groups array is not available');
     expect( () => {
-      let da=new DataAccess({});
+      let da = new DataAccess(constants.AUTH_TYPE_USER);
       da.authorise('alice', []);
     }).toThrowError(Error, 'Access groups array is not available');
   });
 
   it('Authorisation failed - username is all whitespace', function(done) {
-    var da = new DataAccess({});
-    da.on('failed', (username, reason) => {
-      expect(username).toBe('   ');
-      expect(reason).toBe('Invalid user "   "');
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('failed', (reason) => {
+      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "   "');
+      done();
+    });
+    da.authorise('   ', ["9", "6", "10"]);
+  });
+
+  it('Authorisation failed - token is all whitespace', function(done) {
+    var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
+    da.on('failed', (reason) => {
+      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "   "');
       done();
     });
     da.authorise('   ', ["9", "6", "10"]);
@@ -68,10 +122,9 @@ describe('Authorisation', function() {
 
   it('Authorisation failed - email is expected', function(done) {
     config.provide(email_conf);
-    var da = new DataAccess({});
-    da.on('failed', (username, reason) => {
-      expect(username).toBe('alice');
-      expect(reason).toBe('Invalid user "alice"');
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('failed', (reason) => {
+      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "alice"');
       done();
     });
     da.authorise('alice', ["9", "6", "10"]);
@@ -79,10 +132,9 @@ describe('Authorisation', function() {
 
   it('Authorisation failed - email is incorrect', function(done) {
     config.provide(email_conf);
-    var da = new DataAccess({});
-    da.on('failed', (username, reason) => {
-      expect(username).toBe('alice@boom.com');
-      expect(reason).toBe('Invalid user "alice@boom.com"');
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('failed', (reason) => {
+      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "alice@boom.com"');
       done();
     });
     da.authorise('alice@boom.com', ["9", "6", "10"]);
@@ -90,76 +142,51 @@ describe('Authorisation', function() {
 
   it('Authorisation failed - access_control_group_id value is missing', function(done) {
     config.provide(email_conf);
-    var da = new DataAccess({});
-    da.on('failed', (username, reason) => {
-      expect(username).toBe('alice@boom.co.uk');
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('failed', (reason) => {
       expect(reason).toBe(
-        'Some access group ids are not defined');
+        'Failed to get authorisation info: Error: Some access group ids are not defined');
       done();
     });
     da.authorise('alice@boom.co.uk', ["9", "", "10"]);
   });
 
-  it('Authorised - files belong to the same auth group', function(done) {
-    config.provide(email_conf);
-    MongoClient.connect(url, function(err, db) {
-      assert.equal(err, null);
-      var da = new DataAccess(db);
-      da.on('authorised', (username) => {
-         expect(username).toBe('alice@boom.co.uk');
-         done();
-      });
-      // We are not interested in what happens on fail.
-      // If 'authorised' event is not processed withing the set
-      // time limit, the test will fail.
-      da.authorise('alice@boom.co.uk', ["6", "6"]);
+  it('Authorised - username', function(done) {
+    config.provide(noemail_conf);
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('authorised', () => {
+       done();
     });
+    da.on('failed', (reason) => {
+      fail(reason);
+      done();
+    });
+    da.authorise('alice', ['1', '2', '3']);
   });
 
-  it('Authorised - files belong to different auth group', function(done) {
-    config.provide(noemail_conf);
-    MongoClient.connect(url, function(err, db) {
-      assert.equal(err, null);
-      var da = new DataAccess(db);
-      da.on('authorised', (username) => {
-         expect(username).toBe('alice');
-         done();
-      });
-      da.authorise('alice', ["7", "6"]);
+  it('Authorised - token', function(done) {
+    var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
+    da.on('authorised', () => {
+      done();
     });
+    da.on('failed', (reason) => {
+      fail(reason);
+      done();
+    });
+    da.authorise('abc', ['1', '2', '3']);
   });
 
   it('Authorisation failed - no auth for some of the files', function(done) {
     config.provide(noemail_conf);
-    MongoClient.connect(url, function(err, db) {
-      assert.equal(err, null);
-      var da = new DataAccess(db);
-      da.on('failed', (username, reason) => {
-         expect(username).toBe('alice');
-         expect(reason).toBe('Not authorised for some of the files');
-         done();
-      });
-      da.authorise('alice', ["8", "6"]);
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('failed', (reason) => {
+       expect(reason).toBe('Failed to get authorisation info: Error: Not authorised for those files');
+       done();
     });
+    da.authorise('alice', ["8", "6"]);
   });
 
-  it('Authorisation failed - no auth for any of the files', function(done) {
-    config.provide(noemail_conf);
-    MongoClient.connect(url, function(err, db) {
-      assert.equal(err, null);
-      var da = new DataAccess(db);
-      da.on('failed', (username, reason) => {
-         expect(username).toBe('alice');
-         expect(reason).toBe('Not authorised for any of the files');
-         done();
-      });
-      da.authorise('alice', ["8", "9"]);
-    });
-  });
-
-  afterAll(() => {
-    child.execSync(`mongo 'mongodb://localhost:${PORT}/admin' --eval 'db.shutdownServer()'`);
-    console.log('\nMONGODB server has been shut down');
-    fse.remove(tmp_dir, (err) => {if (err) {console.log(`Error removing ${tmp_dir}: ${err}`);}});
+  afterAll(function(done) {
+    dummyAuthServ.close(done);
   });
 });
