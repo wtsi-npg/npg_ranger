@@ -3,6 +3,7 @@
 
 const assert = require('assert');
 const fs     = require('fs');
+const path   = require('path');
 
 const cline   = require('commander');
 const async   = require("async");
@@ -25,6 +26,11 @@ const constants     = require('../lib/constants');
  */
 
 /**
+ * @external path
+ * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/path.html|path}
+ */
+
+/**
  * @external async
  * @see      {@link https://www.npmjs.com/package/async|async}
  */
@@ -43,6 +49,7 @@ const constants     = require('../lib/constants');
  * @module client
  *
  * @requires {@link external:fs|fs}
+ * @requires {@link external:path|path}
  * @requires {@link external:commander|commander}
  * @requires {@link module:logsetup|logsetup}
  *
@@ -100,15 +107,16 @@ cline
   .option('--accept-trailers', 'Request trailers from server')
   .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
   .option('--token_config <token_config_file>', 'path to file with token configuration in json format')
+  .option('--with_ca <path_to_ca_file>', 'path to CA file')
   .parse(process.argv);
 
 cline.on('--help', () => {
   console.log('  Examples:');
   console.log('');
-  console.log('    $ client.js "http://some_server_url/' +
+  console.log('    $ bin/client.js "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"');
   console.log('');
-  console.log('    $ client.js "http://some_server_url/' +
+  console.log('    $ bin/client.js "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
@@ -116,13 +124,20 @@ cline.on('--help', () => {
               ' --token_config <file>. To provide a path for the json file storing' +
               ' the configuration.');
   console.log('');
-  console.log('    $ client.js --token_config path/to/file.json "http://some_server_url/' +
-              'resources/AA0011?referenceName=1&start=500&end=1000&format=BAM');
+  console.log('    $ bin/client.js --token_config path/to/file.json "http://some_server_url/' +
+              'resources/AA0011?referenceName=1&start=500&end=1000&format=BAM"');
+  console.log('');
+  console.log('  Whenever a token is being used HTTPS should also be used. If the' +
+              ' server is configured with a private CA you will need to provide' +
+              ' the compatible CA certificate to establish the connection.');
+  console.log('');
+  console.log('    $ bin/client.js --with_ca path/to/your_ca.crt --token_config' +
+              ' path/to/file.json "http://some ..."');
   console.log('');
   console.log('  If you know the server supports trailers, we suggest you execute' +
               ' with "--accept-trailers" option to improve error control.');
   console.log('');
-  console.log('    $ client.js --accept-trailers "http://some_server_url/' +
+  console.log('    $ bin/client.js --accept-trailers "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
@@ -137,6 +152,8 @@ var token_config = cline.token_config;
 var token;
 
 LOGGER.level = cline.loglevel;
+
+var ca_file = cline.with_ca;
 
 var url = cline.args[0];
 var output;
@@ -157,11 +174,13 @@ var exitWithError = (message) => {
 if ( token_config ) {
   let tokenContentConfig;
   try {
-    tokenContentConfig = JSON.parse(fs.readFileSync(token_config));
+    let token_path = path.resolve(process.env.PWD, token_config);
+    tokenContentConfig = JSON.parse(fs.readFileSync(token_path));
     if ( !tokenContentConfig.hasOwnProperty(TOKEN_BEARER_KEY_NAME) ) {
       throw(new Error('cannot find token key in configuration'));
     }
     token = tokenContentConfig[TOKEN_BEARER_KEY_NAME];
+    LOGGER.info(`With token sourced from ${token_path}`);
   } catch ( e ) {
     exitWithError(`parsing configuration file ${e}`);
   }
@@ -197,6 +216,9 @@ var requestWorker = ( task, callback ) => {
       uri:    task.uri,
       method: 'GET'
     };
+    if ( task.ca ) {
+      options.ca = task.ca;
+    }
     options.headers = task.headers ? task.headers : {};
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
@@ -239,6 +261,9 @@ var requestWorker = ( task, callback ) => {
                   uri:     uriData.uris[i],
                   headers: uriData.headers4uris[i]
                 };
+                if ( task.ca ) {
+                  newTask.ca = task.ca;
+                }
                 LOGGER.debug('Pushing to queue: ' + JSON.stringify( newTask ));
                 q.push( newTask, ( err ) => {
                   if ( !err ) {
@@ -283,7 +308,15 @@ var requestWorker = ( task, callback ) => {
 };
 
 process.nextTick(() => {
-  requestWorker({ uri: url }, ( err ) => {
+  let task = { uri: url };
+  if ( ca_file ) {
+    LOGGER.debug(`Using ${ca_file} to try to source CAs.`);
+    let ca_path = path.resolve(process.env.PWD, ca_file);
+    let ca_content = fs.readFileSync(ca_path).toString();
+    LOGGER.info(`With CA sourced from ${ca_path}`);
+    task.ca = ca_content;
+  }
+  requestWorker(task, ( err ) => {
     if ( err ) {
       exitWithError( err );
     } else {
