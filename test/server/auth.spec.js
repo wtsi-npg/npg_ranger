@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll, fail */
+/* globals describe, it, expect, beforeAll, afterAll*/
 
 'use strict';
 
@@ -9,19 +9,23 @@ const DataAccess  = require('../../lib/server/auth.js');
 const config      = require('../../lib/config.js');
 const constants   = require('../../lib/constants.js');
 
+let BASE_PORT  = 1400;
+let PORT_RANGE = 200;
+let PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+
 describe('Authorisation', function() {
   let closeServ;
   let dummyAuthServ;
   var noemail_conf = function() {
     return {
       emaildomain: null,
-      authurl: 'http://localhost:9898/'
+      authurl: `http://localhost:${PORT}/`
     };
   };
   var email_conf = function() {
     return {
       emaildomain: 'boom.co.uk',
-      authurl: 'http://localhost:9898/'
+      authurl: `http://localhost:${PORT}/`
     };
   };
 
@@ -69,7 +73,7 @@ describe('Authorisation', function() {
         }
       });
     });
-    dummyAuthServ.listen(9898);
+    dummyAuthServ.listen(PORT);
     closeServ = dummyAuthServ.close;
   });
 
@@ -105,7 +109,7 @@ describe('Authorisation', function() {
   it('Authorisation failed - username is all whitespace', function(done) {
     var da = new DataAccess(constants.AUTH_TYPE_USER);
     da.on('failed', (reason) => {
-      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "   "');
+      expect(reason).toMatch(/Invalid identifier "   "/i);
       done();
     });
     da.authorise('   ', ["9", "6", "10"]);
@@ -114,7 +118,7 @@ describe('Authorisation', function() {
   it('Authorisation failed - token is all whitespace', function(done) {
     var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
     da.on('failed', (reason) => {
-      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "   "');
+      expect(reason).toMatch(/Invalid identifier "   "/i);
       done();
     });
     da.authorise('   ', ["9", "6", "10"]);
@@ -124,7 +128,7 @@ describe('Authorisation', function() {
     config.provide(email_conf);
     var da = new DataAccess(constants.AUTH_TYPE_USER);
     da.on('failed', (reason) => {
-      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "alice"');
+      expect(reason).toMatch(/Invalid identifier "alice"/i);
       done();
     });
     da.authorise('alice', ["9", "6", "10"]);
@@ -134,7 +138,7 @@ describe('Authorisation', function() {
     config.provide(email_conf);
     var da = new DataAccess(constants.AUTH_TYPE_USER);
     da.on('failed', (reason) => {
-      expect(reason).toBe('Failed to get authorisation info: Error: Invalid identifier "alice@boom.com"');
+      expect(reason).toMatch(/Invalid identifier "alice@boom.com"/i);
       done();
     });
     da.authorise('alice@boom.com', ["9", "6", "10"]);
@@ -144,8 +148,7 @@ describe('Authorisation', function() {
     config.provide(email_conf);
     var da = new DataAccess(constants.AUTH_TYPE_USER);
     da.on('failed', (reason) => {
-      expect(reason).toBe(
-        'Failed to get authorisation info: Error: Some access group ids are not defined');
+      expect(reason).toMatch(/Some access group ids are not defined/i);
       done();
     });
     da.authorise('alice@boom.co.uk', ["9", "", "10"]);
@@ -158,8 +161,7 @@ describe('Authorisation', function() {
        done();
     });
     da.on('failed', (reason) => {
-      fail(reason);
-      done();
+      done.fail(reason);
     });
     da.authorise('alice', ['1', '2', '3']);
   });
@@ -170,8 +172,7 @@ describe('Authorisation', function() {
       done();
     });
     da.on('failed', (reason) => {
-      fail(reason);
-      done();
+      done.fail(reason);
     });
     da.authorise('abc', ['1', '2', '3']);
   });
@@ -180,8 +181,8 @@ describe('Authorisation', function() {
     config.provide(noemail_conf);
     var da = new DataAccess(constants.AUTH_TYPE_USER);
     da.on('failed', (reason) => {
-       expect(reason).toBe('Failed to get authorisation info: Error: Not authorised for those files');
-       done();
+      expect(reason).toMatch(/Not authorised for those files/i);
+      done();
     });
     da.authorise('alice', ["8", "6"]);
   });
