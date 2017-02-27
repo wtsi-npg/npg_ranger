@@ -8,6 +8,8 @@ LIST OF CHANGES for npg_ranger project
   - upgrade js-md5 to 0.4.2 from 0.4.1
   - upgrade winston to 2.3.1 from 2.3.0
   - upgrade send to 0.14.2 from 0.14.1
+  - add new authorisation strategy; make authorisation requests to
+    npg_sentry via tokens
 
 release 1.2.0
   - remove directly logging to file due to winston bug

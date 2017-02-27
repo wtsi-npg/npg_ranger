@@ -163,7 +163,11 @@ describe('Handling requests - error responses', function() {
       let c = new RangerController(request, response, {one: "two"});
       expect( () => {c.handleRequest();} ).not.toThrow();
     });
-    http.get({socketPath: socket}, function(response) {
+    let httpopts = {
+      socketPath: socket,
+      path: '/authuser',
+    };
+    http.get(httpopts, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
