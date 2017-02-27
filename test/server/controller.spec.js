@@ -174,9 +174,10 @@ describe('Handling requests - error responses', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(401);
         expect(response.statusMessage).toEqual('Proxy authentication required');
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "InvalidAuthentication",
-                   message: "Proxy authentication required"}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "InvalidAuthentication",
+          message: "Proxy authentication required"
+         });
         done();
       });
     });
@@ -199,9 +200,10 @@ describe('Handling requests - error responses', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "NotFound",
-                   message: "URL not found : /invalid"}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "NotFound",
+          message: "URL not found : /invalid"
+        });
         done();
       });
     });
@@ -222,9 +224,10 @@ describe('Handling requests - error responses', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "NotFound",
-                   message: "URL not found : /invalid"}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "NotFound",
+          message: "URL not found : /invalid"
+        });
         done();
       });
     });
@@ -247,9 +250,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(422);
         let m = "Invalid request: multiple values for attribute 'attr1'";
         expect(response.statusMessage).toEqual(m);
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "InvalidInput",
-                   message: m}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "InvalidInput",
+          message: m
+        });
         done();
       });
     });
@@ -271,9 +275,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: sample accession number should be given';
         expect(response.statusMessage).toEqual(m);
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "InvalidInput",
-                   message: m}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "InvalidInput",
+          message: m
+        });
         done();
       });
     });
@@ -294,9 +299,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: file name should be given';
         expect(response.statusMessage).toEqual(m);
-        expect(JSON.parse(body)).toEqual(
-          {error: {type:    "InvalidInput",
-                   message: m}});
+        expect(JSON.parse(body)).toEqual({
+          error:   "InvalidInput",
+          message: m
+        });
         done();
       });
     });
@@ -322,13 +328,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(422);
         let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
-        expect(JSON.parse(body)).toEqual(
-          {
-            error: {
-              type: "InvalidInput",
-              message: m
-            }
-          });
+        expect(JSON.parse(body)).toEqual({
+          error:   "InvalidInput",
+          message: m
+        });
         done();
       });
     });
