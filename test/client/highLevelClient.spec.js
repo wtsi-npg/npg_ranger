@@ -1,4 +1,4 @@
-/* globals describe, xdescribe, expect, it, fail, beforeAll, afterAll, jasmine */
+/* globals describe, xdescribe, expect, it, fail, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -6,12 +6,17 @@ const assert = require('assert');
 const child  = require('child_process');
 const crypto = require('crypto');
 const fse    = require('fs-extra');
+const http   = require('http');
 const md5    = require('js-md5');
 const path   = require('path');
+const url    = require('url');
 const MongoClient = require('mongodb').MongoClient;
 
 const config        = require('../../lib/config.js');
 const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
+const constants     = require('../../lib/constants');
+
+const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -146,6 +151,198 @@ describe('Testing error for unknown server', () => {
 
     req.send('');
   }, 5000);
+});
+
+describe('token bearer', () => {
+  let spawn = child.spawn;
+
+  let BASE_PORT  = 5000;
+  let PORT_RANGE = 200;
+  let SERV_PORT  = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+
+  describe('client token', () => {
+    let tmpDir = config.tempFilePath('npg_ranger_bin_client_test_');
+    fse.ensureDirSync(tmpDir);
+
+    describe('key not in config', () => {
+      let configFile = `${tmpDir}/clientconf_nokey.json`;
+      fse.writeFileSync(
+        configFile,
+        JSON.stringify({ 'someotherkey': 'expectedtoken' })
+      );
+
+      it('client errors and exists', ( done ) => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        let stdout = '';
+        let stderr = '';
+
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('');
+          expect(stderr).toMatch(/cannot find token key in configuration/i);
+          expect(code).toBe(1);
+          done();
+        });
+      });
+    });
+
+    describe('error loading file', () => {
+      let configFile = `${tmpDir}/clientconf_broken.json`;
+      fse.writeFileSync(
+        configFile,
+        '{"broken": "json"'
+      );
+      it('client errors and exists', ( done ) => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        let stdout = '';
+        let stderr = '';
+
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('');
+          expect(stderr).toMatch(/parsing configuration file/i);
+          expect(code).toBe(1);
+          done();
+        });
+      });
+    });
+  });
+
+  describe('checking token headers', () => {
+    let tmpDir = config.tempFilePath('npg_ranger_bin_client_test_');
+    fse.ensureDirSync(tmpDir);
+
+    let server;
+
+    beforeAll( ()=> {
+      server = http.createServer();
+      server.listen(SERV_PORT);
+    });
+
+    beforeEach(() => {
+      server.removeAllListeners('request');
+    });
+
+    afterAll(() => {
+      server.close();
+    });
+
+    it('does not send header when no configuration', (done) => {
+      server.on('request', (req) => {
+        let headers = req.headers;
+        expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
+        done();
+      });
+
+      process.nextTick(() => {
+        spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`]);
+      });
+    });
+
+    it('sends header when configuration available', ( done ) => {
+      let configFile = `${tmpDir}/clientconf1.json`;
+
+      let conf = {};
+      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
+      fse.writeFileSync(
+        configFile,
+        JSON.stringify(conf)
+      );
+
+      server.on('request', (req, res) => {
+        let headers = req.headers;
+        let myHeader = {};
+        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
+        res.end();
+        done();
+      });
+
+      process.nextTick(() => {
+        spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+      });
+    });
+
+    it('sends header for all requests', ( done ) => {
+
+      let configFile = `${tmpDir}/clientconf2.json`;
+      let totalReqs = 0;
+
+      let conf = {};
+      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
+      fse.writeFileSync(
+        configFile,
+        JSON.stringify(conf)
+      );
+
+      server.on('request', (req, res) => {
+        let headers = req.headers;
+        let r1 = url.parse(req.url, true);
+
+        totalReqs += 1;
+
+        let myHeader = {};
+        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
+
+        if ( /json/.test(r1.pathname) ) {
+          res.writeHead(200, {'Content-Type': 'application/json'});
+          res.end(JSON.stringify({
+            format: "BAM",
+            urls: [{
+              url: `http://localhost:${SERV_PORT}/data?value=1`
+            }, {
+              url: `http://localhost:${SERV_PORT}/data?value=2`
+            }]
+          }));
+        } else {
+          res.end(r1.query.value);
+        }
+      });
+
+      process.nextTick(() => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/json`,
+          `--token_config=${configFile}`]);
+
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('12'); // concat data requests responses
+          expect(stderr).toEqual('');
+          expect(code).toBe(0);
+          expect(totalReqs).toBe(3);
+          done();
+        });
+      });
+    });
+  });
 });
 
 describe('Running with ranger server with a', () => {
