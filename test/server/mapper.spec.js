@@ -92,8 +92,7 @@ describe('Data info retrieval', function() {
         assert.equal(err, null);
         var dm = new DataMapper(db);
         dm.once('data', () => {
-          // Data should not be returned, so fail
-          expect(true).toBe(false);
+          fail();
           done();
         });
         dm.once('nodata', (reason) => {
@@ -109,8 +108,7 @@ describe('Data info retrieval', function() {
         assert.equal(err, null);
         var dm = new DataMapper(db);
         dm.once('data', () => {
-          // No data should be returned, so fail
-          expect(true).toBe(false);
+          fail();
           done();
         });
         dm.once('nodata', (reason) => {
