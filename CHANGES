@@ -1,5 +1,17 @@
 LIST OF CHANGES for npg_ranger project
 
+release 1.3.0
+  - parameter in CLI for CA
+  - parameter in CLI for token configuration
+  - use request library to support proxy env variables for CLI client
+  - switch to streaming for CLI client
+  - upgrade mongodb to 2.2.22 from 2.2.21
+  - upgrade js-md5 to 0.4.2 from 0.4.1
+  - upgrade winston to 2.3.1 from 2.3.0
+  - upgrade send to 0.14.2 from 0.14.1
+  - add new authorisation strategy; make authorisation requests to
+    npg_sentry via tokens
+
 release 1.2.0
   - remove directly logging to file due to winston bug
   - add flags to change logging level

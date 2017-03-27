@@ -4,7 +4,7 @@
 
 const http = require('http');
 
-const RangerRequest = require('../../lib/client/rangerRequest');
+const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 
 describe('Testing RangerRequest public functions', () => {
   it('open parameters', ( done ) => {
@@ -211,4 +211,95 @@ describe('Testing RangerRequest requests', () => {
     req.send();
 
   }, 3000);
+});
+
+const procjson = require('../../lib/client/rangerRequest').procJSON;
+
+describe('JSON processing', () => {
+  describe('Positives', () => {
+    let json = JSON.stringify({
+      format: 'BAM',
+      urls:   [],
+      md5:    'randommd5'
+    });
+
+    it('returns empty lists when there are no urls', () => {
+      let res = procjson(json);
+      expect(res.uris).toBeDefined();
+      expect(res.uris.length).toEqual(0);
+      expect(res.headers4uris).toBeDefined();
+    });
+
+    it('returns empty headers when no headers are passed', () => {
+      let res = procjson(json);
+      expect(res.headers4uris.length).toEqual(0);
+    });
+
+    it('returns individual uris for each element in json', () =>{
+      let json2 = JSON.parse(json);
+      json2.urls = [ {url:'url1'}, {url:'url2'}, {url:'url3'} ];
+      let res = procjson(JSON.stringify(json2));
+      expect(res.uris).toBeDefined();
+      expect(res.uris.length).toEqual(3);
+      for ( let i = 0; i < 3; i++) {
+        expect(res.uris[i]).toEqual(`url${i + 1}`);
+      }
+    });
+
+    it('returns an uri with headers', () => {
+      let json2 = JSON.parse(json);
+      json2.urls = [{
+        url:'url1',
+        headers: {
+          "Range":         "bytes=0-1023",
+          "Authorization": "Bearer xxxx"
+        }
+      }];
+      let res = procjson(JSON.stringify(json2));
+      expect(res.uris).toBeDefined();
+      expect(res.uris.length).toEqual(1);
+      let uri = res.uris[0];
+      expect(uri).toBe('url1');
+      let headers = res.headers4uris[0];
+      expect(headers).toBeDefined();
+      expect(headers.Range).toBeDefined();
+      expect(headers.Range).toEqual('bytes=0-1023');
+      expect(headers.Authorization).toBeDefined();
+      expect(headers.Authorization).toEqual('Bearer xxxx');
+    });
+  });
+
+  describe('Fails', () => {
+    describe('Malformed urls', () => {
+      it('complains about malformed urls field', () => {
+        let json = JSON.stringify({
+          urls: [ 'something' ]
+        });
+        expect(() => {
+          procjson(json);
+        }).toThrowError(/^Malformed JSON redirect, missing url field/);
+      });
+      it('complains about empty objects in urls', () => {
+        let json = JSON.stringify({
+          urls: [{}]
+        });
+        expect(() => {
+          procjson(json);
+        }).toThrowError(/^Malformed JSON redirect, missing url field/);
+      });
+      it('complains when only headers', () => {
+        let json = JSON.stringify({
+          urls: [{
+            headers: {
+              "Range":         "bytes=0-1023",
+              "Authorization": "Bearer xxxx"
+            }
+          }]
+        });
+        expect(() => {
+          procjson(json);
+        }).toThrowError(/^Malformed JSON redirect, missing url field/);
+      });
+    });
+  });
 });
