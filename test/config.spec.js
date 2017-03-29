@@ -447,7 +447,6 @@ describe('Secure server options', () => {
         expect(opts.get('config_ro')).toBe(immutable);
         expect(opts.get('protocol')).toBe('https:');
         let o = config.logOpts();
-        expect(o).toMatch(/secure_passphrase=\*+/);
         expect(o).not.toMatch(/secure_passphrase=XYZ/);
         fs.unlinkSync(private_pem);
         fs.unlinkSync(cert_pem);
@@ -516,6 +515,22 @@ describe('Secure server options', () => {
           return conf;
         });
       }).toThrowError(`'${optname}' option requires startssl to be true`);
+    });
+  });
+
+  ['auth_key',
+   'auth_cert',
+   'auth_ca',
+   'auth_key_passphrase'].forEach( optname => {
+    it(`validates unused auth option ${optname}`, () => {
+      expect( () => {
+        conf[optname] = 'somevalue';
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        `A value for option '${optname}' is available but no authurl was provided`
+      );
     });
   });
 });

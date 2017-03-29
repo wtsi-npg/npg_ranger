@@ -4,7 +4,7 @@ const fs  = require('fs');
 const fse = require('fs-extra');
 const pem = require('pem');
 
-const KEY_EXT = 'key';
+const KEY_EXT  = 'key';
 const CERT_EXT = 'cert';
 
 /**
