@@ -128,7 +128,7 @@ describe('Listing config options', function() {
       'auth_ca=""',
       'auth_cert=""',
       'auth_key=""',
-      'authurl=undefined',
+      'authurl=""',
       'clustermaxdeaths=2',
       'clustertimeout=1',
       'configfile=undefined',

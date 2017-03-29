@@ -2,7 +2,6 @@
 
 'use strict';
 
-const http        = require('http');
 const https       = require('https');
 const url         = require('url');
 const fs          = require('fs');
@@ -58,12 +57,6 @@ let _handle_request = ( req, res ) => {
   });
 };
 
-let create_http_server = () => {
-  let server = http.createServer(_handle_request);
-  server.listen(PORT);
-  return server;
-};
-
 let create_https_server = (cert, key, ca) => {
   let options = {
     key:  fs.readFileSync(key),
@@ -75,7 +68,7 @@ let create_https_server = (cert, key, ca) => {
   return server;
 };
 
-['http', 'https'].forEach( serverType => {
+['https'].forEach( serverType => {
   describe(`Authorisation with auth server on ${serverType}`, function() {
     let closeServ;
     let dummyAuthServ;
@@ -87,11 +80,10 @@ let create_https_server = (cert, key, ca) => {
     let client_key;
 
     let addAuthSSL = opts => {
-      if ( serverType === 'https' ) {
-        opts.auth_cert = client_cert;
-        opts.auth_key  = client_key;
-        opts.auth_ca   = ca;
-      }
+      opts.auth_cert = client_cert;
+      opts.auth_key  = client_key;
+      opts.auth_ca   = ca;
+
       return opts;
     };
 
@@ -114,27 +106,20 @@ let create_https_server = (cert, key, ca) => {
     beforeAll( (done) => {
       // Provide a minimal standin for npg_sentry.
       // Authorises user 'alice' or token 'abc' for groups 1, 2 and 3.
-      if(serverType === 'http' ) {
+      let ca_prefix = 'ca';
+      let cert1_prefix = 'serv';
+      let cert2_prefix = 'client';
+      test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, () => {
+        ca          = `${tmpDir}/${ca_prefix}.cert`;
+        serv_key    = `${tmpDir}/${cert1_prefix}.key`;
+        serv_cert   = `${tmpDir}/${cert1_prefix}.cert`;
+        client_key  = `${tmpDir}/${cert2_prefix}.key`;
+        client_cert = `${tmpDir}/${cert2_prefix}.cert`;
         config.provide(noemail_conf);
-        dummyAuthServ = create_http_server();
+        dummyAuthServ = create_https_server(serv_cert, serv_key, ca);
         closeServ = dummyAuthServ.close;
         done();
-      } else {
-        let ca_prefix = 'ca';
-        let cert1_prefix = 'serv';
-        let cert2_prefix = 'client';
-        test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, () => {
-          ca          = `${tmpDir}/${ca_prefix}.cert`;
-          serv_key    = `${tmpDir}/${cert1_prefix}.key`;
-          serv_cert   = `${tmpDir}/${cert1_prefix}.cert`;
-          client_key  = `${tmpDir}/${cert2_prefix}.key`;
-          client_cert = `${tmpDir}/${cert2_prefix}.cert`;
-          config.provide(noemail_conf);
-          dummyAuthServ = create_https_server(serv_cert, serv_key, ca);
-          closeServ = dummyAuthServ.close;
-          done();
-        });
-      }
+      });
     });
 
     it('Input validation', function() {
