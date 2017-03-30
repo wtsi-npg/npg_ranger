@@ -459,7 +459,7 @@ describe('Secure server options', () => {
     });
   });
 
-  it('validates required secure options', () => {
+  it('validates required certificates options', () => {
     expect( () => {
       conf.startssl = true;
       config.provide( () => {
@@ -478,6 +478,66 @@ describe('Secure server options', () => {
       });
     }).toThrowError(`'secure_cert' is required when using 'startssl' option`);
     fs.unlinkSync(private_pem);
+  });
+
+  it('validates authurl must be https', () => {
+    expect( () => {
+      conf.authurl = 'http://somehost/auth';
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError('Only HTTPS protocol should be used for auth server');
+  });
+
+  ['auth_cert', 'auth_key'].forEach( optname => {
+    it('validates at least cert and key are provided when running with authurl', () => {
+      conf.authurl   = 'https://somehost/auth';
+      conf.auth_cert = 'some/path';
+      conf.auth_key  = 'some/path';
+
+      delete conf[optname];
+
+      expect( () => {
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        new RegExp(
+          `'${optname}' is required when using an https Auth-server URL`
+        )
+      );
+    });
+  });
+
+  ['auth_ca', 'auth_cert', 'auth_key'].forEach( optname => {
+    it('validates access to paths if authurl options are provided', () => {
+      let tmpDir = config.tempFilePath();
+      let some_pem = `${tmpDir}/somefile.pem`;
+
+      fs.ensureDirSync(tmpDir);
+
+      conf.authurl = 'https://somehost/auth';
+
+      fs.writeFileSync(some_pem, '');
+
+      conf.auth_ca   = some_pem;
+      conf.auth_cert = some_pem;
+      conf.auth_key  = some_pem;
+
+      conf[optname] = 'someotherpath';
+
+      expect( () => {
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        new RegExp(
+          `File '${conf[optname]}' is not readable for option '${optname}'`
+        )
+      );
+
+      fs.unlinkSync(some_pem);
+    });
   });
 
   it('validates access to paths if secure options are provided', () => {

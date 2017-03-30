@@ -106,7 +106,7 @@ let create_https_server = (cert, key, ca) => {
     beforeAll( (done) => {
       // Provide a minimal standin for npg_sentry.
       // Authorises user 'alice' or token 'abc' for groups 1, 2 and 3.
-      let ca_prefix = 'ca';
+      let ca_prefix    = 'ca';
       let cert1_prefix = 'serv';
       let cert2_prefix = 'client';
       test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, () => {
