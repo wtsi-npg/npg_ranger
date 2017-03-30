@@ -40,6 +40,18 @@ var removeSocket = ( socket ) => {
   } catch (e) { console.log(e); }
 };
 
+/**
+ * Generates a certificate chain with one CA and two certificates signed by that
+ * CA. Both a certificate and a key will be generated for the children
+ * certificates. Certificates will have the ".cert" filename extension, keys
+ * will have the ".key" filename extension.
+ * @param  {String}   path         where files will be saved
+ * @param  {String}   ca_prefix    prefix for the CA filename
+ * @param  {String}   cert1_prefix prefix for the 1st certificate filenames
+ * @param  {String}   cert2_prefix prefix for the 2nd certficate filenames
+ * @param  {Function} callback     will be called with the cerficate objects
+ *                                 with (err, CA, cert1, cert2) signature.
+ */
 let create_certificates = (path, ca_prefix, cert1_prefix, cert2_prefix, callback) => {
   fse.ensureDirSync(path);
 
