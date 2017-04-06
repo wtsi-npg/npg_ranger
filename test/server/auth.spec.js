@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect, beforeAll, afterAll, beforeEach, afterEach */
 
 'use strict';
 
@@ -236,5 +236,86 @@ let create_https_server = (cert, key, ca) => {
     afterAll(function(done) {
       dummyAuthServ.close(done);
     });
+  });
+});
+
+describe('Validate extra properties in response', () => {
+  let server;
+
+  let serv_cert;
+  let serv_key;
+  let ca;
+  let client_cert;
+  let client_key;
+
+  let BAD_SERVER_PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
+
+  let noemail_conf = function() {
+    let opts = {
+      emaildomain: null,
+      authurl: `https://localhost:${BAD_SERVER_PORT}/`
+    };
+    return addAuthSSL(opts);
+  };
+
+  let addAuthSSL = opts => {
+    opts.auth_cert = client_cert;
+    opts.auth_key  = client_key;
+    opts.auth_ca   = ca;
+
+    return opts;
+  };
+
+  let _bad_handle_request = ( req, res ) => {
+    req.on('data', () => {});
+    req.on('end', () => {
+      res.statusCode = 200;
+      res.end(JSON.stringify({ok: true, notOK: false}));
+    });
+  };
+
+  let createBadPropsServer = (cert, key, ca) => {
+    let options = {
+      key:  fs.readFileSync(key),
+      cert: fs.readFileSync(cert),
+      ca:   fs.readFileSync(ca)
+    };
+    server = https.createServer(options, _bad_handle_request);
+    server.listen(BAD_SERVER_PORT);
+  };
+
+  beforeEach( (done) => {
+    let ca_prefix    = 'ca';
+    let cert1_prefix = 'serv';
+    let cert2_prefix = 'client';
+    test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, () => {
+      ca          = `${tmpDir}/${ca_prefix}.cert`;
+      serv_key    = `${tmpDir}/${cert1_prefix}.key`;
+      serv_cert   = `${tmpDir}/${cert1_prefix}.cert`;
+      client_key  = `${tmpDir}/${cert2_prefix}.key`;
+      client_cert = `${tmpDir}/${cert2_prefix}.cert`;
+      config.provide(noemail_conf);
+      createBadPropsServer(serv_cert, serv_key, ca);
+      done();
+    });
+  });
+
+  afterEach( (done) => {
+    server.close();
+    done();
+  });
+
+  it('Fails with extra properties in response', (done) => {
+    config.provide(noemail_conf);
+    var da = new DataAccess(constants.AUTH_TYPE_USER);
+    da.on('authorised', () => {
+      console.log("HERE");
+      done.fail('unexpected authorised');
+    });
+    da.on('failed', (reason) => {
+      expect(reason).toMatch('response contains unexpected value');
+      done();
+    });
+    da.authorise('alice', ['1', '2', '3']);
   });
 });

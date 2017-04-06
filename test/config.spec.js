@@ -490,7 +490,7 @@ describe('Secure server options', () => {
   });
 
   ['auth_cert', 'auth_key'].forEach( optname => {
-    it('validates at least cert and key are provided when running with authurl', () => {
+    it('validates cert and key are provided as a pair when running with authurl', () => {
       conf.authurl   = 'https://somehost/auth';
       conf.auth_cert = 'some/path';
       conf.auth_key  = 'some/path';
@@ -503,7 +503,7 @@ describe('Secure server options', () => {
         });
       }).toThrowError(
         new RegExp(
-          `'${optname}' is required when using an https Auth-server URL`
+          `'${optname}' is required when using auth-cert/key pair`
         )
       );
     });
