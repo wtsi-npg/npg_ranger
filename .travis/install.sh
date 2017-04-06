@@ -20,7 +20,7 @@ popd
 fi
 
 if [ ! "$(ls -A samtools)" ]; then
-git clone --branch "${SAMTOOLS1_VERSION}" --depth 1 https://github.com/wtsi-npg/samtools.git samtools
+git clone --branch "${SAMTOOLS1_VERSION}" --depth 1 https://github.com/samtools/samtools.git samtools
 pushd samtools
 mkdir -p acinclude.m4
 pushd acinclude.m4
