@@ -154,7 +154,7 @@ let create_https_server = (cert, key, ca) => {
     it('Authorisation failed - username is all whitespace', function(done) {
       var da = new DataAccess(constants.AUTH_TYPE_USER);
       da.on('failed', (reason) => {
-        expect(reason).toMatch(/Invalid identifier "   "/i);
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
       da.authorise('   ', ["9", "6", "10"]);
@@ -163,7 +163,7 @@ let create_https_server = (cert, key, ca) => {
     it('Authorisation failed - token is all whitespace', function(done) {
       var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
       da.on('failed', (reason) => {
-        expect(reason).toMatch(/Invalid identifier "   "/i);
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
       da.authorise('   ', ["9", "6", "10"]);
@@ -173,7 +173,7 @@ let create_https_server = (cert, key, ca) => {
       config.provide(email_conf);
       var da = new DataAccess(constants.AUTH_TYPE_USER);
       da.on('failed', (reason) => {
-        expect(reason).toMatch(/Invalid identifier "alice"/i);
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
       da.authorise('alice', ["9", "6", "10"]);
@@ -183,7 +183,7 @@ let create_https_server = (cert, key, ca) => {
       config.provide(email_conf);
       var da = new DataAccess(constants.AUTH_TYPE_USER);
       da.on('failed', (reason) => {
-        expect(reason).toMatch(/Invalid identifier "alice@boom.com"/i);
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
       da.authorise('alice@boom.com', ["9", "6", "10"]);
@@ -193,7 +193,7 @@ let create_https_server = (cert, key, ca) => {
       config.provide(email_conf);
       var da = new DataAccess(constants.AUTH_TYPE_USER);
       da.on('failed', (reason) => {
-        expect(reason).toMatch(/Some access group ids are not defined/i);
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
       da.authorise('alice@boom.co.uk', ["9", "", "10"]);
@@ -313,7 +313,7 @@ describe('Validate extra properties in response', () => {
       done.fail('unexpected authorised');
     });
     da.on('failed', (reason) => {
-      expect(reason).toMatch('response contains unexpected value');
+      expect(reason).toMatch(/Unexpected error while processing authorisation/i);
       done();
     });
     da.authorise('alice', ['1', '2', '3']);
