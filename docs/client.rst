@@ -66,3 +66,36 @@ With output writen to file
 
   $ npg_ranger_client "http://192.168.0.1:5050/resources/A01?referenceName=1&start=167856&end=173507&format=BAM" output.bam
 
+
+Options
+=======
+
+--accept-trailers
+-----------------
+
+Request http trailers from the server, if implemented. This will help indicate if errors occurred during transfer, after the initial http status has been transmitted.
+
+--loglevel <level>
+------------------
+
+Output all logging messages up to and including the given priority level.
+Known levels:   
+
+- debug
+- info
+- warn
+- error [default]
+
+--token_config <path>
+---------------------
+
+Provide the path to an npg_sentry authorisation token, inside a JSON file of the form:
+
+::
+
+  { "npg_sentry_token_bearer": "abcdefghijkl...xyz" }
+  
+--with_ca <path>
+----------------
+
+Path to a PEM formatted CA certificate to verify the npg_sentry server's identity.
