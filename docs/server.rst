@@ -172,7 +172,7 @@ There are three different url paths recognised by the server:
 
  /file?name=$NAME[&directory=$DIR]
  /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
- /ga4gh/v.0.1/sample/get/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ /ga4gh/v.0.1/sample/get/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
  # $REG is in format <referenceName>:<startLoc>-<endLoc>
 
 Each will provide a response in a different way:
