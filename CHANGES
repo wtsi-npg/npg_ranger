@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+release 1.4.0
   - add options to enable https communication between npg_ranger and npg_sentry
 
 release 1.3.0
