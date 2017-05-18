@@ -88,13 +88,31 @@ Running a secure server using HTTPS
 
 To run an https server at least a certificate and a private key must be provided
 in PEM format. If the server private key was generated with a passphrase, the
-passphrase must be profided as part of the configuration. Paths to the pem
+passphrase must be provided as part of the configuration. Paths to the pem
 files with the private key and the certificate can be passed as start up
 options using ``--secure_key`` and ``--secure_cert`` or by configuration file
 using ``secure_key`` and ``secure_cert`` entries. If a passphrase is needed, it
 can only be provided in the configuration file under the ``secure_passphrase``
 entry. For security reasons both .pem files and the server configuration file
 must have proper access permissions, e.g. ``chmod 400 config.json``.
+
+Secure connection to authorisation service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If authorisation is being provided by an external service (**npg_sentry**),
+extra configuration should be provided to establish a secure connection to the
+service. At least an entry point *URL* must be provided with the ``--authurl``
+option. If the listening server is expecting for **npg_ranger** to establish the
+connection using pre-arranged certificates, ``--auth_cert`` and ``--auth_key``
+options should be used. If the key for client side authentication is passphrase
+protected, ``auth_key_passphrase`` should be set in the configuration file. The
+passphrase for the client side key can only be set in the configuration file,
+there is no matching command line option for it. Finally if the certificate of
+authorisation service is signed by a private *CA*, **npg_ranger** will require
+access to the *CA*'s certificate to validate the certificate presented by the
+authorisation service. A path to the *CA* can be configured using the option
+``--auth_ca``.
+
 
 Other options
 -------------
@@ -172,7 +190,7 @@ There are three different url paths recognised by the server:
 
  /file?name=$NAME[&directory=$DIR]
  /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
- /ga4gh/v.0.1/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
+ /ga4gh/v.0.1/get/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
  # $REG is in format <referenceName>:<startLoc>-<endLoc>
 
 Each will provide a response in a different way:
@@ -181,7 +199,7 @@ Each will provide a response in a different way:
 
 /sample will search for content files with given accession, merge them, then stream the file (or specified region) in BAM format (unless overridden).
 
-/ga4gh/v.0.1/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
+/ga4gh/v.0.1/get/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
 
 .. _Biodall: https://github.com/wtsi-npg/dalliance
 
@@ -368,4 +386,3 @@ Not specifying a filter in the query will filter by the default value if it exis
 +------------------+-----------+---------------+
 | alignment_filter | n/a       | phix,human,...|
 +------------------+-----------+---------------+
-

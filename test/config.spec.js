@@ -125,7 +125,10 @@ describe('Listing config options', function() {
     console.log(config.logOpts());
     let expectedAsArray = [
       'anyorigin=undefined',
-      'authurl=undefined',
+      'auth_ca=""',
+      'auth_cert=""',
+      'auth_key=""',
+      'authurl=""',
       'clustermaxdeaths=2',
       'clustertimeout=1',
       'configfile=undefined',
@@ -444,7 +447,6 @@ describe('Secure server options', () => {
         expect(opts.get('config_ro')).toBe(immutable);
         expect(opts.get('protocol')).toBe('https:');
         let o = config.logOpts();
-        expect(o).toMatch(/secure_passphrase=\*+/);
         expect(o).not.toMatch(/secure_passphrase=XYZ/);
         fs.unlinkSync(private_pem);
         fs.unlinkSync(cert_pem);
@@ -457,7 +459,7 @@ describe('Secure server options', () => {
     });
   });
 
-  it('validates required secure options', () => {
+  it('validates required certificates options', () => {
     expect( () => {
       conf.startssl = true;
       config.provide( () => {
@@ -476,6 +478,66 @@ describe('Secure server options', () => {
       });
     }).toThrowError(`'secure_cert' is required when using 'startssl' option`);
     fs.unlinkSync(private_pem);
+  });
+
+  it('validates authurl must be https', () => {
+    expect( () => {
+      conf.authurl = 'http://somehost/auth';
+      config.provide( () => {
+        return conf;
+      });
+    }).toThrowError('Only HTTPS protocol should be used for auth server');
+  });
+
+  ['auth_cert', 'auth_key'].forEach( optname => {
+    it('validates cert and key are provided as a pair when running with authurl', () => {
+      conf.authurl   = 'https://somehost/auth';
+      conf.auth_cert = 'some/path';
+      conf.auth_key  = 'some/path';
+
+      delete conf[optname];
+
+      expect( () => {
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        new RegExp(
+          `'${optname}' is required when using auth-cert/key pair`
+        )
+      );
+    });
+  });
+
+  ['auth_ca', 'auth_cert', 'auth_key'].forEach( optname => {
+    it('validates access to paths if authurl options are provided', () => {
+      let tmpDir = config.tempFilePath();
+      let some_pem = `${tmpDir}/somefile.pem`;
+
+      fs.ensureDirSync(tmpDir);
+
+      conf.authurl = 'https://somehost/auth';
+
+      fs.writeFileSync(some_pem, '');
+
+      conf.auth_ca   = some_pem;
+      conf.auth_cert = some_pem;
+      conf.auth_key  = some_pem;
+
+      conf[optname] = 'someotherpath';
+
+      expect( () => {
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        new RegExp(
+          `File '${conf[optname]}' is not readable for option '${optname}'`
+        )
+      );
+
+      fs.unlinkSync(some_pem);
+    });
   });
 
   it('validates access to paths if secure options are provided', () => {
@@ -513,6 +575,22 @@ describe('Secure server options', () => {
           return conf;
         });
       }).toThrowError(`'${optname}' option requires startssl to be true`);
+    });
+  });
+
+  ['auth_key',
+   'auth_cert',
+   'auth_ca',
+   'auth_key_passphrase'].forEach( optname => {
+    it(`validates unused auth option ${optname}`, () => {
+      expect( () => {
+        conf[optname] = 'somevalue';
+        config.provide( () => {
+          return conf;
+        });
+      }).toThrowError(
+        `A value for option '${optname}' is available but no authurl was provided`
+      );
     });
   });
 });

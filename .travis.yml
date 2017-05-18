@@ -7,6 +7,7 @@ addons:
   apt:
     packages:
       - libssl-dev
+      - liblzma-dev
 cache:
   directories:
   - /tmp/htslib
@@ -14,16 +15,20 @@ cache:
   - /tmp/freebayes
 env:
   global:
-    - MONGODB_VERSION=3.2.4
+    - MONGODB_VERSION=3.4.3
     - FREEBAYES_VERSION="v1.1.0"
-    - BIOBAMBAM_VERSION="2.0.50-release-20160705161609"
-    - HTSLIB_VERSION="1.3.2"
-    - SAMTOOLS1_VERSION="1.3.1-npg-Sep2016"
+    - BIOBAMBAM_VERSION="2.0.72-release-20170316102450"
+    - HTSLIB_VERSION="1.4"
+    - SAMTOOLS1_VERSION="1.4"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"
-  - npm install -g npm@3.10.7
-  - npm --version
+  - npm install -g npm@3.10.10
   - npm install -g grunt-cli
+  - npm --version
+  - mongo --version
+  - freebayes --version
+  - bamstreamingmarkduplicates --version
+  - samtools --version
 script:
   - grunt -v
