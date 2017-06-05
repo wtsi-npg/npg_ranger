@@ -1,5 +1,17 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade async to 2.4.1 from 2.1.4
+  - upgrade browserify to 14.4.0 from 13.3.0
+  - upgrade fs-extra to 3.0.1 from 2.0.0
+  - upgrade grunt-contrib-clean to 1.1.0 from 1.0.0
+  - upgrade grunt-jasmine-nodejs to 1.6.0 from 1.5.4
+  - upgrade http-shutdown to 1.2.0 from 1.1.0
+  - upgrade moment to 2.18.1 from 2.17.1
+  - upgrade mongodb to 2.2.29 from 2.2.22
+  - upgrade pem to 1.9.7 from 1.9.4
+  - upgrade request to 2.81.0 from 2.79.0
+  - upgrade send to 0.15.3 from 0.14.2
+
 release 1.4.1
   - update database entries in docker for public data
   - update ranger Dockerfile to upgrade ranger docker to
