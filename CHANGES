@@ -1,5 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
+  - update database entries in docker for public data
+
 release 1.4.0
   - add options to enable https communication between npg_ranger and npg_sentry
 
