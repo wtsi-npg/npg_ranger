@@ -2,13 +2,13 @@ FROM ubuntu:14.04
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=4.5.0 \
+ENV NODE_VERSION=6.10.3 \
     MONGODB_VERSION=3.2.4 \
-    HTSLIB_VERSION=develop \
-    SAMTOOLS_VERSION=develop \
+    HTSLIB_VERSION=1.4.1 \
+    SAMTOOLS_VERSION=1.4.1 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
-    NPG_RANGER_VERSION=1.2.0 \
+    NPG_RANGER_VERSION=1.4.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
@@ -32,7 +32,7 @@ RUN apt-get update -qq \
   && cd ./htslib \
   # && git checkout c8475e824906a914f3aeeacef89f555009af9f2b \
   && autoreconf -fi \
-  && git reset --hard c8475e824906a914f3aeeacef89f555009af9f2b \
+  && git reset --hard \
   && ./configure --enable-libcurl \
   && make && make install \
   && cd .. \
