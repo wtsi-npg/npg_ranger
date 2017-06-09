@@ -66,7 +66,7 @@ RUN apt-get update -qq \
 # Get Ranger
   && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
-COPY ./certs/*.pem /usr/share/ca-certificates/ranger/
+COPY ./certs/ /usr/share/ca-certificates/ranger/
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
   then \
     for i in /usr/share/ca-certificates/ranger/*.pem; \
