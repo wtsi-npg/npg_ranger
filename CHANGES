@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+  - update database entries in docker for public data
+  - update ranger Dockerfile to reflect upgrades in htslib, samtools and npg_ranger
+
 release 1.4.0
   - add options to enable https communication between npg_ranger and npg_sentry
 
