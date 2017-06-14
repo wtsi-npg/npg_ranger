@@ -247,7 +247,7 @@ describe('Handling requests - error responses', function() {
       response.on('data', ( d ) => { body += d;});
       response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         let m = "Invalid request: multiple values for attribute 'attr1'";
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
@@ -272,7 +272,7 @@ describe('Handling requests - error responses', function() {
       response.on('data', ( d ) => { body += d;});
       response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: sample accession number should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
@@ -296,7 +296,7 @@ describe('Handling requests - error responses', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: file name should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
@@ -325,7 +325,7 @@ describe('Handling requests - error responses', function() {
       response.on('data', (d) => { body += d;});
       response.on('end', () => {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
@@ -698,7 +698,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toBe(
           "'referenceName' attribute requered if 'start' or 'end' attribute is given");
         done();
@@ -714,7 +714,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual(
           "'5.5' is not an integer");
         done();
@@ -730,7 +730,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
         done();
       });
@@ -745,7 +745,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual("'foo' is not an integer");
         done();
       });
@@ -760,7 +760,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
         done();
       });
@@ -775,7 +775,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual(
           'Range end should be bigger than start');
         done();
@@ -791,7 +791,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(422);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual(
           'Invalid character in reference name chr@1');
         done();
@@ -807,7 +807,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
-        expect(response.statusCode).toEqual(409);
+        expect(response.statusCode).toEqual(400);
         expect(response.statusMessage).toEqual(
           "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();

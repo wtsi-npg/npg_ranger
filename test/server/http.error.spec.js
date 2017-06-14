@@ -36,6 +36,12 @@ describe('Setting instance attribute values', function() {
     expect(e.errorType).toBe('PermissionDenied');
     expect(e.message).toBe('some error description');
   });
+  it('tailored status message', function() {
+    let e = new HttpError({}, 400, 'some error description', true, 'MyCodePhrase');
+    expect(e.code).toBe(400);
+    expect(e.errorType).toBe('MyCodePhrase');
+    expect(e.message).toBe('some error description');
+  });
 });
 
 describe('set error response', function() {
