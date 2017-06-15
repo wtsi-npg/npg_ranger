@@ -6,7 +6,7 @@
   "homepage": "https://github.com/wtsi-npg/npg_ranger",
   "license": "SEE LICENSE IN LICENSE",
   "private": false,
-  "engines": { "node" : ">=4.5.0" },
+  "engines": { "node" : ">=6.10.3" },
   "repository": {
     "type": "git",
     "url": "https://github.com/wtsi-npg/npg_ranger"
