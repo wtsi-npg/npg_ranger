@@ -11,6 +11,10 @@ LIST OF CHANGES for npg_ranger project
   - upgrade pem to 1.9.7 from 1.9.4
   - upgrade request to 2.81.0 from 2.79.0
   - upgrade send to 0.15.3 from 0.14.2
+  - update json response for server error reporting
+  - update http error codes reported according to spec
+    - remove 406
+    - replace 409 & 422 with 400 + tailored status message
 
 release 1.4.1
   - update database entries in docker for public data
