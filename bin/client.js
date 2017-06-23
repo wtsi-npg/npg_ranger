@@ -93,8 +93,6 @@ const constants     = require('../lib/constants');
  * design. Therefore, circular references in <em>JSON</em> resources will
  * produce infinite (or very large number of) requests to the resources.</p>
  *
- * @author Marina Gourtovaia
- * @author Jaime Tovar
  * @copyright Genome Research Limited 2017
  */
 

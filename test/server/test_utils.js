@@ -17,7 +17,6 @@ const CERT_EXT = 'cert';
  * @requires {@link external:fs-extra|fs-extra}
  * @requires {@link external:pem|pem}
  *
- * @author Jaime Tovar
  * @copyright Genome Research Limited 2017
  */
 
