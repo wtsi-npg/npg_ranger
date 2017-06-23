@@ -39,7 +39,7 @@ const RangerServer = require('../lib/server.js');
  * @requires {@link external:assert|assert}
  * @requires {@link external:cluster|cluster}
  *
- * @copyright Genome Research Limited 2016
+ * @copyright Genome Research Limited 2017
  */
 
 /**
