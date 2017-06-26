@@ -17,13 +17,15 @@ describe('Constructor input validation', function() {
     expect( () => {new HttpError({});} ).toThrowError(
     ReferenceError, 'HTTP error code is required');
   });
-  it('response code is not valid - error', function() {
-    expect( () => {new HttpError({}, 999);} ).toThrowError(
-    RangeError, 'Invalid HTTP error code: 999');
-  });
 });
 
 describe('Setting instance attribute values', function() {
+  it('error code 500 for unknown codes', function() {
+    let e = new HttpError({}, 999);
+    expect(e.code).toBe(500);
+    expect(e.errorType).toBe('InternalError');
+    expect(e.message).toBe('Internal server error');
+  });
   it('error code and type and default message', function() {
     let e = new HttpError({}, 404);
     expect(e.code).toBe(404);
@@ -40,6 +42,12 @@ describe('Setting instance attribute values', function() {
     let e = new HttpError({}, 400, 'some error description', 'MyCodePhrase');
     expect(e.code).toBe(400);
     expect(e.errorType).toBe('MyCodePhrase');
+    expect(e.message).toBe('some error description');
+  });
+  it('default 400 with no rasonPhrase', function() {
+    let e = new HttpError({}, 400, 'some error description');
+    expect(e.code).toBe(400);
+    expect(e.errorType).toBe('BadRequest');
     expect(e.message).toBe('some error description');
   });
 });
