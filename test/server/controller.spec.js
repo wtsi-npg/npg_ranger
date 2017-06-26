@@ -10,7 +10,8 @@ const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
 const config  = require('../../lib/config.js');
 
-const utils   = require('./test_utils.js');
+const utils           = require('./test_utils.js');
+const ServerHttpError = require('../../lib/server/http/error');
 
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
@@ -251,7 +252,7 @@ describe('Handling requests - error responses', function() {
         let m = "Invalid request: multiple values for attribute 'attr1'";
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   "InvalidInput",
+          error:   ServerHttpError.INVALID_INPUT,
           message: m
         });
         done();
@@ -276,7 +277,7 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: sample accession number should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   "InvalidInput",
+          error:   ServerHttpError.INVALID_INPUT,
           message: m
         });
         done();
@@ -300,7 +301,7 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: file name should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   "InvalidInput",
+          error:   ServerHttpError.INVALID_INPUT,
           message: m
         });
         done();
@@ -329,7 +330,7 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   "InvalidInput",
+          error:   ServerHttpError.INVALID_INPUT,
           message: m
         });
         done();
@@ -700,7 +701,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toBe(
           "'referenceName' attribute requered if 'start' or 'end' attribute is given");
         done();
@@ -718,7 +719,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           "'5.5' is not an integer");
         done();
@@ -736,7 +737,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
         done();
       });
@@ -753,7 +754,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'foo' is not an integer");
         done();
       });
@@ -770,7 +771,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
         done();
       });
@@ -787,7 +788,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           'Range end should be bigger than start');
         done();
@@ -805,7 +806,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe('InvalidInput');
+        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           'Invalid character in reference name chr@1');
         done();
@@ -823,7 +824,7 @@ describe('Redirection in json response', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toEqual('UnsupportedFormat');
+        expect(errorPayload.error).toEqual(ServerHttpError.UNSUPPORTED_FORMAT);
         expect(response.statusMessage).toEqual(
           "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
