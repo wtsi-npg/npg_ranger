@@ -2,6 +2,18 @@
 Server Manual
 #############
 
+General
+=======
+
+In a production setup the main entities on the server side are a node.js ranger server,
+an Apache httpd server acting as a reverse proxy, behind which the ranger server runs,
+and a MongoDB database that keeps metadata about location of sequencing data. All three
+are capable of handling many thousands queries simultaneously. If the number of simultaneous
+requests is not capped, the load on the underlying sequencing data storage might
+become too high. A configuration for the httpd server, supplied in this project,
+limits the number of simultaneously run queries. It can be adjusted either way
+depending on the type of underlying storage.  
+
 Running
 =======
 
@@ -9,7 +21,7 @@ Running
 
 2. Ensure you have bioinformatics tools in path
 
-   2.1 samtools v1.3 or higher
+   2.1 samtools v1.4 or higher
 
    2.2 biobambam v2.0.50
 
