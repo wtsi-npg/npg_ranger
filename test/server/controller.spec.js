@@ -699,6 +699,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toBe(
           "'referenceName' attribute requered if 'start' or 'end' attribute is given");
         done();
@@ -715,6 +717,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual(
           "'5.5' is not an integer");
         done();
@@ -731,6 +735,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
         done();
       });
@@ -746,6 +752,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual("'foo' is not an integer");
         done();
       });
@@ -761,6 +769,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
         done();
       });
@@ -776,6 +786,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual(
           'Range end should be bigger than start');
         done();
@@ -792,6 +804,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toBe('InvalidInput');
         expect(response.statusMessage).toEqual(
           'Invalid character in reference name chr@1');
         done();
@@ -808,6 +822,8 @@ describe('Redirection in json response', function() {
       response.on('end', function() {
         expect(response.headers['content-type']).toEqual('application/json');
         expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.error).toEqual('UnsupportedFormat');
         expect(response.statusMessage).toEqual(
           "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
