@@ -13,6 +13,8 @@ LIST OF CHANGES for npg_ranger project
   - upgrade send to 0.15.3 from 0.14.2
   - update json response for server error reporting
   - update http error codes reported according to spec
+    - httperror constructor does not take verbose anymore
+    - trying to use unknown codes will result in 500 and log
     - remove 406
     - replace 409 & 422 with 400 + tailored status message
 
