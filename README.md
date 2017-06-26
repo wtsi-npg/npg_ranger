@@ -7,8 +7,8 @@
 
 This project is a contribution towards development of the streaming API under the
 [GA4GH](http://ga4gh.org) initiative (GA4GH Directory API and Streaming). The project has
-a server and a compatible command-line http client; both conform to GA4GH API
-https://github.com/samtools/hts-specs/blob/master/htsget.md .
+a server and a compatible command-line http client; both conform to `GA4GH API
+<https://github.com/samtools/hts-specs/blob/master/htsget.md>`_.
 
 ## Package structure
 
