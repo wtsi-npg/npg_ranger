@@ -17,6 +17,7 @@ LIST OF CHANGES for npg_ranger project
     - trying to use unknown codes will result in 500 and log
     - remove 406
     - replace 409 & 422 with 400 + tailored status message
+  - move trailer logic from error to controller
 
 release 1.4.1
   - update database entries in docker for public data

@@ -2,14 +2,12 @@
 
 "use strict";
 
-const http    = require('http');
-const fs      = require('fs');
-const tmp     = require('tmp');
+const http = require('http');
+const fs   = require('fs');
+const tmp  = require('tmp');
 
-const trailer         = require('../../lib/server/http/trailer.js');
 const ServerHttpError = require('../../lib/server/http/error.js');
-
-const HttpError = ServerHttpError.HttpError;
+const HttpError       = ServerHttpError.HttpError;
 
 describe('Constructor input validation', function() {
   it('response object is not given - error', function() {
@@ -75,33 +73,9 @@ describe('set error response', function() {
     try { fs.unlinkSync(socket); } catch (e) {}
   });
 
-  it('Headers have been sent - set a trailer', function(done) {
-
+  it('set an error response', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
-      trailer.declare(response);
-      response.write('truncated payload');
-      let e = new HttpError(response, 404);
-      e. setErrorResponse();
-      response.end();
-    });
-
-    http.get({socketPath: socket}, function(response) {
-      var body = '';
-      response.on('data', function(d) { body += d;});
-      response.on('end', function() {
-        expect(body).toEqual('truncated payload');
-        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true' ]);
-        done();
-      });
-    });
-  });
-
-  it('Headers have not been sent - set an error response', function(done) {
-
-    server.removeAllListeners('request');
-    server.on('request', (request, response) => {
-      trailer.declare(response);
       let e = new HttpError(response, 404, 'file XX not found');
       e.setErrorResponse();
       response.end();
@@ -120,13 +94,8 @@ describe('set error response', function() {
         let headers = response.headers;
         expect(headers['content-type']).toBe('application/json');
         expect(headers['content-length']).toBe(body.length + '');
-        expect(headers['transfer-encoding']).toBe(undefined);
-        expect(headers.trailer).toBe(undefined);
-        expect(response.rawTrailers).toEqual([]);
         done();
       });
     });
-
   });
-
 });

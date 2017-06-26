@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll, jasmine */
+/* globals describe, it, expect, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -12,12 +12,21 @@ const config  = require('../../lib/config.js');
 
 const utils           = require('./test_utils.js');
 const ServerHttpError = require('../../lib/server/http/error');
+const trailer         = require('../../lib/server/http/trailer.js');
 
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
 var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
 var dummy     = function() { return {tempdir: tmpDir, skipauth: true}; };
 var options;
+
+let checkGenericErrorResponse = ( expect, response ) => {
+  let headers = response.headers;
+  expect(headers['content-type']).toEqual('application/json');
+  expect(headers['transfer-encoding']).toBe(undefined);
+  expect(headers.trailer).toBe(undefined);
+  expect(response.rawTrailers).toEqual([]);
+};
 
 describe('Creating object instance - synch', function() {
   beforeAll(function() {
@@ -44,6 +53,73 @@ describe('Creating object instance - synch', function() {
   it('response is not an object - error', function() {
     expect( () => {new RangerController({}, 1);} ).toThrowError(assert.AssertionError,
     'Server response object is required');
+  });
+});
+
+describe('set data truncation', () => {
+  const server = http.createServer();
+  var socket = tmp.tmpNameSync();
+
+  beforeAll( ( done ) => {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(dummy);
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  afterAll( () => {
+    server.close();
+    utils.removeSocket(socket);
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
+  });
+
+  beforeEach( () => {
+    server.removeAllListeners('request');
+  });
+
+  it('sets sends error response when headers have not been sent', ( done ) => {
+    server.on('request', ( request, response ) => {
+      assert(typeof request == 'object');
+      trailer.declare(response);
+      let c = new RangerController(request, response, {one: "two"});
+      c.errorResponse(response, 404, 'Not Found');
+    });
+
+    http.get( {socketPath: socket}, ( response ) => {
+      var body = '';
+      response.on('data', d => { body += d;});
+      response.on('end', () => {
+        expect(response.statusCode).toEqual(404);
+        let jsonbody = JSON.parse(body);
+        expect(jsonbody.error).toEqual('NotFound');
+        expect(jsonbody.message).toEqual('Not Found');
+        expect(response.rawTrailers).toEqual([]);
+        done();
+      });
+    });
+  });
+
+  it('sets up trailers when setting error response after headers sent', ( done ) => {
+    server.on('request', ( request, response ) => {
+      assert(typeof request == 'object');
+      trailer.declare(response);
+      let c = new RangerController(request, response, {one: "two"});
+      response.write('truncated payload'); //send headers
+      c.errorResponse(response, 404);
+    });
+
+    http.get({socketPath: socket}, ( response ) => {
+      var body = '';
+      response.on('data', d => { body += d;});
+      response.on('end', () => {
+        expect(response.statusCode).toEqual(200);
+        expect(body).toEqual('truncated payload');
+        expect(response.rawTrailers).toEqual([ 'data-truncated', 'true' ]);
+        done();
+      });
+    });
   });
 });
 
@@ -146,7 +222,7 @@ describe('Handling requests - error responses', function() {
     let options = { socketPath: socket, method: 'POST' };
     let req = http.request(options);
     req.on('response', (response) => {
-      expect(response.headers['content-type']).toEqual('application/json');
+      checkGenericErrorResponse(expect, response);
       expect(response.statusCode).toEqual(405);
       expect(response.statusMessage).toEqual('POST method is not allowed');
       done();
@@ -172,7 +248,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(401);
         expect(response.statusMessage).toEqual('Proxy authentication required');
         expect(JSON.parse(body)).toEqual({
@@ -198,7 +274,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
         expect(JSON.parse(body)).toEqual({
@@ -222,7 +298,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
         expect(JSON.parse(body)).toEqual({
@@ -247,7 +323,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', ( d ) => { body += d;});
       response.on('end', () => {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let m = "Invalid request: multiple values for attribute 'attr1'";
         expect(response.statusMessage).toEqual(m);
@@ -272,7 +348,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', ( d ) => { body += d;});
       response.on('end', () => {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: sample accession number should be given';
         expect(response.statusMessage).toEqual(m);
@@ -296,7 +372,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: file name should be given';
         expect(response.statusMessage).toEqual(m);
@@ -325,7 +401,7 @@ describe('Handling requests - error responses', function() {
       var body = '';
       response.on('data', (d) => { body += d;});
       response.on('end', () => {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
@@ -404,7 +480,7 @@ describe('Sample reference', () => {
         let body = '';
         response.on('data', ( d ) => { body += d;});
         response.on('end',  ()    => {
-          expect(response.headers['content-type']).toEqual('application/json');
+          checkGenericErrorResponse(expect, response);
           expect(response.statusCode).toEqual(404);
           expect(response.statusMessage).toEqual(`URL not found : ${thisPath}`);
           done();
@@ -448,7 +524,7 @@ describe('Sample reference', () => {
       let body = '';
       response.on('data', ( d ) => { body += d;});
       response.on('end',  ()    => {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual(
           `No files for sample accession ${missingAcc}`
@@ -490,7 +566,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : ' + server_path_basic);
         done();
@@ -504,7 +580,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : ' + path);
         done();
@@ -518,7 +594,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : ' + path);
         done();
@@ -698,7 +774,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -716,7 +792,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -734,7 +810,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -751,7 +827,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -768,7 +844,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -785,7 +861,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -803,7 +879,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
@@ -821,7 +897,7 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
         expect(errorPayload.error).toEqual(ServerHttpError.UNSUPPORTED_FORMAT);
