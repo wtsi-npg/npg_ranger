@@ -31,13 +31,13 @@ describe('Setting instance attribute values', function() {
     expect(e.message).toBe('Unknown error');
   });
   it('saved error message', function() {
-    let e = new HttpError({}, 403, 'some error description', true);
+    let e = new HttpError({}, 403, 'some error description');
     expect(e.code).toBe(403);
     expect(e.errorType).toBe('PermissionDenied');
     expect(e.message).toBe('some error description');
   });
   it('tailored status message', function() {
-    let e = new HttpError({}, 400, 'some error description', true, 'MyCodePhrase');
+    let e = new HttpError({}, 400, 'some error description', 'MyCodePhrase');
     expect(e.code).toBe(400);
     expect(e.errorType).toBe('MyCodePhrase');
     expect(e.message).toBe('some error description');
