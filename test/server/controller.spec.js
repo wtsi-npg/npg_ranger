@@ -147,7 +147,7 @@ describe('Handling requests - error responses', function() {
     req.on('response', (response) => {
       expect(response.headers['content-type']).toEqual('application/json');
       expect(response.statusCode).toEqual(405);
-      expect(response.statusMessage).toEqual('POST request is not allowed');
+      expect(response.statusMessage).toEqual('POST method is not allowed');
       done();
     });
     req.end();
