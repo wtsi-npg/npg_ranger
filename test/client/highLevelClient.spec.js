@@ -478,21 +478,31 @@ describe('Running with ranger server with a', () => {
     serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
-        let client = spawn('bin/client.js', [
-          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=SAM`]);
-        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
-        client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', ( data ) => {
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=SAM`
+        ]);
+        bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
-        bamseqchksum.on('exit', () => {
-          let chksums = [
-            '79cb05e3fe428da52da346e7d4f6324a',
-            '9b123c8f3a3e8a59584c2193976d1226'
-          ];
-          expect(hash.digest('hex')).toBeOneOf(chksums);
+        bamseqchksum.on('exit', ( code ) => {
           serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '79cb05e3fe428da52da346e7d4f6324a',
+              '9b123c8f3a3e8a59584c2193976d1226'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
         });
       }
     });
@@ -527,21 +537,31 @@ describe('Running with ranger server with a', () => {
     serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
-        let client = spawn('bin/client.js', [
-          `http://localhost:${SERV_PORT}/ga4gh/v.0.1/get/sample/ABC123456`]);
-        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
-        client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', (data) => {
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/ga4gh/v.0.1/get/sample/ABC123456`
+        ]);
+        bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
-        bamseqchksum.on('exit', () => {
-          let chksums = [
-            '79cb05e3fe428da52da346e7d4f6324a',
-            '9b123c8f3a3e8a59584c2193976d1226'
-          ];
-          expect(hash.digest('hex')).toBeOneOf(chksums);
+        bamseqchksum.on('exit', ( code ) => {
           serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '79cb05e3fe428da52da346e7d4f6324a',
+              '9b123c8f3a3e8a59584c2193976d1226'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
         });
       }
     });
