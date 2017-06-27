@@ -4,8 +4,8 @@ MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 # Hold versions in environment variables.
 ENV NODE_VERSION=6.10.3 \
     MONGODB_VERSION=3.2.4 \
-    HTSLIB_VERSION=1.4.1 \
-    SAMTOOLS_VERSION=1.4.1 \
+    HTSLIB_VERSION=1.5 \
+    SAMTOOLS_VERSION=1.5 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
     NPG_RANGER_VERSION=1.4.0 \
