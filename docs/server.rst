@@ -12,7 +12,7 @@ are capable of handling many thousands queries simultaneously. If the number of 
 requests is not capped, the load on the underlying sequencing data storage might
 become too high. A configuration for the httpd server, supplied in this project,
 limits the number of simultaneously run queries. It can be adjusted either way
-depending on the type of underlying storage.  
+depending on the type of underlying storage.
 
 Running
 =======
@@ -202,7 +202,7 @@ There are three different url paths recognised by the server:
 
  /file?name=$NAME[&directory=$DIR]
  /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
- /ga4gh/v.0.1/get/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
+ /ga4gh/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
  # $REG is in format <referenceName>:<startLoc>-<endLoc>
 
 Each will provide a response in a different way:
@@ -211,7 +211,7 @@ Each will provide a response in a different way:
 
 /sample will search for content files with given accession, merge them, then stream the file (or specified region) in BAM format (unless overridden).
 
-/ga4gh/v.0.1/get/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
+/ga4gh/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
 
 .. _Biodall: https://github.com/wtsi-npg/dalliance
 
