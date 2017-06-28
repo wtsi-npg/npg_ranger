@@ -93,7 +93,7 @@ Provide the path to an npg_sentry authorisation token, inside a JSON file of the
 
 ::
 
-  { "npg_sentry_token_bearer": "abcdefghijkl...xyz" }
+  { "token": "abcdefghijkl...xyz" }
   
 --with_ca <path>
 ----------------

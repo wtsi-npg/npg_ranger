@@ -17,6 +17,7 @@ const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 const constants     = require('../../lib/constants');
 
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
+const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -258,7 +259,7 @@ describe('token bearer', () => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -268,7 +269,8 @@ describe('token bearer', () => {
       server.on('request', (req, res) => {
         let headers = req.headers;
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
         expect(headers).toEqual(jasmine.objectContaining(myHeader));
         res.end();
         done();
@@ -287,7 +289,7 @@ describe('token bearer', () => {
       let totalReqs = 0;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -301,7 +303,8 @@ describe('token bearer', () => {
         totalReqs += 1;
 
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
 
         expect(headers).toEqual(jasmine.objectContaining(myHeader));
 
