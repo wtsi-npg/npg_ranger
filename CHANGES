@@ -19,6 +19,11 @@ LIST OF CHANGES for npg_ranger project
     - replace 409 & 422 with 400 + tailored status message
   - move trailer logic from error to controller
   - simplify url path to /ga4gh/sample (remove 'v.0.1/get')
+  - fix heather key name for token authorisation
+    - client sends token under 'Authorization' header
+    - client formats token string as 'Bearer XXX'
+    - server expects token under 'authorization' header (lowercase)
+    - server tries to parse token string from 'Bearer XXX' 
 
 release 1.4.1
   - update database entries in docker for public data
