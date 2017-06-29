@@ -2,6 +2,8 @@
 
 "use strict";
 
+const util = require('util');
+
 let tokenUtils = require('../lib/token_utils');
 
 describe('Errors reported with wrong parameters', () => {
@@ -33,7 +35,7 @@ describe('Errors reported with wrong parameters', () => {
     it('throws with empty string', () => {
       expect(() => {
         tokenUtils.formatTokenForHeader(item);
-      }).toThrowError(/token length must be greater than 0/i);
+      }).toThrowError(/token cannot be blank/i);
     });
   });
 });
@@ -49,7 +51,6 @@ describe('Errors reported when problems with token string', () => {
 
 describe('Errors are reported when impossible to parse token', () => {
   let bad_formats = [
-    '  ',
     ' xxx xxx ',
     'x Bearer xxxx',
     'Bearer',
@@ -63,6 +64,25 @@ describe('Errors are reported when impossible to parse token', () => {
       expect(() => {
         tokenUtils.parseToken(item);
       }).toThrowError(/Unexpected format in authorization string/i);
+    });
+  });
+});
+
+describe('Errors reported with invalid characters in token', () => {
+  let bad_characters = "\n£$%^&*";
+  let formats = [
+    'Bearer %sAAABBBAAABBB',
+    'Bearer AAABBBAAABBB%s',
+    'Bearer AAABBB%sAAABBB',
+  ];
+  formats.forEach( f => {
+    bad_characters.split('').forEach( character => {
+      let tokenBearer = util.format(f, character);
+      it(`throws when token contains invalid character: ${tokenBearer}`, () =>{
+        expect(()=>{
+          tokenUtils.parseToken(tokenBearer);
+        }).toThrowError(/Token contains unexpected characters/i);
+      });
     });
   });
 });
