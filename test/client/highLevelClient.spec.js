@@ -221,6 +221,38 @@ describe('token bearer', () => {
         });
       });
     });
+
+    describe('Error reported with invalid characters in token', () => {
+      // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
+      let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
+      let bin = Buffer.from(enc, 'base64');
+      let configFile = `${tmpDir}/clientconf_bin.json`;
+      fse.writeFileSync(
+        configFile,
+        `{"token": "${bin.toString()}"}`
+      );
+
+      it('fails and reports when invalid chars in token file', done => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        let stdout = '';
+        let stderr = '';
+
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('');
+          expect(stderr).toMatch(/The header content contains invalid characters/i);
+          expect(code).toBe(1);
+          done();
+        });
+      });
+    });
   });
 
   describe('checking token headers', () => {

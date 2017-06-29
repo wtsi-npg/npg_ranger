@@ -79,7 +79,7 @@ Request http trailers from the server, if implemented. This will help indicate i
 ------------------
 
 Output all logging messages up to and including the given priority level.
-Known levels:   
+Known levels:
 
 - debug
 - info
@@ -94,7 +94,10 @@ Provide the path to an npg_sentry authorisation token, inside a JSON file of the
 ::
 
   { "token": "abcdefghijkl...xyz" }
-  
+
+The token itself must be a string of ISO/IEC-8859-1 characters an error will
+be thrown otherwise.
+
 --with_ca <path>
 ----------------
 
