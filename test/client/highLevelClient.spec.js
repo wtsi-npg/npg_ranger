@@ -540,7 +540,7 @@ describe('Running with ranger server with a', () => {
         let hash = crypto.createHash('md5');
         let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
         let client = spawn('bin/client.js', [
-          `http://localhost:${SERV_PORT}/ga4gh/v.0.1/get/sample/ABC123456`
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
         ]);
         bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());

@@ -14,6 +14,8 @@ const utils           = require('./test_utils.js');
 const ServerHttpError = require('../../lib/server/http/error');
 const trailer         = require('../../lib/server/http/trailer.js');
 
+const GA4GH_URL = '/ga4gh/sample';
+
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
 var tmpDir    = config.tempFilePath('npg_ranger_controller_test_');
@@ -539,8 +541,7 @@ describe('Redirection in json response', function() {
   const server = http.createServer();
   var socket   = tmp.tmpNameSync();
   let id       = 'EGA45678';
-  let server_path_basic = '/ga4gh/v.0.1/get/sample';
-  let server_path = server_path_basic + '/' + id;
+  let server_path = `${GA4GH_URL}/${id}`;
 
   beforeAll((done) =>  {
     fse.ensureDirSync(tmpDir);
@@ -562,20 +563,20 @@ describe('Redirection in json response', function() {
   });
 
   it('invalid url - no id - error response', function(done) {
-    http.get({socketPath: socket, path: server_path_basic}, function(response) {
+    http.get({socketPath: socket, path: GA4GH_URL}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(404);
-        expect(response.statusMessage).toEqual('URL not found : ' + server_path_basic);
+        expect(response.statusMessage).toEqual('URL not found : ' + GA4GH_URL);
         done();
       });
     });
   });
 
   it('invalid url - no id - error response', function(done) {
-    let path = server_path_basic + '/';
+    let path = GA4GH_URL + '/';
     http.get({socketPath: socket, path: path}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -589,7 +590,7 @@ describe('Redirection in json response', function() {
   });
 
   it('invalid sample id - error response', function(done) {
-    let path = server_path_basic + 'ERS-4556';
+    let path = GA4GH_URL + 'ERS-4556';
     http.get({socketPath: socket, path: path}, function(response) {
       var body = '';
       response.on('data', function(d) { body += d;});
@@ -914,7 +915,7 @@ describe('redirection when running behind a proxy', () => {
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
   let id              = 'EGA45678';
-  let serverPath      = '/ga4gh/v.0.1/get/sample/' + id;
+  let serverPath      = `${GA4GH_URL}/${id}`;
 
   beforeAll((done) =>  {
     fse.ensureDirSync(tmpDir);
@@ -1116,7 +1117,7 @@ describe('trailers in response', function() {
 
 describe('CORS in response', function() {
   var server;
-  let serverPath = '/ga4gh/v.0.1/get/sample/EGA45678';
+  let serverPath = `${GA4GH_URL}/EGA45678`;
   let socket = tmp.tmpNameSync();
 
   let checkHeaders = (headers, origin) => {
