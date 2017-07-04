@@ -224,8 +224,8 @@ var requestWorker = ( task, callback ) => {
       options.headers.TE = 'trailers';
     }
     if ( token ) {
-      let formatedToken = tokenUtils.formatTokenForHeader(token);
-      options.headers[TOKEN_BEARER_KEY_NAME] = formatedToken;
+      let formattedToken = tokenUtils.formatTokenForHeader(token);
+      options.headers[TOKEN_BEARER_KEY_NAME] = formattedToken;
     }
     let req = request(options);
     req.on('error', ( err ) => {
