@@ -13,7 +13,7 @@ describe('Errors reported with wrong parameters', () => {
     1
   ];
   bad_params.forEach( item => {
-    it(`throws with wrong parameter type '${item}' `, () => {
+    it(`parseToken throws with wrong parameter type '${item}' `, () => {
       expect(() => {
         tokenUtils.parseToken(item);
       }).toThrowError(/String parameter is required/i);
@@ -21,7 +21,7 @@ describe('Errors reported with wrong parameters', () => {
   });
 
   bad_params.forEach( item => {
-    it(`throws with wrong parameter type '${item}' `, () => {
+    it(`formatTokenForHeader throws with wrong parameter type '${item}' `, () => {
       expect(() => {
         tokenUtils.formatTokenForHeader(item);
       }).toThrowError(/String parameter is required/i);
