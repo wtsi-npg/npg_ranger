@@ -74,7 +74,7 @@ module.exports = function(grunt) {
         customReporters: []
       },
       'config_tests': {
-        specs: [ "test/config.spec.js" ]
+        specs: [ "test/*.js" ]
       },
       'server_tests': {
         // target specific options
