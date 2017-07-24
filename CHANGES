@@ -24,6 +24,7 @@ LIST OF CHANGES for npg_ranger project
     - client formats token string as 'Bearer XXX'
     - server expects token under 'authorization' header (lowercase)
     - server tries to parse token string from 'Bearer XXX' 
+  - drop official support for node 4.x
 
 release 1.4.1
   - update database entries in docker for public data

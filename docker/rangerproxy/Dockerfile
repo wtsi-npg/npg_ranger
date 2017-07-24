@@ -1,7 +1,7 @@
 FROM httpd:2.4.23
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
-ENV NODE_VERSION=4.5.0 \
+ENV NODE_VERSION=6.10.3 \
     NPG_RANGER_VERSION=1.0.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
