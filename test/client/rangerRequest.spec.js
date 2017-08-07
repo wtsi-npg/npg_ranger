@@ -4,7 +4,8 @@
 
 const http = require('http');
 
-const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
+const RR = require('../../lib/client/rangerRequest');
+const RangerRequest = RR.RangerRequest;
 
 describe('Testing RangerRequest public functions', () => {
   it('open parameters', ( done ) => {
@@ -25,6 +26,57 @@ describe('Testing RangerRequest public functions', () => {
     var req = new RangerRequest();
     expect(() => {req.send();}).toThrowError(/The object state must be OPENED/);
     done();
+  });
+});
+
+describe('Testing parsing of content type', () => {
+  it('returns expected for non json', () => {
+    [
+      'text/html',
+      'application/javascript',
+      'application/octet-stream'
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: false,
+        version: null
+      }));
+    });
+  });
+
+  it('returns json for json responses', () => {
+    [
+      'application/json',
+      'application/something+json',
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: true,
+        version: null
+      }));
+    });
+  });
+
+  it('returns content type and version when possible', () => {
+    [
+      'application/vnd.ga4gh.htsget.v1.0.0-rc+json',
+      'application/vnd.ga4gh.htsget.v1.0.0+json',
+      'application/vnd.ga4gh.htsget.v1.0rc+json'
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: true
+      }));
+      expect(parsed.version).toMatch(/v1.*/);
+    });
+  });
+
+  it('can parse version correctly', () => {
+    ['v1.0.0-rc', 'v1.0.0', 'v1.0rc'].forEach( version => {
+      let header = `application/vnd.ga4gh.htsget.${version}+json`;
+      let parsed = RR.parseContentType(header);
+      expect(parsed.version).toBe(version);
+    });
   });
 });
 
