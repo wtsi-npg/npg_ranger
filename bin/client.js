@@ -240,7 +240,13 @@ var requestWorker = ( task, callback ) => {
         let contentType = res.headers['content-type'];
         contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
                                                           : '';
-        if ( contentType.startsWith('application/json') ) {
+        let parsedContentType = rangerRequest.parseContentType(contentType);
+        if ( parsedContentType.json ) {
+          if ( parsedContentType.version && !rangerRequest.supportedVersion(parsedContentType.version) ) {
+            LOGGER.warn(
+              `Unsupported streaming specification version in server response: ${parsedContentType.version}`
+            );
+          }
           try {
             let body = '';
             res.on('data', (data) => {
