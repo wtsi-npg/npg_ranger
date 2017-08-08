@@ -6,7 +6,10 @@
   "homepage": "https://github.com/wtsi-npg/npg_ranger",
   "license": "SEE LICENSE IN LICENSE",
   "private": false,
-  "engines": { "node" : ">=4.5.0" },
+  "engines": {
+    "node" : ">=6.10.3",
+    "npm": ">=3.10.10"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wtsi-npg/npg_ranger"
@@ -62,6 +65,7 @@
     "js-md5" :       "0.4.2",
     "http-shutdown": "1.2.0",
     "request":       "2.81.0",
+    "semver": "5.3.0",
     "send":          "0.15.3"
   },
   "devDependencies": {

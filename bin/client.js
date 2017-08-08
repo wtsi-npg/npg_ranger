@@ -12,6 +12,7 @@ const request = require('request');
 const LOGGER        = require('../lib/logsetup.js');
 const rangerRequest = require('../lib/client/rangerRequest');
 const trailer       = require('../lib/server/http/trailer.js');
+const tokenUtils    = require('../lib/token_utils');
 const uriUtils      = require('../lib/client/uriUtils.js');
 const constants     = require('../lib/constants');
 
@@ -97,6 +98,7 @@ const constants     = require('../lib/constants');
  */
 
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
+const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
 cline
   .version(require('../package.json').version)
@@ -174,10 +176,10 @@ if ( token_config ) {
   try {
     let token_path = path.resolve(process.env.PWD, token_config);
     tokenContentConfig = JSON.parse(fs.readFileSync(token_path));
-    if ( !tokenContentConfig.hasOwnProperty(TOKEN_BEARER_KEY_NAME) ) {
+    if ( !tokenContentConfig.hasOwnProperty(TOKEN_CONFIG_KEY_NAME) ) {
       throw(new Error('cannot find token key in configuration'));
     }
-    token = tokenContentConfig[TOKEN_BEARER_KEY_NAME];
+    token = tokenContentConfig[TOKEN_CONFIG_KEY_NAME];
     LOGGER.info(`With token sourced from ${token_path}`);
   } catch ( e ) {
     exitWithError(`parsing configuration file ${e}`);
@@ -222,7 +224,8 @@ var requestWorker = ( task, callback ) => {
       options.headers.TE = 'trailers';
     }
     if ( token ) {
-      options.headers[TOKEN_BEARER_KEY_NAME] = token;
+      let formattedToken = tokenUtils.formatTokenForHeader(token);
+      options.headers[TOKEN_BEARER_KEY_NAME] = formattedToken;
     }
     let req = request(options);
     req.on('error', ( err ) => {
@@ -237,7 +240,13 @@ var requestWorker = ( task, callback ) => {
         let contentType = res.headers['content-type'];
         contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
                                                           : '';
-        if ( contentType.startsWith('application/json') ) {
+        let parsedContentType = rangerRequest.parseContentType(contentType);
+        if ( parsedContentType.json ) {
+          if ( parsedContentType.version && !rangerRequest.supportedVersion(parsedContentType.version) ) {
+            LOGGER.warn(
+              `Unsupported streaming specification version in server response: ${parsedContentType.version}`
+            );
+          }
           try {
             let body = '';
             res.on('data', (data) => {

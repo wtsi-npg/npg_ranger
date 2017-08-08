@@ -610,7 +610,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -628,7 +630,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -646,7 +650,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -664,7 +670,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -682,7 +690,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -700,7 +710,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -719,7 +731,9 @@ describe('Redirection in json response', function() {
         var body = '';
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
-          expect(response.headers['content-type']).toEqual('application/json');
+          expect(response.headers['content-type']).toMatch(
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+          );
           expect(response.statusCode).toBe(200);
           expect(response.statusMessage).toBe(
             'OK, see redirection instructions in the body of the message');
@@ -739,7 +753,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
@@ -757,7 +773,9 @@ describe('Redirection in json response', function() {
       var body = '';
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
-        expect(response.headers['content-type']).toEqual('application/json');
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');

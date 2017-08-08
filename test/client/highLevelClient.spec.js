@@ -17,6 +17,7 @@ const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 const constants     = require('../../lib/constants');
 
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
+const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -220,6 +221,38 @@ describe('token bearer', () => {
         });
       });
     });
+
+    describe('Error reported with invalid characters in token', () => {
+      // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
+      let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
+      let bin = Buffer.from(enc, 'base64');
+      let configFile = `${tmpDir}/clientconf_bin.json`;
+      fse.writeFileSync(
+        configFile,
+        `{"token": "${bin.toString()}"}`
+      );
+
+      it('fails and reports when invalid chars in token file', done => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        let stdout = '';
+        let stderr = '';
+
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('');
+          expect(stderr).toMatch(/The header content contains invalid characters/i);
+          expect(code).toBe(1);
+          done();
+        });
+      });
+    });
   });
 
   describe('checking token headers', () => {
@@ -258,7 +291,7 @@ describe('token bearer', () => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -268,7 +301,8 @@ describe('token bearer', () => {
       server.on('request', (req, res) => {
         let headers = req.headers;
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
         expect(headers).toEqual(jasmine.objectContaining(myHeader));
         res.end();
         done();
@@ -287,7 +321,7 @@ describe('token bearer', () => {
       let totalReqs = 0;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -301,7 +335,8 @@ describe('token bearer', () => {
         totalReqs += 1;
 
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
 
         expect(headers).toEqual(jasmine.objectContaining(myHeader));
 
