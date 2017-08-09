@@ -1,4 +1,4 @@
-FROM httpd:2.4.23
+FROM httpd:2.4.27
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 ENV NODE_VERSION=6.10.3 \

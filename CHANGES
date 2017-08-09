@@ -27,6 +27,7 @@ LIST OF CHANGES for npg_ranger project
   - drop official support for node 4.x
   - update content-type to match spec
   - client warns on unsupported versions of json from server
+  - switch to httpd:2.4.27 for base container for proxy
 
 release 1.4.1
   - update database entries in docker for public data
