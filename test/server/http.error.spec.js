@@ -86,8 +86,10 @@ describe('set error response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(JSON.parse(body)).toEqual({
-          error:   "NotFound",
-          message: "file XX not found"
+          htsget: {
+            error:   "NotFound",
+            message: "file XX not found"
+          }
         });
         expect(response.statusCode).toBe(404);
         expect(response.statusMessage).toBe('file XX not found');

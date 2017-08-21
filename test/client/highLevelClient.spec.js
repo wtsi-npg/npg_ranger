@@ -343,12 +343,14 @@ describe('token bearer', () => {
         if ( /json/.test(r1.pathname) ) {
           res.writeHead(200, {'Content-Type': 'application/json'});
           res.end(JSON.stringify({
-            format: "BAM",
-            urls: [{
-              url: `http://localhost:${SERV_PORT}/data?value=1`
-            }, {
-              url: `http://localhost:${SERV_PORT}/data?value=2`
-            }]
+            htsget: {
+              format: "BAM",
+              urls: [{
+                url: `http://localhost:${SERV_PORT}/data?value=1`
+              }, {
+                url: `http://localhost:${SERV_PORT}/data?value=2`
+              }]
+            }
           }));
         } else {
           res.end(r1.query.value);

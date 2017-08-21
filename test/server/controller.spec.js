@@ -95,8 +95,10 @@ describe('set data truncation', () => {
       response.on('end', () => {
         expect(response.statusCode).toEqual(404);
         let jsonbody = JSON.parse(body);
-        expect(jsonbody.error).toEqual('NotFound');
-        expect(jsonbody.message).toEqual('Not Found');
+        expect(jsonbody.htsget).toBeDefined();
+        let htsget = jsonbody.htsget;
+        expect(htsget.error).toEqual('NotFound');
+        expect(htsget.message).toEqual('Not Found');
         expect(response.rawTrailers).toEqual([]);
         done();
       });
@@ -254,8 +256,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(401);
         expect(response.statusMessage).toEqual('Proxy authentication required');
         expect(JSON.parse(body)).toEqual({
-          error:   "InvalidAuthentication",
-          message: "Proxy authentication required"
+          htsget: {
+            error:   "InvalidAuthentication",
+            message: "Proxy authentication required"
+          }
          });
         done();
       });
@@ -280,8 +284,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
         expect(JSON.parse(body)).toEqual({
-          error:   "NotFound",
-          message: "URL not found : /invalid"
+          htsget:{
+            error:   "NotFound",
+            message: "URL not found : /invalid"
+          }
         });
         done();
       });
@@ -304,8 +310,10 @@ describe('Handling requests - error responses', function() {
         expect(response.statusCode).toEqual(404);
         expect(response.statusMessage).toEqual('URL not found : /invalid');
         expect(JSON.parse(body)).toEqual({
-          error:   "NotFound",
-          message: "URL not found : /invalid"
+          htsget: {
+            error:   "NotFound",
+            message: "URL not found : /invalid"
+          }
         });
         done();
       });
@@ -330,8 +338,10 @@ describe('Handling requests - error responses', function() {
         let m = "Invalid request: multiple values for attribute 'attr1'";
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   ServerHttpError.INVALID_INPUT,
-          message: m
+          htsget: {
+            error:   ServerHttpError.INVALID_INPUT,
+            message: m
+          }
         });
         done();
       });
@@ -355,8 +365,10 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: sample accession number should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   ServerHttpError.INVALID_INPUT,
-          message: m
+          htsget: {
+            error:   ServerHttpError.INVALID_INPUT,
+            message: m
+          }
         });
         done();
       });
@@ -379,8 +391,10 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: file name should be given';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   ServerHttpError.INVALID_INPUT,
-          message: m
+          htsget: {
+            error:   ServerHttpError.INVALID_INPUT,
+            message: m
+          }
         });
         done();
       });
@@ -408,8 +422,10 @@ describe('Handling requests - error responses', function() {
         let m = 'Invalid request: cannot produce VCF files while multiref set on server';
         expect(response.statusMessage).toEqual(m);
         expect(JSON.parse(body)).toEqual({
-          error:   ServerHttpError.INVALID_INPUT,
-          message: m
+          htsget: {
+            error:   ServerHttpError.INVALID_INPUT,
+            message: m
+          }
         });
         done();
       });
@@ -617,7 +633,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -637,7 +658,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=CRAM`;
-        expect(JSON.parse(body)).toEqual({format: 'CRAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'CRAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -657,7 +683,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -677,7 +708,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A4`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -697,7 +733,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-4`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -717,7 +758,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -739,7 +785,12 @@ describe('Redirection in json response', function() {
             'OK, see redirection instructions in the body of the message');
           let formatUpperCase = value.toUpperCase();
           let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-400`;
-          expect(JSON.parse(body)).toEqual({format: `${formatUpperCase}`, urls: [{'url': url}]});
+          expect(JSON.parse(body)).toEqual({
+            htsget: {
+              format: `${formatUpperCase}`,
+              urls: [{'url': url}]
+            }
+          });
           done();
         });
       });
@@ -760,7 +811,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM&target=0&manual_qc=&alignment_not=undef`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -780,7 +836,12 @@ describe('Redirection in json response', function() {
         expect(response.statusMessage).toEqual(
           'OK, see redirection instructions in the body of the message');
         let url = `http://localhost/sample?accession=${id}&format=BAM`;
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -796,7 +857,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toBe(
           "'referenceName' attribute requered if 'start' or 'end' attribute is given");
         done();
@@ -814,7 +876,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           "'5.5' is not an integer");
         done();
@@ -832,7 +895,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
         done();
       });
@@ -849,7 +913,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'foo' is not an integer");
         done();
       });
@@ -866,7 +931,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
         done();
       });
@@ -883,7 +949,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           'Range end should be bigger than start');
         done();
@@ -901,7 +968,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
         expect(response.statusMessage).toEqual(
           'Invalid character in reference name chr@1');
         done();
@@ -919,7 +987,8 @@ describe('Redirection in json response', function() {
         checkGenericErrorResponse(expect, response);
         expect(response.statusCode).toEqual(400);
         let errorPayload = JSON.parse(body);
-        expect(errorPayload.error).toEqual(ServerHttpError.UNSUPPORTED_FORMAT);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toEqual(ServerHttpError.UNSUPPORTED_FORMAT);
         expect(response.statusMessage).toEqual(
           "Format 'fa' is not supported, supported formats: BAM, CRAM, SAM, VCF");
         done();
@@ -1022,7 +1091,12 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(200);
       res.on('data', (d) => { body += d;});
       res.on('end', () => {
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
@@ -1042,7 +1116,11 @@ describe('redirection when running behind a proxy', () => {
       expect(res.statusCode).toEqual(200);
       res.on('data', (d) => { body += d;});
       res.on('end', () => {
-        expect(JSON.parse(body)).toEqual({format: 'BAM', urls: [{'url': url}]});
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM', urls: [{'url': url}]
+          }
+        });
         done();
       });
     });
