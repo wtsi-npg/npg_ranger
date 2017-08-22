@@ -21,7 +21,7 @@ Running
 
 2. Ensure you have bioinformatics tools in path
 
-   2.1 samtools v1.4.1 or higher
+   2.1 samtools v1.5 or higher
 
    2.2 biobambam v2.0.50
 
