@@ -3,7 +3,7 @@ This directory contains a collection of Dockerfiles, scripts, and a
 docker-compose.yml which will allow you to quickly set up a working ranger
 server.
 
-This configuration is working with npg_ranger v1.4.0 in the ranger container. It
+This configuration is working with npg_ranger v2.0.0 in the ranger container. It
 includes proof of concept Dockerfiles and docker-compose.yml to bring up a
 mongodb container, an npg_ranger container and an apache container to act as a
 reverse proxy.

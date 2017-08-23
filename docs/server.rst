@@ -175,19 +175,19 @@ If installed globally
 ::
 
  #on the default socket /tmp/${USER}/npg_ranger.sock
- npg_ranger_server.js
+ npg_ranger_server
 
  #on a custom socket
- npg_ranger_server.js /tmp/my.sock
+ npg_ranger_server /tmp/my.sock
 
  #on a custom port 9447
- npg_ranger_server.js 9447
+ npg_ranger_server 9447
 
  #on a custom port and skip authentication
- npg_ranger_server.js -p PORT -s
+ npg_ranger_server -p PORT -s
 
  #changing time to wait before killing child processes
- npg_ranger_server.js -g SECONDS
+ npg_ranger_server -g SECONDS
 
 
 EXAMPLES AND COMPATIBLE CLIENTS
@@ -261,9 +261,9 @@ Setting up the server
 
 ::
 
- wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.18.tar.gz
- tar -xzvf httpd-2.4.18.tar.gz
- cd httpd-2.4.18
+ wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.27.tar.gz
+ tar -xzvf httpd-2.4.27.tar.gz
+ cd httpd-2.4.27
  ./configure --enable-load-all-modules --prefix=${HOME}/apache_build
  make
  make install

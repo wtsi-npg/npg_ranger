@@ -2,7 +2,6 @@ FROM httpd:2.4.27
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 ENV NODE_VERSION=6.10.3 \
-    NPG_RANGER_VERSION=1.0.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
