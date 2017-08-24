@@ -34,6 +34,11 @@ release 2.0.0
     - httpd@2.4.27
     - npg_ranger@2.0.0
 
+release 1.4.2
+  - fix not showing errors when next process in pipe closes
+  - fix bug premature end of output stream when piping to output and end of
+    stream in input (response)
+
 release 1.4.1
   - update database entries in docker for public data
   - update ranger Dockerfile to upgrade ranger docker to
