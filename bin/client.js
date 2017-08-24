@@ -197,6 +197,10 @@ if ( token_config ) {
 }
 
 output.on('error', ( err ) => {
+  if (err.code == "EPIPE") {
+    // next process in the pipe closed e.g. samtools printing only headers
+    process.exit(0);
+  }
   exitWithError( err );
 });
 

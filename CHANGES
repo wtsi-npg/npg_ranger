@@ -1,6 +1,7 @@
 LIST OF CHANGES for npg_ranger project
 
 release 1.4.2
+  - fix not showing errors when next process in pipe closes
   - fix bug premature end of output stream when piping to output and end of
     stream in input (response)
 
