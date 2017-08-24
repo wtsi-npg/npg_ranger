@@ -172,6 +172,12 @@ if ( cline.args.length === 2 ) {
   });
   output.pipe(fileoutput);
 } else {
+  process.stdout.on('error', err => {
+    if (err.code == "EPIPE") {
+      // next process in the pipe closed e.g. samtools printing only headers
+      process.exit(0);
+    }
+  });
   output.pipe(process.stdout);
 }
 
@@ -197,10 +203,6 @@ if ( token_config ) {
 }
 
 output.on('error', ( err ) => {
-  if (err.code == "EPIPE") {
-    // next process in the pipe closed e.g. samtools printing only headers
-    process.exit(0);
-  }
   exitWithError( err );
 });
 
