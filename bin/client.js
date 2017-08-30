@@ -5,6 +5,8 @@ const assert = require('assert');
 const fs     = require('fs');
 const path   = require('path');
 
+const PassThrough = require('stream').PassThrough;
+
 const cline   = require('commander');
 const async   = require("async");
 const request = require('request');
@@ -32,6 +34,11 @@ const constants     = require('../lib/constants');
  */
 
 /**
+ * @external stream
+ * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/stream.html|}
+ */
+
+/**
  * @external async
  * @see      {@link https://www.npmjs.com/package/async|async}
  */
@@ -51,6 +58,7 @@ const constants     = require('../lib/constants');
  *
  * @requires {@link external:fs|fs}
  * @requires {@link external:path|path}
+ * @requires {@link external:stream|stream}
  * @requires {@link external:commander|commander}
  * @requires {@link module:logsetup|logsetup}
  *
@@ -156,14 +164,21 @@ LOGGER.level = cline.loglevel;
 var ca_file = cline.with_ca;
 
 var url = cline.args[0];
-var output;
+var output = new PassThrough();
 if ( cline.args.length === 2 ) {
-  output = fs.createWriteStream(cline.args[1], {
+  var fileoutput = fs.createWriteStream(cline.args[1], {
     flags:     'w',
     autoClose: true
   });
+  output.pipe(fileoutput);
 } else {
-  output = process.stdout;
+  process.stdout.on('error', err => {
+    if (err.code == "EPIPE") {
+      // next process in the pipe closed e.g. samtools printing only headers
+      process.exit(0);
+    }
+  });
+  output.pipe(process.stdout);
 }
 
 var exitWithError = (message) => {
@@ -258,6 +273,7 @@ var requestWorker = ( task, callback ) => {
 
               q.drain = () => {
                 LOGGER.debug('All items have been processed in internal queue');
+                output.end();
               };
 
               q.pause(); // To prevent run condition adding tasks vs processing queue
@@ -303,7 +319,7 @@ var requestWorker = ( task, callback ) => {
             }
             callback();
           });
-          res.pipe(output);
+          res.pipe(output, { end: false });
         }
       } else {
         let code = res.statusCode;
