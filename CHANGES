@@ -33,6 +33,7 @@ release 2.0.0
   - update ranger Dockerfile to upgrade ranger docker to
     - httpd@2.4.27
     - npg_ranger@2.0.0
+  - mark support for version ~1.0.0 of spec
 
 release 1.4.2
   - fix not showing errors when next process in pipe closes
