@@ -95,6 +95,29 @@ in the database, the root path should be provided in the startup configuration.
  # as parameter
  bin/server.js -r "/path_to_ref_root/"
 
+It is possible to use ssl connections to the mongo server (if the server is
+configured to support them). Modify the mongodb url passing options for ssl
+and certificate checking.
+
+::
+ 
+ If working with a self signed certificate in the mongo server
+
+ "mongourl": "mongodb://<server>:<port>/imetacache?ssl=true&sslValidate=false"
+
+ If using a certificate signed by a know CA
+
+ "mongourl": "mongodb://<server>:<port>/imetacache?ssl=true"
+
+If using a *CA* which is not installed in the system trust store, it is possible
+to let node know that extra certificates can be found in a specific ``pem`` 
+file by setting an enviroment variable, see `node cli documentation 
+<https://nodejs.org/api/cli.html#cli_node_extra_ca_certs_file>`_.
+
+::
+
+ export NODE_EXTRA_CA_CERTS=/<path-to>/CA.pem
+
 Running a secure server using HTTPS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
