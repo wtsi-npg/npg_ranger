@@ -9,12 +9,15 @@ const fse     = require('fs-extra');
 const tmp     = require('tmp');
 const RangerController = require('../../lib/server/controller.js');
 const config  = require('../../lib/config.js');
+const constants = require('../../lib/constants.js');
+const tokenUtils = require('../../lib/token_utils.js');
 
 const utils           = require('./test_utils.js');
 const ServerHttpError = require('../../lib/server/http/error');
 const trailer         = require('../../lib/server/http/trailer.js');
 
-const GA4GH_URL = '/ga4gh/sample';
+const GA4GH_URL       = '/ga4gh/sample';
+const GA4GH_TOKEN_URL = '/authtoken' + GA4GH_URL;
 
 // Create temp dir here so it is available for all tests.
 // Use this dir as a default dir that will be available in all.
@@ -547,6 +550,73 @@ describe('Sample reference', () => {
         expect(response.statusMessage).toEqual(
           `No files for sample accession ${missingAcc}`
         );
+        done();
+      });
+    });
+  });
+});
+
+describe('Redirection with token in json response', () => {
+  const server = http.createServer();
+  var socket   = tmp.tmpNameSync();
+  let id       = 'EGA45678';
+  let server_path = `${GA4GH_TOKEN_URL}/${id}`;
+
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(() => {
+      return { tempdir: tmpDir };
+    });
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  afterAll( () => {
+    server.close();
+    utils.removeSocket(socket);
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
+  });
+
+  it('successful redirection with token', function(done) {
+    let my_token = 'XXXYYYXXX';
+    let headers  = {};
+    headers[
+      constants.TOKEN_BEARER_KEY_NAME
+    ] = tokenUtils.formatTokenForHeader(my_token);
+    http.get(
+      { socketPath: socket,
+        path: server_path,
+        headers: headers
+      }, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toMatch(
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=BAM`;
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [
+              {
+                'url': url,
+                'headers': {
+                  'Authorization': `Bearer ${my_token}`
+                }
+              }
+            ]
+          }
+        });
         done();
       });
     });
