@@ -238,8 +238,8 @@ var requestWorker = ( task, callback ) => {
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-    if ( token ) {
-      let formattedToken = tokenUtils.formatTokenForHeader(token);
+    if ( task.token ) {
+      let formattedToken = tokenUtils.formatTokenForHeader(task.token);
       options.headers[TOKEN_BEARER_KEY_NAME] = formattedToken;
     }
     let req = request(options);
@@ -338,6 +338,9 @@ process.nextTick(() => {
     let ca_content = fs.readFileSync(ca_path).toString();
     LOGGER.info(`With CA sourced from ${ca_path}`);
     task.ca = ca_content;
+  }
+  if ( token ) {
+    task.token = token;
   }
   requestWorker(task, ( err ) => {
     if ( err ) {
