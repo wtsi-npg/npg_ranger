@@ -221,6 +221,8 @@ var requestWorker = ( task, callback ) => {
     LOGGER.debug('Processing data URI');
     try {
       let buffer = uriUtils.procDataURI( task.uri );
+      // Data uris write to output and should not close it. We expect the output
+      // to be closed only when the process finishes.
       output.write( buffer );
       callback();
     } catch ( err ) {
@@ -315,6 +317,10 @@ var requestWorker = ( task, callback ) => {
             }
             callback();
           });
+
+          // Processing individual data uris should not try to close the output
+          // stream. We expect the stream to be closed at the end of the whole
+          // process.
           res.pipe(output, { end: false });
         }
       } else {
