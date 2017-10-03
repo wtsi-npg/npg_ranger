@@ -238,10 +238,6 @@ var requestWorker = ( task, callback ) => {
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-    if ( task.token ) {
-      let formattedToken = tokenUtils.formatTokenForHeader(task.token);
-      options.headers[TOKEN_BEARER_KEY_NAME] = formattedToken;
-    }
     let req = request(options);
     req.on('error', ( err ) => {
       LOGGER.error('Error on request ' + err);
@@ -340,7 +336,9 @@ process.nextTick(() => {
     task.ca = ca_content;
   }
   if ( token ) {
-    task.token = token;
+    let headers = {};
+    headers[TOKEN_BEARER_KEY_NAME] = tokenUtils.formatTokenForHeader(token);
+    task.headers = headers;
   }
   requestWorker(task, ( err ) => {
     if ( err ) {
