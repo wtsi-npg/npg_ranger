@@ -338,21 +338,46 @@ describe('token bearer', () => {
         // Needs lowercase because header names are provided lowercase from req
         myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
 
-        expect(headers).toEqual(jasmine.objectContaining(myHeader));
-
         if ( /json/.test(r1.pathname) ) {
+          expect(headers).toEqual(jasmine.objectContaining(myHeader));
+
           res.writeHead(200, {'Content-Type': 'application/json'});
           res.end(JSON.stringify({
             htsget: {
               format: "BAM",
               urls: [{
-                url: `http://localhost:${SERV_PORT}/data?value=1`
+                url: `http://localhost:${SERV_PORT}/data?value=1`,
+                headers: {
+                  'Authorization': 'Bearer expectedtoken2'
+                }
               }, {
                 url: `http://localhost:${SERV_PORT}/data?value=2`
+              }, {
+                url: `http://localhost:${SERV_PORT}/data?value=3`,
+                headers: {
+                  'Authorization': 'Bearer expectedtoken3'
+                }
               }]
             }
           }));
         } else {
+          expect(headers).not.toEqual(jasmine.objectContaining(myHeader));
+
+          let myHeader2 = {};
+          myHeader2[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken2';
+          let myHeader3 = {};
+          myHeader3[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken3';
+
+          if (/value=1/.test(r1.path)) {
+            expect(headers).toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader3));
+          } else if (/value=3/.test(r1.path)) {
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).toEqual(jasmine.objectContaining(myHeader3));
+          } else {
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader3));
+          }
           res.end(r1.query.value);
         }
       });
@@ -371,10 +396,10 @@ describe('token bearer', () => {
           stderr += data;
         });
         client.on('close', function(code) {
-          expect(stdout).toEqual('12'); // concat data requests responses
+          expect(stdout).toEqual('123'); // concat data requests responses
           expect(stderr).toEqual('');
           expect(code).toBe(0);
-          expect(totalReqs).toBe(3);
+          expect(totalReqs).toBe(4);
           done();
         });
       });
