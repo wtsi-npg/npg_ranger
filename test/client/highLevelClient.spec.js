@@ -342,6 +342,7 @@ describe('token bearer', () => {
           expect(headers).toEqual(jasmine.objectContaining(myHeader));
 
           res.writeHead(200, {'Content-Type': 'application/json'});
+          let encoded = new Buffer('333', 'ascii').toString('base64');
           res.end(JSON.stringify({
             htsget: {
               format: "BAM",
@@ -353,9 +354,11 @@ describe('token bearer', () => {
               }, {
                 url: `http://localhost:${SERV_PORT}/data?value=2`
               }, {
-                url: `http://localhost:${SERV_PORT}/data?value=3`,
+                url: 'data:text/plain;charset=utf-8;base64,' + encoded
+              }, {
+                url: `http://localhost:${SERV_PORT}/data?value=4`,
                 headers: {
-                  'Authorization': 'Bearer expectedtoken3'
+                  'Authorization': 'Bearer expectedtoken4'
                 }
               }]
             }
@@ -366,12 +369,12 @@ describe('token bearer', () => {
           let myHeader2 = {};
           myHeader2[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken2';
           let myHeader3 = {};
-          myHeader3[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken3';
+          myHeader3[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken4';
 
           if (/value=1/.test(r1.path)) {
             expect(headers).toEqual(jasmine.objectContaining(myHeader2));
             expect(headers).not.toEqual(jasmine.objectContaining(myHeader3));
-          } else if (/value=3/.test(r1.path)) {
+          } else if (/value=4/.test(r1.path)) {
             expect(headers).not.toEqual(jasmine.objectContaining(myHeader2));
             expect(headers).toEqual(jasmine.objectContaining(myHeader3));
           } else {
@@ -396,7 +399,7 @@ describe('token bearer', () => {
           stderr += data;
         });
         client.on('close', function(code) {
-          expect(stdout).toEqual('123'); // concat data requests responses
+          expect(stdout).toEqual('123334'); // concat data requests responses
           expect(stderr).toEqual('');
           expect(code).toBe(0);
           expect(totalReqs).toBe(4);
