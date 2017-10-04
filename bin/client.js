@@ -221,6 +221,8 @@ var requestWorker = ( task, callback ) => {
     LOGGER.debug('Processing data URI');
     try {
       let buffer = uriUtils.procDataURI( task.uri );
+      // Data uris write to output and should not close it. We expect the output
+      // to be closed only when the process finishes.
       output.write( buffer );
       callback();
     } catch ( err ) {
@@ -237,10 +239,6 @@ var requestWorker = ( task, callback ) => {
     options.headers = task.headers ? task.headers : {};
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
-    }
-    if ( token ) {
-      let formattedToken = tokenUtils.formatTokenForHeader(token);
-      options.headers[TOKEN_BEARER_KEY_NAME] = formattedToken;
     }
     let req = request(options);
     req.on('error', ( err ) => {
@@ -319,6 +317,10 @@ var requestWorker = ( task, callback ) => {
             }
             callback();
           });
+
+          // Processing individual data uris should not try to close the output
+          // stream. We expect the stream to be closed at the end of the whole
+          // process.
           res.pipe(output, { end: false });
         }
       } else {
@@ -338,6 +340,11 @@ process.nextTick(() => {
     let ca_content = fs.readFileSync(ca_path).toString();
     LOGGER.info(`With CA sourced from ${ca_path}`);
     task.ca = ca_content;
+  }
+  if ( token ) {
+    let headers = {};
+    headers[TOKEN_BEARER_KEY_NAME] = tokenUtils.formatTokenForHeader(token);
+    task.headers = headers;
   }
   requestWorker(task, ( err ) => {
     if ( err ) {

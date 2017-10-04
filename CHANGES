@@ -34,6 +34,10 @@ release 2.0.0
     - httpd@2.4.27
     - npg_ranger@2.0.0
   - mark support for version ~1.0.0 of spec
+  - fix complementary bugs in token use
+    - server returns auth header for redirection
+    - client only uses token from configuration for first request
+  - remove legacy prefix/sufix code from htsget json proc
 
 release 1.4.2
   - fix not showing errors when next process in pipe closes
