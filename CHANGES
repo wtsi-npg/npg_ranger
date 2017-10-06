@@ -38,6 +38,7 @@ release 2.0.0
     - server returns auth header for redirection
     - client only uses token from configuration for first request
   - remove legacy prefix/sufix code from htsget json proc
+  - DataAccess sends access groups as array per file
 
 release 1.4.2
   - fix not showing errors when next process in pipe closes
