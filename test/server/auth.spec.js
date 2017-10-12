@@ -18,9 +18,12 @@ let PORT       = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
 let tmpDir = config.tempFilePath('npg_ranger_auth_test_');
 
 let _handle_request = ( req, res ) => {
-  let isSubset = function(arr1, arr2) {
-    return arr1.every(function(val) {
-      return arr2.indexOf(val) > -1;
+  let auth_groups = ['1', '2', '3'];
+  let test_groups = groups => {
+    return groups.every( individual_group => {
+      return individual_group.some( g_element => {
+         return auth_groups.indexOf(g_element) != -1;
+      });
     });
   };
 
@@ -36,19 +39,12 @@ let _handle_request = ( req, res ) => {
   let ok;
   req.on('end', () => {
     let reqdata = JSON.parse(body);
+    console.log(JSON.stringify(reqdata));
     if (requrl.pathname === constants.AUTH_URL_TOKEN) {
-      if (reqdata.token === 'abc' && isSubset(reqdata.groups, ['1', '2', '3'])) {
-        ok = true;
-      } else {
-        ok = false;
-      }
+      ok = (reqdata.token === 'abc' && test_groups(reqdata.groups));
       res.end(JSON.stringify({ok: ok}));
     } else if (requrl.pathname === constants.AUTH_URL_USER) {
-      if (reqdata.user === 'alice' && isSubset(reqdata.groups, ['1', '2', '3'])) {
-        ok = true;
-      } else {
-        ok = false;
-      }
+      ok = (reqdata.user === 'alice' && test_groups(reqdata.groups));
       res.end(JSON.stringify({ok: ok}));
     } else {
       res.statusCode = 404;
@@ -157,7 +153,7 @@ let create_https_server = (cert, key, ca) => {
         expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
-      da.authorise('   ', ["9", "6", "10"]);
+      da.authorise('   ', [["9"], ["6"], ["10"]]);
     });
 
     it('Authorisation failed - token is all whitespace', function(done) {
@@ -166,7 +162,7 @@ let create_https_server = (cert, key, ca) => {
         expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
-      da.authorise('   ', ["9", "6", "10"]);
+      da.authorise('   ', [["9"], ["6"], ["10"]]);
     });
 
     it('Authorisation failed - email is expected', function(done) {
@@ -176,7 +172,7 @@ let create_https_server = (cert, key, ca) => {
         expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
-      da.authorise('alice', ["9", "6", "10"]);
+      da.authorise('alice', [["9"], ["6"], ["10"]]);
     });
 
     it('Authorisation failed - email is incorrect', function(done) {
@@ -186,51 +182,85 @@ let create_https_server = (cert, key, ca) => {
         expect(reason).toMatch(/Unexpected error while processing authorisation/i);
         done();
       });
-      da.authorise('alice@boom.com', ["9", "6", "10"]);
+      da.authorise('alice@boom.com', [["9"], ["6"], ["10"]]);
     });
 
-    it('Authorisation failed - access_control_group_id value is missing', function(done) {
-      config.provide(email_conf);
-      var da = new DataAccess(constants.AUTH_TYPE_USER);
-      da.on('failed', (reason) => {
-        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
-        done();
+    [
+      [["9"], [""], ["10"]],
+      [["9"], [], ["10"]]
+    ].forEach( groups => {
+      it('Authorisation failed - access_control_group_id value is missing', function(done) {
+        config.provide(email_conf);
+        var da = new DataAccess(constants.AUTH_TYPE_USER);
+        da.on('failed', (reason) => {
+          expect(reason).toMatch(/Not authorised for those files/i);
+          done();
+        });
+        da.authorise('alice@boom.co.uk', groups);
       });
-      da.authorise('alice@boom.co.uk', ["9", "", "10"]);
     });
 
-    it('Authorised - username', function(done) {
-      config.provide(noemail_conf);
-      var da = new DataAccess(constants.AUTH_TYPE_USER);
-      da.on('authorised', () => {
-         done();
+    [
+      ['1', '2', '3'],
+      [['1'], ['2'], ['3']],
+      [['1'], '2', ['3']]
+    ].forEach( access_groups => {
+      it('Authorised - username array groups', function(done) {
+        config.provide(noemail_conf);
+        var da = new DataAccess(constants.AUTH_TYPE_USER);
+        da.on('authorised', () => {
+           done();
+        });
+        da.on('failed', (reason) => {
+          console.log(reason);
+          done.fail(reason);
+        });
+        da.authorise('alice', access_groups);
       });
-      da.on('failed', (reason) => {
-        console.log(reason);
-        done.fail(reason);
-      });
-      da.authorise('alice', ['1', '2', '3']);
     });
 
-    it('Authorised - token', function(done) {
-      var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
-      da.on('authorised', () => {
-        done();
+    [
+      ['1', '2', '3'],
+      [['1'], ['2'], ['3']],
+      [['1'], '2', ['3']]
+    ].forEach( access_groups => {
+      it('Authorised - token array groups', function(done) {
+        var da = new DataAccess(constants.AUTH_TYPE_TOKEN);
+        da.on('authorised', () => {
+          done();
+        });
+        da.on('failed', (reason) => {
+          done.fail(reason);
+        });
+        da.authorise('abc', access_groups);
       });
-      da.on('failed', (reason) => {
-        done.fail(reason);
-      });
-      da.authorise('abc', ['1', '2', '3']);
     });
 
-    it('Authorisation failed - no auth for some of the files', function(done) {
+    it('Authorisation failed - no auth for any of the files', function(done) {
       config.provide(noemail_conf);
       var da = new DataAccess(constants.AUTH_TYPE_USER);
       da.on('failed', (reason) => {
         expect(reason).toMatch(/Not authorised for those files/i);
         done();
       });
-      da.authorise('alice', ["8", "6"]);
+      da.authorise('alice', [["8"], ["6"]]);
+    });
+
+    [
+      [["1"], ["6"]],
+      ["1", ["6"]],
+      ["1", ["2"], ["6"]],
+      ["1", ["2"], "6"],
+    ].forEach( access_groups => {
+      it('Authorisation failed - no auth for some of the files', function(done) {
+        config.provide(noemail_conf);
+        var da = new DataAccess(constants.AUTH_TYPE_USER);
+        da.on('failed', (reason) => {
+          expect(reason).toMatch(/Not authorised for those files/i);
+          done();
+        });
+        da.authorise('alice', access_groups);
+      });
     });
 
     afterAll(function(done) {
@@ -305,17 +335,19 @@ describe('Validate extra properties in response', () => {
     done();
   });
 
-  it('Fails with extra properties in response', (done) => {
-    config.provide(noemail_conf);
-    var da = new DataAccess(constants.AUTH_TYPE_USER);
-    da.on('authorised', () => {
-      console.log("HERE");
-      done.fail('unexpected authorised');
+  [['1', '2', '3'], [['1'], ['2'], ['3']]].forEach( group_set  => {
+    it('Fails with extra properties in response', (done) => {
+      config.provide(noemail_conf);
+      var da = new DataAccess(constants.AUTH_TYPE_USER);
+      da.on('authorised', () => {
+        console.log("HERE");
+        done.fail('unexpected authorised');
+      });
+      da.on('failed', (reason) => {
+        expect(reason).toMatch(/Unexpected error while processing authorisation/i);
+        done();
+      });
+      da.authorise('alice', group_set);
     });
-    da.on('failed', (reason) => {
-      expect(reason).toMatch(/Unexpected error while processing authorisation/i);
-      done();
-    });
-    da.authorise('alice', ['1', '2', '3']);
   });
 });

@@ -29,9 +29,18 @@
   <div id="svgHolder"></div>
   <script>
     $( function() {
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
       var lastSearched = '';
       var webUrl       = window.location.origin;
-      var rangerUrl    = window.location.origin + '/npg_ranger/authuser';
+      var auth         = getUrlParameter('auth');
+      auth = ( auth ) ? '/' + auth : '';
+      var rangerUrl    = window.location.origin + '/npg_ranger' + auth;
 
       function showAccData ( data ) {
         var accession     = data.accession;

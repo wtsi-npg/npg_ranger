@@ -1,6 +1,7 @@
 sudo: false
 language: node_js
 node_js :
+  - "6.11.4"
   - "6.10.3"
   - "6"
 addons:
