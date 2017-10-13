@@ -42,6 +42,7 @@ release 2.0.0
   - don't try to suggest authurl when token missing because
     it may not make sense in complex configs
   - test with node 6.11.4 in travis matrix
+  - support empty mediatype in data uri
 
 release 1.4.2
   - fix not showing errors when next process in pipe closes
