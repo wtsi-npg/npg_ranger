@@ -2,13 +2,13 @@ FROM ubuntu:14.04
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=6.10.3 \
+ENV NODE_VERSION=6.11.4 \
     MONGODB_VERSION=3.2.4 \
-    HTSLIB_VERSION=1.4.1 \
-    SAMTOOLS_VERSION=1.4.1 \
+    HTSLIB_VERSION=1.5 \
+    SAMTOOLS_VERSION=1.5 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
-    NPG_RANGER_VERSION=1.4.0 \
+    NPG_RANGER_VERSION=2.0.0 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
@@ -49,7 +49,7 @@ RUN apt-get update -qq \
   && make && make install \
   && cd .. \
   && rm -rf samtools \
-  
+
 # Get Biobambam
   && wget -q "https://github.com/gt1/biobambam2/releases/download/${BIOBAMBAM_VERSION}/biobambam2-${BIOBAMBAM_VERSION}-x86_64-etch-linux-gnu.tar.gz" -O biobambam2.tar.gz \
   && tar xzf biobambam2.tar.gz -C /usr/local --strip-components=1 \
@@ -62,7 +62,7 @@ RUN apt-get update -qq \
   && make \
   && make install \
   && cd .. \
-  
+
 # Get Ranger
   && npm install -g npg_ranger@${NPG_RANGER_VERSION}
 
@@ -97,4 +97,3 @@ EXPOSE 5050
 USER apprunner
 
 CMD [ "/bin/bash" ]
-

@@ -17,6 +17,7 @@ const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
 const constants     = require('../../lib/constants');
 
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
+const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
 xdescribe('Testing external servers', () => {
   it('Success with Google', ( done ) => {
@@ -220,6 +221,38 @@ describe('token bearer', () => {
         });
       });
     });
+
+    describe('Error reported with invalid characters in token', () => {
+      // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
+      let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
+      let bin = Buffer.from(enc, 'base64');
+      let configFile = `${tmpDir}/clientconf_bin.json`;
+      fse.writeFileSync(
+        configFile,
+        `{"token": "${bin.toString()}"}`
+      );
+
+      it('fails and reports when invalid chars in token file', done => {
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        let stdout = '';
+        let stderr = '';
+
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.on('close', function(code) {
+          expect(stdout).toEqual('');
+          expect(stderr).toMatch(/The header content contains invalid characters/i);
+          expect(code).toBe(1);
+          done();
+        });
+      });
+    });
   });
 
   describe('checking token headers', () => {
@@ -258,7 +291,7 @@ describe('token bearer', () => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -268,7 +301,8 @@ describe('token bearer', () => {
       server.on('request', (req, res) => {
         let headers = req.headers;
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
         expect(headers).toEqual(jasmine.objectContaining(myHeader));
         res.end();
         done();
@@ -287,7 +321,7 @@ describe('token bearer', () => {
       let totalReqs = 0;
 
       let conf = {};
-      conf[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
 
       fse.writeFileSync(
         configFile,
@@ -301,21 +335,52 @@ describe('token bearer', () => {
         totalReqs += 1;
 
         let myHeader = {};
-        myHeader[TOKEN_BEARER_KEY_NAME] = 'expectedtoken';
-
-        expect(headers).toEqual(jasmine.objectContaining(myHeader));
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
 
         if ( /json/.test(r1.pathname) ) {
+          expect(headers).toEqual(jasmine.objectContaining(myHeader));
+
           res.writeHead(200, {'Content-Type': 'application/json'});
+          let encoded = new Buffer('333', 'ascii').toString('base64');
           res.end(JSON.stringify({
-            format: "BAM",
-            urls: [{
-              url: `http://localhost:${SERV_PORT}/data?value=1`
-            }, {
-              url: `http://localhost:${SERV_PORT}/data?value=2`
-            }]
+            htsget: {
+              format: "BAM",
+              urls: [{
+                url: `http://localhost:${SERV_PORT}/data?value=1`,
+                headers: {
+                  'Authorization': 'Bearer expectedtoken2'
+                }
+              }, {
+                url: `http://localhost:${SERV_PORT}/data?value=2`
+              }, {
+                url: 'data:text/plain;charset=utf-8;base64,' + encoded
+              }, {
+                url: `http://localhost:${SERV_PORT}/data?value=4`,
+                headers: {
+                  'Authorization': 'Bearer expectedtoken4'
+                }
+              }]
+            }
           }));
         } else {
+          expect(headers).not.toEqual(jasmine.objectContaining(myHeader));
+
+          let myHeader2 = {};
+          myHeader2[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken2';
+          let myHeader3 = {};
+          myHeader3[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken4';
+
+          if (/value=1/.test(r1.path)) {
+            expect(headers).toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader3));
+          } else if (/value=4/.test(r1.path)) {
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).toEqual(jasmine.objectContaining(myHeader3));
+          } else {
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader2));
+            expect(headers).not.toEqual(jasmine.objectContaining(myHeader3));
+          }
           res.end(r1.query.value);
         }
       });
@@ -334,10 +399,10 @@ describe('token bearer', () => {
           stderr += data;
         });
         client.on('close', function(code) {
-          expect(stdout).toEqual('12'); // concat data requests responses
+          expect(stdout).toEqual('123334'); // concat data requests responses
           expect(stderr).toEqual('');
           expect(code).toBe(0);
-          expect(totalReqs).toBe(3);
+          expect(totalReqs).toBe(4);
           done();
         });
       });
@@ -478,21 +543,31 @@ describe('Running with ranger server with a', () => {
     serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
-        let client = spawn('bin/client.js', [
-          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=SAM`]);
-        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
-        client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', ( data ) => {
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/sample?accession=ABC123456&format=SAM`
+        ]);
+        bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
-        bamseqchksum.on('exit', () => {
-          let chksums = [
-            '79cb05e3fe428da52da346e7d4f6324a',
-            '9b123c8f3a3e8a59584c2193976d1226'
-          ];
-          expect(hash.digest('hex')).toBeOneOf(chksums);
+        bamseqchksum.on('exit', ( code ) => {
           serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '79cb05e3fe428da52da346e7d4f6324a',
+              '9b123c8f3a3e8a59584c2193976d1226'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
         });
       }
     });
@@ -527,21 +602,31 @@ describe('Running with ranger server with a', () => {
     serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
-        let client = spawn('bin/client.js', [
-          `http://localhost:${SERV_PORT}/ga4gh/v.0.1/get/sample/ABC123456`]);
-        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
-        client.stdout.pipe(bamseqchksum.stdin);
         let hash = crypto.createHash('md5');
-        bamseqchksum.stdout.on('data', (data) => {
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
-        bamseqchksum.on('exit', () => {
-          let chksums = [
-            '79cb05e3fe428da52da346e7d4f6324a',
-            '9b123c8f3a3e8a59584c2193976d1226'
-          ];
-          expect(hash.digest('hex')).toBeOneOf(chksums);
+        bamseqchksum.on('exit', ( code ) => {
           serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '79cb05e3fe428da52da346e7d4f6324a',
+              '9b123c8f3a3e8a59584c2193976d1226'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
         });
       }
     });

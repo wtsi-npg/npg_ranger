@@ -2,6 +2,18 @@
 Server Manual
 #############
 
+General
+=======
+
+In a production setup the main entities on the server side are a node.js ranger server,
+an Apache httpd server acting as a reverse proxy, behind which the ranger server runs,
+and a MongoDB database that keeps metadata about location of sequencing data. All three
+are capable of handling many thousands queries simultaneously. If the number of simultaneous
+requests is not capped, the load on the underlying sequencing data storage might
+become too high. A configuration for the httpd server, supplied in this project,
+limits the number of simultaneously run queries. It can be adjusted either way
+depending on the type of underlying storage.
+
 Running
 =======
 
@@ -9,7 +21,7 @@ Running
 
 2. Ensure you have bioinformatics tools in path
 
-   2.1 samtools v1.3 or higher
+   2.1 samtools v1.5 or higher
 
    2.2 biobambam v2.0.50
 
@@ -82,6 +94,29 @@ in the database, the root path should be provided in the startup configuration.
 
  # as parameter
  bin/server.js -r "/path_to_ref_root/"
+
+It is possible to use ssl connections to the mongo server (if the server is
+configured to support them). Modify the mongodb url passing options for ssl
+and certificate checking.
+
+::
+ 
+ If working with a self signed certificate in the mongo server
+
+ "mongourl": "mongodb://<server>:<port>/imetacache?ssl=true&sslValidate=false"
+
+ If using a certificate signed by a know CA
+
+ "mongourl": "mongodb://<server>:<port>/imetacache?ssl=true"
+
+If using a *CA* which is not installed in the system trust store, it is possible
+to let node know that extra certificates can be found in a specific ``pem`` 
+file by setting an enviroment variable, see `node cli documentation 
+<https://nodejs.org/api/cli.html#cli_node_extra_ca_certs_file>`_.
+
+::
+
+ export NODE_EXTRA_CA_CERTS=/<path-to>/CA.pem
 
 Running a secure server using HTTPS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,19 +198,19 @@ If installed globally
 ::
 
  #on the default socket /tmp/${USER}/npg_ranger.sock
- npg_ranger_server.js
+ npg_ranger_server
 
  #on a custom socket
- npg_ranger_server.js /tmp/my.sock
+ npg_ranger_server /tmp/my.sock
 
  #on a custom port 9447
- npg_ranger_server.js 9447
+ npg_ranger_server 9447
 
  #on a custom port and skip authentication
- npg_ranger_server.js -p PORT -s
+ npg_ranger_server -p PORT -s
 
  #changing time to wait before killing child processes
- npg_ranger_server.js -g SECONDS
+ npg_ranger_server -g SECONDS
 
 
 EXAMPLES AND COMPATIBLE CLIENTS
@@ -190,7 +225,7 @@ There are three different url paths recognised by the server:
 
  /file?name=$NAME[&directory=$DIR]
  /sample?accession=$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&region=$REG]
- /ga4gh/v.0.1/get/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
+ /ga4gh/sample/$ACCESSION[&format={BAM,SAM,CRAM,VCF}][&referenceName=$CHR&start=$STARTPOS&end=$ENDPOS]
  # $REG is in format <referenceName>:<startLoc>-<endLoc>
 
 Each will provide a response in a different way:
@@ -199,7 +234,7 @@ Each will provide a response in a different way:
 
 /sample will search for content files with given accession, merge them, then stream the file (or specified region) in BAM format (unless overridden).
 
-/ga4gh/v.0.1/get/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
+/ga4gh/sample will provide a json response, mapping the url to a /sample url with the same accession and queries. The npg_ranger client and `our biodalliance fork`__ will automatically follow this redirect, curl and other http clients will not.
 
 .. _Biodall: https://github.com/wtsi-npg/dalliance
 
@@ -249,9 +284,9 @@ Setting up the server
 
 ::
 
- wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.18.tar.gz
- tar -xzvf httpd-2.4.18.tar.gz
- cd httpd-2.4.18
+ wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//httpd/httpd-2.4.27.tar.gz
+ tar -xzvf httpd-2.4.27.tar.gz
+ cd httpd-2.4.27
  ./configure --enable-load-all-modules --prefix=${HOME}/apache_build
  make
  make install

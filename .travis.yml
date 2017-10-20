@@ -1,7 +1,7 @@
 sudo: false
 language: node_js
 node_js :
-  - "4.5.0"
+  - "6.11.4"
   - "6"
 addons:
   apt:
@@ -18,12 +18,12 @@ env:
     - MONGODB_VERSION=3.4.3
     - FREEBAYES_VERSION="v1.1.0"
     - BIOBAMBAM_VERSION="2.0.72-release-20170316102450"
-    - HTSLIB_VERSION="1.4"
-    - SAMTOOLS1_VERSION="1.4"
+    - HTSLIB_VERSION="1.5"
+    - SAMTOOLS1_VERSION="1.5"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"
-  - npm install -g npm@3.10.10
+  - npm install -g npm@4.5.0
   - npm install -g grunt-cli
   - npm --version
   - mongo --version

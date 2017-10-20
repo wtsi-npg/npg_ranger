@@ -4,7 +4,8 @@
 
 const http = require('http');
 
-const RangerRequest = require('../../lib/client/rangerRequest').RangerRequest;
+const RR = require('../../lib/client/rangerRequest');
+const RangerRequest = RR.RangerRequest;
 
 describe('Testing RangerRequest public functions', () => {
   it('open parameters', ( done ) => {
@@ -25,6 +26,57 @@ describe('Testing RangerRequest public functions', () => {
     var req = new RangerRequest();
     expect(() => {req.send();}).toThrowError(/The object state must be OPENED/);
     done();
+  });
+});
+
+describe('Testing parsing of content type', () => {
+  it('returns expected for non json', () => {
+    [
+      'text/html',
+      'application/javascript',
+      'application/octet-stream'
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: false,
+        version: null
+      }));
+    });
+  });
+
+  it('returns json for json responses', () => {
+    [
+      'application/json',
+      'application/something+json',
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: true,
+        version: null
+      }));
+    });
+  });
+
+  it('returns content type and version when possible', () => {
+    [
+      'application/vnd.ga4gh.htsget.v1.0.0-rc+json',
+      'application/vnd.ga4gh.htsget.v1.0.0+json',
+      'application/vnd.ga4gh.htsget.v1.0rc+json'
+    ].forEach( header => {
+      let parsed = RR.parseContentType(header);
+      expect(parsed).toEqual(jasmine.objectContaining({
+        json: true
+      }));
+      expect(parsed.version).toMatch(/v1.*/);
+    });
+  });
+
+  it('can parse version correctly', () => {
+    ['v1.0.0-rc', 'v1.0.0', 'v1.0rc'].forEach( version => {
+      let header = `application/vnd.ga4gh.htsget.${version}+json`;
+      let parsed = RR.parseContentType(header);
+      expect(parsed.version).toBe(version);
+    });
   });
 });
 
@@ -218,9 +270,11 @@ const procjson = require('../../lib/client/rangerRequest').procJSON;
 describe('JSON processing', () => {
   describe('Positives', () => {
     let json = JSON.stringify({
-      format: 'BAM',
-      urls:   [],
-      md5:    'randommd5'
+      htsget: {
+        format: 'BAM',
+        urls:   [],
+        md5:    'randommd5'
+      }
     });
 
     it('returns empty lists when there are no urls', () => {
@@ -237,7 +291,7 @@ describe('JSON processing', () => {
 
     it('returns individual uris for each element in json', () =>{
       let json2 = JSON.parse(json);
-      json2.urls = [ {url:'url1'}, {url:'url2'}, {url:'url3'} ];
+      json2.htsget.urls = [ {url:'url1'}, {url:'url2'}, {url:'url3'} ];
       let res = procjson(JSON.stringify(json2));
       expect(res.uris).toBeDefined();
       expect(res.uris.length).toEqual(3);
@@ -248,7 +302,7 @@ describe('JSON processing', () => {
 
     it('returns an uri with headers', () => {
       let json2 = JSON.parse(json);
-      json2.urls = [{
+      json2.htsget.urls = [{
         url:'url1',
         headers: {
           "Range":         "bytes=0-1023",
@@ -270,10 +324,31 @@ describe('JSON processing', () => {
   });
 
   describe('Fails', () => {
+    describe('Missing htsget root element in JSON', () => {
+      it('complains when there is missing "htsget" root element missing', () => {
+        let json = JSON.stringify({
+          format: 'BAM',
+          urls: [{
+            url: 'url1',
+            headers: {
+              "Range":         "bytes=0-1023",
+              "Authorization": "Bearer xxxx"
+            }
+          }],
+          md5: 'randommd5'
+        });
+        expect(() => {
+          procjson(json);
+        }).toThrowError(/^Malformed JSON redirect, missing "htsget" as root field/);
+      });
+    });
+
     describe('Malformed urls', () => {
       it('complains about malformed urls field', () => {
         let json = JSON.stringify({
-          urls: [ 'something' ]
+          htsget: {
+            urls: [ 'something' ]
+          }
         });
         expect(() => {
           procjson(json);
@@ -281,7 +356,9 @@ describe('JSON processing', () => {
       });
       it('complains about empty objects in urls', () => {
         let json = JSON.stringify({
-          urls: [{}]
+          htsget: {
+            urls: [{}]
+          }
         });
         expect(() => {
           procjson(json);
@@ -289,12 +366,14 @@ describe('JSON processing', () => {
       });
       it('complains when only headers', () => {
         let json = JSON.stringify({
-          urls: [{
-            headers: {
-              "Range":         "bytes=0-1023",
-              "Authorization": "Bearer xxxx"
-            }
-          }]
+          htsget: {
+            urls: [{
+              headers: {
+                "Range":         "bytes=0-1023",
+                "Authorization": "Bearer xxxx"
+              }
+            }]
+          }
         });
         expect(() => {
           procjson(json);

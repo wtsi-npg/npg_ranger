@@ -5,12 +5,9 @@
 
 ## Introduction
 
-This project is a contribution towards development of the streaming API and servers under the
+This project is a contribution towards development of the streaming API under the
 [GA4GH](http://ga4gh.org) initiative (GA4GH Directory API and Streaming). The project has
-both a server and a compatible http client.
-
-The server conforms to as yet unpublished at the time of writing GA4GH API. It uses
-the http transfer encoding protocol to stream sequencing data.
+a server and a compatible command-line http client; both conform to [GA4GH API](https://github.com/samtools/hts-specs/blob/master/htsget.md)
 
 ## Package structure
 
@@ -18,8 +15,14 @@ the http transfer encoding protocol to stream sequencing data.
  bin - node.js scripts, server and client
  lib - application libraries
  test - tests
+ docker - scripts for deploying a server in docker containers in a cloud 
  docs - technical manuals
  docs/api - generated API (run "grunt doc" to generate)
  package.json - npm package definition
  Gruntfile.js - grunt runner specification
 ```
+
+# Related projects
+
+ - OAuth2 authorization server https://github.com/wtsi-npg/npg_sentry
+ - GA4GH-compatible genome browser (biodalliance) extension https://github.com/wtsi-npg/dalliance

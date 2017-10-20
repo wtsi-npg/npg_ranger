@@ -17,6 +17,19 @@ describe('Testing processing data URIs', () => {
   });
 });
 
+describe('Testing processing data URIs with no mediatype', () => {
+  let expected = 'some data';
+  let encoded = new Buffer(expected, 'ascii').toString('base64');
+  let dataURI = 'data:;base64,' + encoded;
+
+  it('can get buffer from base64 data URI', () => {
+    let buffer = uriUtils.procDataURI(dataURI);
+    expect(typeof buffer).toEqual('object');
+    expect(buffer instanceof Buffer).toBe(true);
+    expect(buffer.toString()).toEqual(expected);
+  });
+});
+
 describe('Fails with missing or unknown encoding', () => {
   let wrongURIs = [
     'data:text/plain;charset=utf-8;unknown,xxxx',

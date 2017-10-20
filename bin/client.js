@@ -14,27 +14,28 @@ const request = require('request');
 const LOGGER        = require('../lib/logsetup.js');
 const rangerRequest = require('../lib/client/rangerRequest');
 const trailer       = require('../lib/server/http/trailer.js');
+const tokenUtils    = require('../lib/token_utils');
 const uriUtils      = require('../lib/client/uriUtils.js');
 const constants     = require('../lib/constants');
 
 /**
  * @external assert
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/assert.html|assert}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/assert.html|assert}
  */
 
 /**
  * @external fs
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/fs.html|fs}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/fs.html|fs}
  */
 
 /**
  * @external path
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/path.html|path}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/path.html|path}
  */
 
 /**
  * @external stream
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/stream.html|}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/stream.html|}
  */
 
 /**
@@ -101,12 +102,11 @@ const constants     = require('../lib/constants');
  * design. Therefore, circular references in <em>JSON</em> resources will
  * produce infinite (or very large number of) requests to the resources.</p>
  *
- * @author Marina Gourtovaia
- * @author Jaime Tovar
  * @copyright Genome Research Limited 2017
  */
 
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
+const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
 cline
   .version(require('../package.json').version)
@@ -172,6 +172,12 @@ if ( cline.args.length === 2 ) {
   });
   output.pipe(fileoutput);
 } else {
+  process.stdout.on('error', err => {
+    if (err.code == "EPIPE") {
+      // next process in the pipe closed e.g. samtools printing only headers
+      process.exit(0);
+    }
+  });
   output.pipe(process.stdout);
 }
 
@@ -185,10 +191,10 @@ if ( token_config ) {
   try {
     let token_path = path.resolve(process.env.PWD, token_config);
     tokenContentConfig = JSON.parse(fs.readFileSync(token_path));
-    if ( !tokenContentConfig.hasOwnProperty(TOKEN_BEARER_KEY_NAME) ) {
+    if ( !tokenContentConfig.hasOwnProperty(TOKEN_CONFIG_KEY_NAME) ) {
       throw(new Error('cannot find token key in configuration'));
     }
-    token = tokenContentConfig[TOKEN_BEARER_KEY_NAME];
+    token = tokenContentConfig[TOKEN_CONFIG_KEY_NAME];
     LOGGER.info(`With token sourced from ${token_path}`);
   } catch ( e ) {
     exitWithError(`parsing configuration file ${e}`);
@@ -197,10 +203,6 @@ if ( token_config ) {
 }
 
 output.on('error', ( err ) => {
-  if (err.code == "EPIPE") {
-    // next process in the pipe closed e.g. samtools printing only headers
-    process.exit(0);
-  }
   exitWithError( err );
 });
 
@@ -219,6 +221,8 @@ var requestWorker = ( task, callback ) => {
     LOGGER.debug('Processing data URI');
     try {
       let buffer = uriUtils.procDataURI( task.uri );
+      // Data uris write to output and should not close it. We expect the output
+      // to be closed only when the process finishes.
       output.write( buffer );
       callback();
     } catch ( err ) {
@@ -236,9 +240,6 @@ var requestWorker = ( task, callback ) => {
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-    if ( token ) {
-      options.headers[TOKEN_BEARER_KEY_NAME] = token;
-    }
     let req = request(options);
     req.on('error', ( err ) => {
       LOGGER.error('Error on request ' + err);
@@ -252,7 +253,13 @@ var requestWorker = ( task, callback ) => {
         let contentType = res.headers['content-type'];
         contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
                                                           : '';
-        if ( contentType.startsWith('application/json') ) {
+        let parsedContentType = rangerRequest.parseContentType(contentType);
+        if ( parsedContentType.json ) {
+          if ( parsedContentType.version && !rangerRequest.supportedVersion(parsedContentType.version) ) {
+            LOGGER.warn(
+              `Unsupported streaming specification version in server response: ${parsedContentType.version}`
+            );
+          }
           try {
             let body = '';
             res.on('data', (data) => {
@@ -310,6 +317,10 @@ var requestWorker = ( task, callback ) => {
             }
             callback();
           });
+
+          // Processing individual data uris should not try to close the output
+          // stream. We expect the stream to be closed at the end of the whole
+          // process.
           res.pipe(output, { end: false });
         }
       } else {
@@ -329,6 +340,11 @@ process.nextTick(() => {
     let ca_content = fs.readFileSync(ca_path).toString();
     LOGGER.info(`With CA sourced from ${ca_path}`);
     task.ca = ca_content;
+  }
+  if ( token ) {
+    let headers = {};
+    headers[TOKEN_BEARER_KEY_NAME] = tokenUtils.formatTokenForHeader(token);
+    task.headers = headers;
   }
   requestWorker(task, ( err ) => {
     if ( err ) {
