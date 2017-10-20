@@ -20,22 +20,22 @@ const constants     = require('../lib/constants');
 
 /**
  * @external assert
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/assert.html|assert}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/assert.html|assert}
  */
 
 /**
  * @external fs
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/fs.html|fs}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/fs.html|fs}
  */
 
 /**
  * @external path
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/path.html|path}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/path.html|path}
  */
 
 /**
  * @external stream
- * @see      {@link https://nodejs.org/dist/latest-v4.x/docs/api/stream.html|}
+ * @see      {@link https://nodejs.org/dist/latest-v6.x/docs/api/stream.html|}
  */
 
 /**

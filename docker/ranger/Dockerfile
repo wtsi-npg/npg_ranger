@@ -2,7 +2,7 @@ FROM ubuntu:14.04
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=6.10.3 \
+ENV NODE_VERSION=6.11.4 \
     MONGODB_VERSION=3.2.4 \
     HTSLIB_VERSION=1.5 \
     SAMTOOLS_VERSION=1.5 \

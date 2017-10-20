@@ -7,8 +7,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "private": false,
   "engines": {
-    "node" : ">=6.10.3",
-    "npm": ">=3.10.10"
+    "node" : ">=6.11.4",
+    "npm": ">=4.5.0"
   },
   "repository": {
     "type": "git",

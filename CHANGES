@@ -43,6 +43,8 @@ release 2.0.0
     it may not make sense in complex configs
   - test with node 6.11.4 in travis matrix
   - support empty mediatype in data uri
+  - switch to npm@4.5.0 in travis
+  - set node@6.11.4 and npm@4.5.0 in package.json
 
 release 1.4.2
   - fix not showing errors when next process in pipe closes

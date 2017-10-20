@@ -1,7 +1,7 @@
 FROM httpd:2.4.27
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
-ENV NODE_VERSION=6.10.3 \
+ENV NODE_VERSION=6.11.4 \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
