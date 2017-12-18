@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - require node.js v6.12.2
   - modify test checking start up failure to improve test stability
   - upgrade send to 0.16.1 from 0.15.3
   - upgrade moment to 2.20.1 from 2.18.1
