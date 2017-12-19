@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+  - upgrade send to 0.16.1 from 0.15.3
+  - upgrade moment to 2.20.1 from 2.18.1
+
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4
   - upgrade browserify to 14.4.0 from 13.3.0
