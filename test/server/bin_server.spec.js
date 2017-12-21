@@ -205,18 +205,15 @@ describe('Cluster limit consecutive forks at start', () => {
     }
   });
 
-  // Test is known to be flaky: if server takes longer than the given
-  // timeout to kill workers, it will not recognise that consecutive
-  // forks are dying, so will not kill the sever within the jasmine timeout.
   it('exits with correct code if max number of consec forks reached', ( done ) => {
-    child = exec('bin/server.js -k10 -l3 -n10 -m mongodb://loclhost:27017/imc -p33000', (error) => {
+    child = exec('bin/server.js -k10 -l5 -n5 -m mongodb://loclhost:27017/imc -p33000', (error) => {
       expect(error).not.toBe(null);
       if ( !!error ) {
         expect(error.code).toEqual(210);
       }
       done();
     });
-  }, 10000);
+  }, 15000);
 });
 
 describe('Sockets are cleaned', () => {
