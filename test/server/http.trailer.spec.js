@@ -160,7 +160,7 @@ describe('declaring, setting and removing a trailer', function() {
     server.on('request', (request, response) => {
       response.write('payload');
       expect( () => {trailer.declare(response);} ).toThrowError(Error,
-        "Can't set headers after they are sent.");
+        "Cannot set headers after they are sent to the client");
       expect(response.getHeader('Trailer')).toBe(undefined);
       response.end();
       done();
