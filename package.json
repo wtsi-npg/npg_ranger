@@ -7,8 +7,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "private": false,
   "engines": {
-    "node" : ">=6.11.4",
-    "npm": ">=4.5.0"
+    "node": ">=10.16.2",
+    "npm": ">=6.9.0"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
     "Marina Gourtovaia",
     "David Jackson",
     "Andrew Nowak",
-    "Jaime Tovar Corona"
+    "Jaime Tovar Corona",
+    "Grisha Hushchyn"    
   ],
   "keywords": [
     "data streaming",
