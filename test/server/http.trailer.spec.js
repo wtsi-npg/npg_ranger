@@ -131,13 +131,14 @@ describe('declaring, setting and removing a trailer', function() {
 
   });
 
-  it('If Transfer-Encoding header is not set, the trailer is not set', function(done) {
+  it('If Transfer-Encoding header is not set, Transfer-Encoding is set to "chunked"', function(done) {
 
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       response.removeHeader('Transfer-Encoding');
       response.setHeader('Content-Type', 'application/json');
       trailer.declare(response);
+      expect(response.getHeader('Transfer-Encoding')).toBe('chunked');
       expect(response.getHeader('Trailer')).toBe('data-truncated');
       response.write('{"some": "property"}');
       trailer.setDataTruncation(response, true);
@@ -147,7 +148,10 @@ describe('declaring, setting and removing a trailer', function() {
     http.get({socketPath: socket}, function(response) {
       response.on('data', function() {});
       response.on('end', function() {
-        expect(response.rawTrailers).toEqual([]);
+        let rawTrailers = response.rawTrailers;
+        expect(rawTrailers.length).toEqual(2);
+        expect(rawTrailers[0]).toEqual('data-truncated');
+        expect(rawTrailers[1]).toEqual('true');
         done();
       });
     });
