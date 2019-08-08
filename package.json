@@ -23,7 +23,7 @@
     "David Jackson",
     "Andrew Nowak",
     "Jaime Tovar Corona",
-    "Grisha Hushchyn"    
+    "Grisha Hushchyn"
   ],
   "keywords": [
     "data streaming",
@@ -55,19 +55,19 @@
   },
   "main": "./lib/main.js",
   "dependencies": {
-    "async":         "2.4.1",
-    "winston":       "2.3.1",
-    "moment" :       "2.20.1",
-    "fs-extra":      "3.0.1",
-    "mongodb":       "2.2.29",
-    "node-getopt":   "0.3.2",
-    "config-chain":  "1.1.11",
-    "commander":     "2.9.0",
-    "js-md5" :       "0.4.2",
+    "async": "2.4.1",
+    "commander": "2.9.0",
+    "config-chain": "1.1.11",
+    "fs-extra": "3.0.1",
     "http-shutdown": "1.2.0",
-    "request":       "2.81.0",
+    "js-md5": "0.4.2",
+    "moment": "2.20.1",
+    "mongodb": "2.2.29",
+    "node-getopt": "0.3.2",
+    "request": "2.81.0",
     "semver": "5.3.0",
-    "send": "0.16.1"
+    "send": "0.17.1",
+    "winston": "2.3.1"
   },
   "devDependencies": {
     "decache": "4.1.0",
@@ -83,7 +83,7 @@
     "grunt-jsonlint": "^1.0.7",
     "grunt-browserify": "5.0.0",
     "load-grunt-tasks": "3.5.2",
-    "pem":              "1.9.7",
+    "pem": "1.9.7",
     "tmp": "0.0.31",
     "browserify": "14.4.0"
   }
