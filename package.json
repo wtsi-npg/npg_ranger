@@ -70,21 +70,21 @@
     "winston": "2.3.1"
   },
   "devDependencies": {
-    "decache": "4.1.0",
-    "dev-null": "^0.1.1",
-    "grunt": "1.0.1",
+    "decache": "4.5.1",
+    "dev-null": "0.1.1",
+    "grunt": "1.0.4",
     "grunt-cli": "*",
-    "grunt-contrib-clean": "1.1.0",
+    "grunt-contrib-clean": "2.0.0",
     "grunt-contrib-jshint": "*",
     "grunt-contrib-watch": "*",
-    "grunt-jasmine-nodejs": "1.6.0",
+    "grunt-jasmine-nodejs": "1.6.1",
     "grunt-jscs": "3.0.1",
-    "grunt-jsdoc": "2.1.0",
-    "grunt-jsonlint": "^1.0.7",
-    "grunt-browserify": "5.0.0",
-    "load-grunt-tasks": "3.5.2",
-    "pem": "1.9.7",
-    "tmp": "0.0.31",
-    "browserify": "14.4.0"
+    "grunt-jsdoc": "2.4.0",
+    "grunt-jsonlint": "2.0.0",
+    "grunt-browserify": "5.3.0",
+    "load-grunt-tasks": "5.1.0",
+    "pem": "1.14.2",
+    "tmp": "0.1.0",
+    "browserify": "16.4.0"
   }
 }
