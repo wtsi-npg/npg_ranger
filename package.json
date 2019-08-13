@@ -55,24 +55,26 @@
   },
   "main": "./lib/main.js",
   "dependencies": {
-    "async": "2.4.1",
-    "commander": "2.9.0",
-    "config-chain": "1.1.11",
-    "fs-extra": "3.0.1",
-    "http-shutdown": "1.2.0",
-    "js-md5": "0.4.2",
-    "moment": "2.20.1",
-    "mongodb": "2.2.29",
+    "async": "2.6.3",
+    "commander": "2.20.0",
+    "config-chain": "1.1.12",
+    "fs-extra": "8.1.0",
+    "http-shutdown": "1.2.1",
+    "js-md5": "0.7.3",
+    "moment": "2.24.0",
+    "mongodb": "2.2.36",
     "node-getopt": "0.3.2",
-    "request": "2.81.0",
-    "semver": "5.3.0",
+    "request": "2.88.0",
+    "semver": "6.3.0",
     "send": "0.17.1",
-    "winston": "2.3.1"
+    "winston": "2.4.4"
   },
   "devDependencies": {
+    "browserify": "16.5.0",
     "decache": "4.5.1",
     "dev-null": "0.1.1",
     "grunt": "1.0.4",
+    "grunt-browserify": "5.3.0",
     "grunt-cli": "*",
     "grunt-contrib-clean": "2.0.0",
     "grunt-contrib-jshint": "*",
@@ -81,10 +83,8 @@
     "grunt-jscs": "3.0.1",
     "grunt-jsdoc": "2.4.0",
     "grunt-jsonlint": "2.0.0",
-    "grunt-browserify": "5.3.0",
     "load-grunt-tasks": "5.1.0",
     "pem": "1.14.2",
-    "tmp": "0.1.0",
-    "browserify": "16.4.0"
+    "tmp": "0.1.0"
   }
 }
