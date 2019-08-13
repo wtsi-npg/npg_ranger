@@ -269,10 +269,10 @@ var requestWorker = ( task, callback ) => {
               let uriData = rangerRequest.procJSON( body );
               let q = async.queue( requestWorker, 1 );
 
-              q.drain = () => {
+              q.drain(() => {
                 LOGGER.debug('All items have been processed in internal queue');
                 output.end();
-              };
+              });
 
               q.pause(); // To prevent run condition adding tasks vs processing queue
               /* jshint -W083 */
