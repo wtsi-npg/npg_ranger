@@ -1,0 +1,51 @@
+{
+   "type":"object",
+   "properties":{
+      "format":{
+         "type":"string"
+      },
+      "accession":{
+         "type":"string"
+      },
+      "fields":{
+         "type":"array"
+      },
+      "tags":{
+         "type":"array"
+      },
+      "notags":{
+         "type":"array"
+      },
+      "regions":{
+         "type":"array",
+         "items":{
+            "$ref":"#/definitions/regions"
+         },
+         "additionalItems":false,
+         "uniqueItems":true
+      }
+   },
+   "additionalProperties":false,
+   "definitions":{
+      "regions":{
+         "type":"object",
+         "properties":{
+            "referenceName":{
+               "type":"string"
+            },
+            "start":{
+               "type":"integer",
+               "minimum": 0
+            },
+            "end":{
+               "type":"integer",
+               "minimum": 0
+            }
+         },
+         "required":[
+            "referenceName"
+         ],
+         "additionalProperties":false
+      }
+   }
+}
