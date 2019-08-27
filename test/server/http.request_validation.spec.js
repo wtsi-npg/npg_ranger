@@ -14,6 +14,11 @@ describe('Temp - all tests', function() {
     expect(typeof tmp !== 'undefined').toBe(false);
   });
 
+  it('Pass empty request', function() { // --?
+    let tmp = reqValid.duplicateAttr({});
+    expect(typeof tmp !== 'undefined').toBe(false);
+  });
+
   it('Invalid array, does not contain objects', function() {
     let tmp = reqValid.duplicateAttr(({
       "format" : "bam",
@@ -27,10 +32,18 @@ describe('Temp - all tests', function() {
     expect(typeof tmp !== 'undefined').toBe(false);
   });
 
-  it('Valid array, holds objects', function() {
+  it('Valid array, holds basic object', function() {
     let tmp = reqValid.duplicateAttr({
       "format" : "bam",
       "regions" : [{"referenceName" : "chr1"}]
+    });
+    expect(typeof tmp !== 'undefined').toBe(false);
+  });
+
+  it('Valid array, holds more complex object', function() {
+    let tmp = reqValid.duplicateAttr({
+      "format" : "bam",
+      "regions" : [{"referenceName" : "chr2", "start" : 3, "end" : 10}]
     });
     expect(typeof tmp !== 'undefined').toBe(false);
   });

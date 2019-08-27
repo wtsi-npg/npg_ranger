@@ -8,7 +8,22 @@
          "type":"string"
       },
       "fields":{
-         "type":"array"
+         "type":"array",
+         "items":{
+            "enum":[
+               "QNAME",
+               "FLAG",
+               "RNAME",
+               "POS",
+               "MARQ",
+               "CIGAR",
+               "RNEXT",
+               "PNEXT",
+               "TLEN",
+               "SEQ",
+               "QUAL"
+            ]
+         }
       },
       "tags":{
          "type":"array"
@@ -25,7 +40,6 @@
          "uniqueItems":true
       }
    },
-   "additionalProperties":false,
    "definitions":{
       "regions":{
          "type":"object",
