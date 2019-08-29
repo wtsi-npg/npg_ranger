@@ -110,5 +110,105 @@ describe('Temp', function() {
     });
   });
 
+  it('Query merging - region start and end undefined', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 }] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 50, "end" : 100}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - region start and end undefined', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr1", "start" : 150, "end" : 200}] };
+    expect(schemaValid.validate(query)).toEqual(query);
+  });
+
+  it('Query merging - region start and end undefined', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2"}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2"}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - overlapping on both start and end', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 25, "end" : 140}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 25, "end" : 140}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - overlapping on both start and end', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 25, "end" : 140},
+      { "referenceName" : "chr2", "start" : 50, "end" : 100}]};
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 25, "end" : 140}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - overlapping on start', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 1, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 25, "end" : 100}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 1, "end" : 100}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - overlapping on start and undefined end', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 1, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 25}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 1}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - overlapping on end', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 50, "end": 150}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 50, "end" : 150}] };
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+
+  it('Query merging - several regions', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr1", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 5, "end" : 10 },
+      { "referenceName" : "chr2", "start" : 20, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 50, "end": 150}] };
+    let expected = {"regions" : [{ "referenceName" : "chr1", "start" : 50, "end" : 100},
+                                 { "referenceName" : "chr2", "start" : 5, "end" : 10},
+                                 { "referenceName" : "chr2", "start" : 20, "end" : 150}]};
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+  
+  it('Query merging - several mixed regions', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr1", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 5, "end" : 10 },
+      { "referenceName" : "chr3", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 120, "end": 150},
+      { "referenceName" : "chr3", "start" : 500, "end" : 1000 }]};
+    let expected = {"regions" : [{ "referenceName" : "chr1", "start" : 50, "end" : 100},
+                                 { "referenceName" : "chr2", "start" : 5, "end" : 10},
+                                 { "referenceName" : "chr2", "start" : 50, "end" : 100},
+                                 { "referenceName" : "chr2", "start" : 120, "end" : 150},
+                                 { "referenceName" : "chr3", "start" : 50, "end" : 100},
+                                 {"referenceName" : "chr3", "start" : 500, "end" : 1000}]};
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+  
+  it('Query merging - two non-overlapping regions', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
+      { "referenceName" : "chr2", "start" : 150, "end": 200}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 50, "end" : 100},
+                                 { "referenceName" : "chr2", "start" : 150, "end" : 200}]}; 
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
 
 });
