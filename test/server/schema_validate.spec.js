@@ -4,7 +4,7 @@
 
 const schemaValid = require('../../lib/server/schema_validate.js');
 
-describe('Temp', function() {
+describe('Valid POST query', function() {
 
   beforeAll( () => {});
   afterAll( () => {});
@@ -40,6 +40,13 @@ describe('Temp', function() {
     let query = {};
     expect(schemaValid.validate(query)).toBe(query);
   });
+});
+
+describe('Invalid POST parameters - format and accession', function() {
+
+  beforeAll( () => {});
+  afterAll( () => {});
+
 
   let stringArray = [ // May remove accession later
     {format : 123, accession : "XYZ123456"},
@@ -91,7 +98,13 @@ describe('Temp', function() {
       expect(() => {schemaValid.validate(query);}).toThrowError();
     });
   });
+});
 
+
+describe('POST parameters - regions array', function() {
+
+  beforeAll( () => {});
+  afterAll( () => {});
   
   let regionsArray = [ // May remove accession later
     {"regions" : [{"referenceName" : ["ch1"], "start" : 5, "end" : 96}]},
@@ -102,7 +115,7 @@ describe('Temp', function() {
   ];
 
   regionsArray.forEach( optionsList => {
-    it(`testing regions parameters definitions for regions:${JSON.stringify(optionsList.regions)}` , function() {
+    it(`Invalid queries, testing regions parameters definitions for regions:${JSON.stringify(optionsList.regions)}` , function() {
       let query = {
         "regions" : optionsList.regions
       };
@@ -110,18 +123,12 @@ describe('Temp', function() {
     });
   });
 
-  it('Query merging - region start and end undefined', function() {
+  it('Query merging - region start and end undefined 2', function() {
     let query = {"regions" : [
-      { "referenceName" : "chr2", "start" : 50, "end" : 100 }] };
-    let expected = {"regions" : [{ "referenceName" : "chr2", "start" : 50, "end" : 100}] };
+      { "referenceName" : "chr2"},
+      { "referenceName" : "chr2", "start" : 150, "end" : 200}] };
+    let expected = {"regions" : [{ "referenceName" : "chr2"}] };
     expect(schemaValid.validate(query)).toEqual(expected);
-  });
-
-  it('Query merging - region start and end undefined', function() {
-    let query = {"regions" : [
-      { "referenceName" : "chr2", "start" : 50, "end" : 100 },
-      { "referenceName" : "chr1", "start" : 150, "end" : 200}] };
-    expect(schemaValid.validate(query)).toEqual(query);
   });
 
   it('Query merging - region start and end undefined', function() {
@@ -132,7 +139,7 @@ describe('Temp', function() {
     expect(schemaValid.validate(query)).toEqual(expected);
   });
 
-  it('Query merging - overlapping on both start and end', function() {
+  it('Query merging - overlapping on both start and end 1', function() {
     let query = {"regions" : [
       { "referenceName" : "chr2", "start" : 50, "end" : 100 },
       { "referenceName" : "chr2", "start" : 25, "end" : 140}] };
@@ -140,7 +147,7 @@ describe('Temp', function() {
     expect(schemaValid.validate(query)).toEqual(expected);
   });
 
-  it('Query merging - overlapping on both start and end', function() {
+  it('Query merging - overlapping on both start and end 2', function() {
     let query = {"regions" : [
       { "referenceName" : "chr2", "start" : 25, "end" : 140},
       { "referenceName" : "chr2", "start" : 50, "end" : 100}]};
@@ -210,5 +217,4 @@ describe('Temp', function() {
                                  { "referenceName" : "chr2", "start" : 150, "end" : 200}]}; 
     expect(schemaValid.validate(query)).toEqual(expected);
   });
-
 });

@@ -270,7 +270,6 @@ describe('Handling requests - error responses', function() {
       });
       obj.path = '/authuser';
       let req = http.request( obj, function(response) {
-        console.log("request write test after");
         var body = '';
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
@@ -286,7 +285,6 @@ describe('Handling requests - error responses', function() {
           done();
         });
       });
-      console.log("request write test before");
       if (obj.method === "POST") {
         req.write(JSON.stringify({"format":"bam"}), () => {
           req.end();
@@ -794,7 +792,7 @@ describe('Redirection in json response', function() {
   });
 
 
-  it(`successful redirection, filter given}`, function(done) {
+  it(`successful redirection, filter given`, function(done) {
     options = {method: "GET", socketPath: socket, path : server_path + '?target=0&manual_qc=&alignment_not=undef'};
     let req = http.request( options, function(response) {
       var body = '';
@@ -818,12 +816,12 @@ describe('Redirection in json response', function() {
     });
     req.end();
   });
-
+        
   let requestOptions = [
     {method: 'GET', socketPath: socket},
     {method: 'POST', socketPath: socket}
   ];
-
+  
   requestOptions.forEach( optionsList => {
     it(`invalid url - no id - error response for ${optionsList.method}`, function(done) {
       let obj = JSON.parse(JSON.stringify(optionsList));
@@ -964,8 +962,6 @@ describe('Redirection in json response', function() {
       } else {
         obj.path = server_path;
       }
-      console.log('Checking obj content');
-      console.log(obj);
       let req = http.request( obj, function(response) {
         var body = '';
         response.on('data', function(d) { body += d;});
@@ -1191,7 +1187,7 @@ describe('Redirection in json response', function() {
           expect(errorPayload.htsget).toBeDefined();
           expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
           expect(response.statusMessage).toBe(
-            "'referenceName' attribute requered if 'start' or 'end' attribute is given");
+            "'referenceName' attribute required if 'start' or 'end' attribute is given");
           done();
         });
       });
@@ -1220,7 +1216,7 @@ describe('Redirection in json response', function() {
           expect(errorPayload.htsget).toBeDefined();
           expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
           expect(response.statusMessage).toEqual(
-            "'5.5' is not an integer");
+            "ranges must be integers");
           done();
         });
       });
@@ -1249,7 +1245,7 @@ describe('Redirection in json response', function() {
           let errorPayload = JSON.parse(body);
           expect(errorPayload.htsget).toBeDefined();
           expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
-          expect(response.statusMessage).toEqual("'-44' is not an unsigned integer");
+          expect(response.statusMessage).toEqual("ranges must be unsigned integers");
           done();
         });
       });
@@ -1278,7 +1274,7 @@ describe('Redirection in json response', function() {
           let errorPayload = JSON.parse(body);
           expect(errorPayload.htsget).toBeDefined();
           expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
-          expect(response.statusMessage).toEqual("'foo' is not an integer");
+          expect(response.statusMessage).toEqual("ranges must be integers");
           done();
         });
       });
@@ -1307,7 +1303,7 @@ describe('Redirection in json response', function() {
           let errorPayload = JSON.parse(body);
           expect(errorPayload.htsget).toBeDefined();
           expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
-          expect(response.statusMessage).toEqual("'-400' is not an unsigned integer");
+          expect(response.statusMessage).toEqual("ranges must be unsigned integers");
           done();
         });
       });
@@ -1353,7 +1349,7 @@ describe('Redirection in json response', function() {
     it(`redirection error, invalid characted in reference name for ${optionsList.method}`, function(done) {
       let obj = JSON.parse(JSON.stringify(optionsList));
       if (obj.method === "GET") {
-        obj.path = server_path + '?referenceName=chr@1&start=400&end=4';
+        obj.path = server_path + '?referenceName=chr@1&start=4&end=400';
       } else {
         obj.path = server_path;
       }
@@ -1372,7 +1368,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr@1", "start":400, "end":4}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr@1", "start":4, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1795,7 +1791,7 @@ describe('CORS in response', function() {
     });
     req.end();
   });
-  // TODO - make sure this is the right way to go about things below.
+  
   it('no CORS headers in a response to CORS POST request due to server options', function(done) {
     config.provide( () => {
       return {tempdir: tmpDir, anyorigin: false, originlist: null, skipauth: true};
