@@ -4,7 +4,7 @@
 
 const schemaValid = require('../../lib/server/schema_validate.js');
 
-describe('Valid POST query', function() {
+describe('Valid POST queries', function() {
 
   beforeAll( () => {});
   afterAll( () => {});
@@ -59,7 +59,7 @@ describe('Invalid POST parameters - format and accession', function() {
   ];
 
   stringArray.forEach( optionsList => {
-    it(`testing string definitions for format:${optionsList.format} and accession:${optionsList.accession}` , function() {
+    it(`testing string definitions for format: ${optionsList.format} and accession: ${optionsList.accession}` , function() {
       let query = {
         "format" : optionsList.format,
         "accession" : optionsList.accession
@@ -115,7 +115,7 @@ describe('POST parameters - regions array', function() {
   ];
 
   regionsArray.forEach( optionsList => {
-    it(`Invalid queries, testing regions parameters definitions for regions:${JSON.stringify(optionsList.regions)}` , function() {
+    it(`Invalid queries, testing regions parameters definitions for regions: ${JSON.stringify(optionsList.regions)}` , function() {
       let query = {
         "regions" : optionsList.regions
       };
@@ -123,7 +123,7 @@ describe('POST parameters - regions array', function() {
     });
   });
 
-  it('Query merging - region start and end undefined 2', function() {
+  it('Query merging - region start and end undefined 1', function() {
     let query = {"regions" : [
       { "referenceName" : "chr2"},
       { "referenceName" : "chr2", "start" : 150, "end" : 200}] };
@@ -131,7 +131,7 @@ describe('POST parameters - regions array', function() {
     expect(schemaValid.validate(query)).toEqual(expected);
   });
 
-  it('Query merging - region start and end undefined', function() {
+  it('Query merging - region start and end undefined 2', function() {
     let query = {"regions" : [
       { "referenceName" : "chr2", "start" : 50, "end" : 100 },
       { "referenceName" : "chr2"}] };
