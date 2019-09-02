@@ -4,7 +4,7 @@
 
 const reqValid = require('../../lib/server/http/request_validation.js');
 
-describe('Temp - all tests', function() {
+describe('POST request parameters testing', function() {
 
   beforeAll( () => {});
   afterAll( () => {});
@@ -14,7 +14,7 @@ describe('Temp - all tests', function() {
     expect(typeof tmp !== 'undefined').toBe(false);
   });
 
-  it('Pass empty request', function() { // --?
+  it('Pass empty request', function() {
     let tmp = reqValid.duplicateAttr({});
     expect(typeof tmp !== 'undefined').toBe(false);
   });

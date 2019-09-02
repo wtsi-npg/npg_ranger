@@ -1138,7 +1138,7 @@ describe('Redirection in json response', function() {
       });
     });
 
-    it(`successful redirection, unknown filter ignored  for ${optionsList.method}`, function(done) {
+    it(`successful redirection, unknown filter ignored for ${optionsList.method}`, function(done) {
       let obj = JSON.parse(JSON.stringify(optionsList));
       obj.path = server_path + '?not_a_filter=1';
       let req = http.request ( obj, function(response) {
@@ -1199,6 +1199,7 @@ describe('Redirection in json response', function() {
         req.end();
       }
     });
+
     it(`redirection error, range start is not an integer ${optionsList.method}`, function(done) {
       let obj = JSON.parse(JSON.stringify(optionsList));
       if (obj.method === "GET") {
