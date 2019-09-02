@@ -6,7 +6,7 @@ const uriUtils = require('../../lib/client/uriUtils');
 
 describe('Testing processing data URIs', () => {
   let expected = 'some data';
-  let encoded = new Buffer(expected, 'ascii').toString('base64');
+  let encoded = Buffer.from(expected, 'ascii').toString('base64');
   let dataURI = 'data:text/plain;charset=utf-8;base64,' + encoded;
 
   it('can get buffer from base64 data URI', () => {
@@ -19,7 +19,7 @@ describe('Testing processing data URIs', () => {
 
 describe('Testing processing data URIs with no mediatype', () => {
   let expected = 'some data';
-  let encoded = new Buffer(expected, 'ascii').toString('base64');
+  let encoded = Buffer.from(expected, 'ascii').toString('base64');
   let dataURI = 'data:;base64,' + encoded;
 
   it('can get buffer from base64 data URI', () => {
