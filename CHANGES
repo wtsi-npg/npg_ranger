@@ -1,8 +1,10 @@
 LIST OF CHANGES for npg_ranger project
-
+  
+  - upgrade node version to support node 10 and 12
+    - remove support for node 6 and 8
+    - update tests code to be compatible with new node versions
+  - upgrade package dependencies and developer dependencies
   - modify test checking start up failure to improve test stability
-  - upgrade send to 0.16.1 from 0.15.3
-  - upgrade moment to 2.20.1 from 2.18.1
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4

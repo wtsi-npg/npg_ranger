@@ -222,7 +222,7 @@ describe('token bearer', () => {
       });
     });
 
-    describe('Error reported with invalid characters in token', () => {
+    xdescribe('Error reported with invalid characters in token', () => {
       // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
       let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
       let bin = Buffer.from(enc, 'base64');
@@ -342,7 +342,7 @@ describe('token bearer', () => {
           expect(headers).toEqual(jasmine.objectContaining(myHeader));
 
           res.writeHead(200, {'Content-Type': 'application/json'});
-          let encoded = new Buffer('333', 'ascii').toString('base64');
+          let encoded = Buffer.from('333', 'ascii').toString('base64');
           res.end(JSON.stringify({
             htsget: {
               format: "BAM",
