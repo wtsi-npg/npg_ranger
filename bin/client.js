@@ -116,6 +116,7 @@ cline
   .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
   .option('--token_config <token_config_file>', 'path to file with token configuration in json format')
   .option('--with_ca <path_to_ca_file>', 'path to CA file')
+  .option('-P, --post_request', 'use POST request')
   .parse(process.argv);
 
 cline.on('--help', () => {
@@ -151,10 +152,14 @@ cline.on('--help', () => {
   console.log('');
 });
 
+// console.log(cline.args);
+
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
 var acceptTrailers = cline.acceptTrailers;
+
+let post_request = cline.post_request; // TODO
 
 var token_config = cline.token_config;
 var token;
@@ -202,6 +207,27 @@ if ( token_config ) {
   LOGGER.debug(`using token from configuration file`);
 }
 
+let post_request_body = async () => {
+  let request_body = new Promise((resolve, reject) => {
+    let temp = "";
+    // console.log('test');
+    process.stdin.on('data', ( data ) => {
+      temp += data;
+    });
+    process.stdin.on('end', () => {
+      // console.log('Successfully read body, output: ');
+      // console.log(temp.substr(1,200));
+      resolve(temp);
+    });
+    process.stdin.on('error', ( err ) => {
+      reject(err);
+    });
+  });
+  let body = await request_body;
+  // console.log('body is' + body);
+  return body;
+};
+
 output.on('error', ( err ) => {
   exitWithError( err );
 });
@@ -213,7 +239,7 @@ output.on('close', () => {
 
 const RE_DATA_URI = /^data:/i;
 
-var requestWorker = ( task, callback ) => {
+var requestWorker = async ( task, callback ) => {
   assert( task.uri, 'uri is required' );
   assert( typeof callback === 'function', 'callback must be of type <function>');
 
@@ -237,6 +263,20 @@ var requestWorker = ( task, callback ) => {
       options.ca = task.ca;
     }
     options.headers = task.headers ? task.headers : {};
+    // console.log(post_request);
+    if ( post_request ) {
+      options.method = 'POST';
+      try {
+        options.headers["Content-type"] = "application/json"; 
+        options.body = await post_request_body();
+        // options.body = JSON.stringify(options.body);
+      } catch ( err ) {
+        // console.log('error thrown over await');
+        callback( err );
+      }
+      // console.log('options body read');
+      // console.log(options);
+    }
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
@@ -324,6 +364,8 @@ var requestWorker = ( task, callback ) => {
           res.pipe(output, { end: false });
         }
       } else {
+        // console.log('test123');
+        // console.log(req);
         let code = res.statusCode;
         let msg  = res.statusMessage || '';
         callback(`Non 200 status - ${code} ${msg}`);
