@@ -8,7 +8,6 @@ const path   = require('path');
 const PassThrough = require('stream').PassThrough;
 
 const cline   = require('commander');
-const async   = require("async");
 const request = require('request');
 const asyncModule   = require("async");
 
@@ -117,10 +116,10 @@ cline
   .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
   .option('--token_config <token_config_file>', 'path to file with token configuration in json format')
   .option('--with_ca <path_to_ca_file>', 'path to CA file')
-  .option('-P, --post_request', 'use POST request')
+  .option('-P, --post_request', 'pass through as a POST request, requires an input to be passed through')
   .parse(process.argv);
 
-cline.on('--help', () => {
+cline.on('--help', () => { // TODO - fix up the options and help menu instructions
   console.log('  Examples:');
   console.log('');
   console.log('    $ bin/client.js "http://some_server_url/' +
@@ -144,15 +143,28 @@ cline.on('--help', () => {
   console.log('    $ bin/client.js --with_ca path/to/your_ca.crt --token_config' +
               ' path/to/file.json "http://some ..."');
   console.log('');
-  console.log('  If you know the server supports trailers, we suggest you execute' +
+  console.log(' If you know the server supports trailers, we suggest you execute' +
               ' with "--accept-trailers" option to improve error control.');
   console.log('');
   console.log('    $ bin/client.js --accept-trailers "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
+  console.log(' If the HTTP request is a POST method, execute with "--post_request"' +
+              ' or -P option to enable it. JSON / The body can be piped through as' +
+              ' seen in the example either as a buffer or as a string.');
+  console.log('');
+  console.log('    $ cat JSON2.json | bin/client.js --post_request' +
+              ' "https://198.51.100.0/POST"');
+  console.log('');
 });
 
+/**
+* Read the input fed into the POST request, and output the
+* collected body.
+* Returns the inputted body as a string.
+* @return {string}- String containing the full body data.
+*/
 let _post_parse_body = async () => {
   let parse_body = new Promise((resolve, reject) => {
     let temp = "";
@@ -160,23 +172,31 @@ let _post_parse_body = async () => {
       temp += data;
     });
     process.stdin.on('end', () => {
-      // console.log('Successfully read body, output: ');
-      // console.log(temp.substr(1,200));
-      console.log('test2');
-      console.log(typeof temp);
+      // console.log('test2');
       resolve( temp );
     });
     process.stdin.on('error', ( err ) => {
-      console.log('test1');
+      // console.log('test1');
       reject( err );
     });
   });
-  console.log('test5');
-  let temp = await parse_body;
-  console.log('test6');
-  return temp;
+  // console.log('test5');
+  let parsedBody = await parse_body;
+  // console.log('test6');
+  return parsedBody;
 };
 
+/**
+* Creates a queue of instances of requestWorker with the given uriData
+* and executes them one by one. Once finished, the task resolves.
+* Returns a promise object for the queue.
+* @param {object} uriData - An array of all the uri and any relevant
+*                           information.
+* @param output           - Passthrough stream instance.
+* @param {object} task    - Contains information about the request made.
+* @param callback         - Callback function to enable error catching. (?)
+* @return {object}        - Promise object to guarantee that the queue finishes fully.
+*/
 let _make_tasks_queue = (uriData, output, task, callback) => {
   let queuePromise = new Promise((resolve, reject) => {
     let q = asyncModule.queue( requestWorker, 1 );
@@ -214,29 +234,33 @@ let _make_tasks_queue = (uriData, output, task, callback) => {
   return queuePromise;
 };
 
-// TODO - is it worth passing the value of post_request? it's defined in the upper scope
-let _check_for_post = ( POST, options ) => {
+/**
+* Checks if the request made is done by the POST method. If so, parse the body
+* of the request and apply it to the options. Finally, resolve for either option.
+* @param {boolean} POST - Boolean that's true if the POST option was enabled.
+*                         Otherwise it's undefined.
+* @param {object} options - The options for the request, with .body being modified
+*                           with the input data is POST is true.
+*/
+let _check_for_post = ( is_post, options ) => {
   return new Promise((resolve, reject) => {
-    if ( POST ) {
+    if ( is_post ) {
       options.method = 'POST';
-      post_request = false;  // TODO - This is here as only the first request needs to
-      // be a post reques and this being passed through to all the URLs breaks the await.
+      post_request = false;
       try {
         options.headers["Content-type"] = "application/json";
-        let temp = _post_parse_body();
-        console.log('test12345');
-        // console.log(temp);
-        temp.then((body) => {
+        let parsedBody = _post_parse_body();
+        // console.log('test12345');
+        parsedBody.then((body) => {
           options.body = body;
           LOGGER.debug('First .then');
           resolve();
-        }); // TODO check which one must be async'd
+        });
       } catch ( err ) {
         reject( err );
       }
     } else {
       LOGGER.debug('Directly resolving promise');
-      // temp = Promise.resolve();
       resolve();
     }
   });
@@ -247,7 +271,7 @@ if ( !cline.args.length ||
 
 var acceptTrailers = cline.acceptTrailers;
 
-var post_request = cline.post_request; // TODO
+var post_request = cline.post_request;
 
 var token_config = cline.token_config;
 var token;
@@ -295,9 +319,6 @@ if ( token_config ) {
   LOGGER.debug(`using token from configuration file`);
 }
 
-
-
-
 output.on('error', ( err ) => {
   exitWithError( err );
 });
@@ -337,7 +358,7 @@ var requestWorker = ( task, callback ) => {
       options.headers.TE = 'trailers';
     }
 
-    let checkPOST = _check_for_post( post_request, options ); // TODO check if this is fine
+    let checkPOST = _check_for_post( post_request, options );
 
     checkPOST.then(()=> {
       LOGGER.debug('second .then');
@@ -393,7 +414,6 @@ var requestWorker = ( task, callback ) => {
               }
               callback();
             });
-
             // Processing individual data uris should not try to close the output
             // stream. We expect the stream to be closed at the end of the whole
             // process.
