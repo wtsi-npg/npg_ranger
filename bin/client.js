@@ -153,6 +153,30 @@ cline.on('--help', () => {
   console.log('');
 });
 
+let _post_parse_body = async () => {
+  let parse_body = new Promise((resolve, reject) => {
+    let temp = "";
+    process.stdin.on('data', ( data ) => {
+      temp += data;
+    });
+    process.stdin.on('end', () => {
+      // console.log('Successfully read body, output: ');
+      // console.log(temp.substr(1,200));
+      console.log('test2');
+      console.log(typeof temp);
+      resolve( temp );
+    });
+    process.stdin.on('error', ( err ) => {
+      console.log('test1');
+      reject( err );
+    });
+  });
+  console.log('test5');
+  let temp = await parse_body;
+  console.log('test6');
+  return temp;
+};
+
 let _make_tasks_queue = (uriData, output, task, callback) => {
   let queuePromise = new Promise((resolve, reject) => {
     let q = asyncModule.queue( requestWorker, 1 );
@@ -190,12 +214,40 @@ let _make_tasks_queue = (uriData, output, task, callback) => {
   return queuePromise;
 };
 
+// TODO - is it worth passing the value of post_request? it's defined in the upper scope
+let _check_for_post = ( POST, options ) => {
+  return new Promise((resolve, reject) => {
+    if ( POST ) {
+      options.method = 'POST';
+      post_request = false;  // TODO - This is here as only the first request needs to
+      // be a post reques and this being passed through to all the URLs breaks the await.
+      try {
+        options.headers["Content-type"] = "application/json";
+        let temp = _post_parse_body();
+        console.log('test12345');
+        // console.log(temp);
+        temp.then((body) => {
+          options.body = body;
+          LOGGER.debug('First .then');
+          resolve();
+        }); // TODO check which one must be async'd
+      } catch ( err ) {
+        reject( err );
+      }
+    } else {
+      LOGGER.debug('Directly resolving promise');
+      // temp = Promise.resolve();
+      resolve();
+    }
+  });
+};
+
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
 var acceptTrailers = cline.acceptTrailers;
 
-let post_request = cline.post_request; // TODO
+var post_request = cline.post_request; // TODO
 
 var token_config = cline.token_config;
 var token;
@@ -243,29 +295,7 @@ if ( token_config ) {
   LOGGER.debug(`using token from configuration file`);
 }
 
-let post_request_body = async () => {
-  let request_body = new Promise((resolve, reject) => {
-    let temp = "";
-    process.stdin.on('data', ( data ) => {
-      temp += data;
-    });
-    process.stdin.on('end', () => {
-      // console.log('Successfully read body, output: ');
-      // console.log(temp.substr(1,200));
-      console.log('test2');
-      console.log(typeof temp);
-      resolve( temp );
-    });
-    process.stdin.on('error', ( err ) => {
-      console.log('test1');
-      reject( err );
-    });
-  });
-  console.log('test5');
-  let temp = await request_body;
-  console.log('test6');
-  return temp;
-};
+
 
 
 output.on('error', ( err ) => {
@@ -306,30 +336,10 @@ var requestWorker = ( task, callback ) => {
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-    let temp;
-    if ( post_request ) {
-      options.method = 'POST';
-      post_request = false;  // TODO - This is here as only the first request needs to
-      // be a post reques and this being passed through to all the URLs breaks the await.
-      try {
-        options.headers["Content-type"] = "application/json";
-        temp = post_request_body();
-        console.log('test12345');
-        // console.log(temp);
-        temp.then((body) => {
-          options.body = body;
-          LOGGER.debug('First .then');
-        }); // TODO check which one must be async'd
-      } catch ( err ) {
-        callback( err );
-      }
-    } else {
-      LOGGER.debug('Directly resolving promise');
-      temp = Promise.resolve();
-    }
-    // console.log('not waiting');
-    // console.log(options);
-    temp.then(()=> { // better solutions?
+
+    let checkPOST = _check_for_post( post_request, options ); // TODO check if this is fine
+
+    checkPOST.then(()=> {
       LOGGER.debug('second .then');
       let req = request(options);
       req.on('error', ( err ) => {
