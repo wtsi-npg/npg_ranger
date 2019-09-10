@@ -274,7 +274,7 @@ describe('token bearer', () => {
       server.close();
     });
 
-    it('does not send header when no configuration', (done) => {
+    it('GET - does not send header when no configuration', (done) => {
       server.on('request', (req) => {
         let headers = req.headers;
         expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
@@ -287,7 +287,25 @@ describe('token bearer', () => {
       });
     });
 
-    it('sends header when configuration available', ( done ) => {
+
+    it('POST - does not send header when no configuration', (done) => {
+      server.on('request', (req) => {
+        let headers = req.headers;
+        expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
+        done();
+      });
+
+      process.nextTick(() => {
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/something`]);
+
+        client.stdin.write('{"format": "bam"}');
+        client.stdin.end();
+      });
+    });
+
+    it('GET - sends header when configuration available', ( done ) => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
       let conf = {};
@@ -315,7 +333,38 @@ describe('token bearer', () => {
       });
     });
 
-    it('sends header for all requests', ( done ) => {
+    it('POST - sends header when configuration available', ( done ) => {
+      let configFile = `${tmpDir}/clientconf1.json`;
+
+      let conf = {};
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
+
+      fse.writeFileSync(
+        configFile,
+        JSON.stringify(conf)
+      );
+
+      server.on('request', (req, res) => {
+        let headers = req.headers;
+        let myHeader = {};
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
+        res.end();
+        done();
+      });
+
+      process.nextTick(() => {
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        client.stdin.write('{"format": "bam"}');
+        client.stdin.end();
+      });
+    });
+
+    it('sends header for all requests', ( done ) => { 
 
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
@@ -596,7 +645,7 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
-  it('GA4GH url and the redirect is followed', (done) => {
+  it('GET - GA4GH url and the redirect is followed', (done) => {
     let serv = startServer( done, fail );
 
     serv.stderr.on('data', (data) => {
@@ -631,4 +680,54 @@ describe('Running with ranger server with a', () => {
       }
     });
   }, 20000);
+
+  it('POST - GA4GH url and the redirect is followed', (done) => {
+    let serv = startServer( done, fail );
+
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        // let jsonfile = spawn('cat', ['TESTJSON3.json']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"bam"}));
+        client.stdin.end();
+        /*
+        jsonfile.stdout.on('data', ( data ) => {
+          client.stdin.write(data);
+        });
+        jsonfile.on('close', (code) => {
+          if (code !== 0) {
+            console.log(`json process exited with code ${code}`);
+          }
+          client.stdin.end();
+        });
+        */
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '79cb05e3fe428da52da346e7d4f6324a',
+              '9b123c8f3a3e8a59584c2193976d1226'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        client.stderr.pipe(process.stderr);
+        bamseqchksum.stderr.pipe(process.stderr);
+        client.stdout.pipe(bamseqchksum.stdin);
+      }
+    });
+  }, 20000);
+
 });
