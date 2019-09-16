@@ -347,21 +347,22 @@ var requestWorker = ( task, callback ) => {
     }
   } else {
     let options = {
-      uri:    task.uri,
-      method: 'GET'
+      uri: task.uri
     };
     if ( task.ca ) {
       options.ca = task.ca;
     }
     options.headers = task.headers ? task.headers : {};
+    // console.error('options is: ');
+    // console.error(options);
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-
+    if (!(post_request)) { options.method = 'GET'; }
     let checkPOST = _check_for_post( post_request, options );
-
     checkPOST.then(()=> {
       LOGGER.debug('second .then');
+      // console.error(options);
       let req = request(options);
       req.on('error', ( err ) => {
         LOGGER.error('Error on request ' + err);
@@ -439,7 +440,7 @@ process.nextTick(() => {
     task.ca = ca_content;
   }
   if ( token ) {
-    let headers = {};
+    let headers = task.headers || {};
     headers[TOKEN_BEARER_KEY_NAME] = tokenUtils.formatTokenForHeader(token);
     task.headers = headers;
   }

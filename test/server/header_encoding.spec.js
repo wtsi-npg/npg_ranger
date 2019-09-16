@@ -56,6 +56,13 @@ describe('Temp Describe Name', function() {
     expect(testData.equals(deconvertedData)).toBe(true);
   });
   
-  
-
+  it('Empty array input', async function() {
+    let testData = new Buffer.from([]);
+    let str = 'H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKrVwSphpKSjVFySWFSiZGVpaamjlJqXomRlaGBgQFi9EVAVVIMRUEdtLAAiqs+mewAAAA=='
+    let temp = new Buffer.from(str);
+    let deconvertedData = await headerEncode.fullDecoding(str);
+    console.log(deconvertedData);
+    expect(testData.equals(deconvertedData)).toBe(true);
+  });
+ 
 });

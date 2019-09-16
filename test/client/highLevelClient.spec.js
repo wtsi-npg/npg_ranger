@@ -555,6 +555,9 @@ describe('Running with ranger server with a', () => {
       '-n0',
       `-p${SERV_PORT}`,
       `-m${mongourl}`]);
+    serv.stdout.on('data', (data) => { 
+      console.log(data.toString());
+    });
     serv.on('close', (code, signal) => {
       if (code || signal) {
         myFail('Server failed with error: ' + (code || signal));
@@ -694,7 +697,11 @@ describe('Running with ranger server with a', () => {
           '--post_request',
           `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
         ]);
-        client.stdin.write(JSON.stringify({"format":"bam"}));
+        client.stdin.write(JSON.stringify({"format":"bam",
+                                           "regions" : [
+        { "referenceName" : "chr1" },
+        { "referenceName" : "chr2", "start" : 999, "end" : 1000 }]
+                                          }));
         client.stdin.end();
         /*
         jsonfile.stdout.on('data', ( data ) => {

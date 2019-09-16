@@ -1940,3 +1940,136 @@ describe('CORS in response', function() {
     req.end();
   });
 });
+
+describe('POST regions in header', () => {
+  const server = http.createServer();
+  var socket   = tmp.tmpNameSync();
+  let id       = 'EGA45678';
+  let server_path = `${GA4GH_TOKEN_URL}/${id}`;
+
+  beforeAll((done) =>  {
+    fse.ensureDirSync(tmpDir);
+    options = config.provide(() => {
+      return { tempdir: tmpDir };
+    });
+    server.on('request', (request, response) => {
+      let c = new RangerController(request, response, {});
+      c.handleRequest();
+    });
+    server.listen(socket, () => {
+      console.log(`Server listening on socket ${socket}`);
+      done();
+    });
+  });
+
+  afterAll( () => {
+    server.close();
+    utils.removeSocket(socket);
+    try { fse.removeSync(tmpDir); } catch (e) { console.log(e); }
+  });
+
+  
+  let obj =  {method: 'POST', socketPath: socket, path: server_path};
+  
+  it('Three regions non-overlap', function(done) {
+    let my_token = 'XXXYYYXXX';
+    let headers  = {};
+    headers[
+      constants.TOKEN_BEARER_KEY_NAME
+    ] = tokenUtils.formatTokenForHeader(my_token);
+    obj.headers = headers;
+    let req = http.request( obj, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toMatch(
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=BAM`;
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [
+              {
+                'url': url,
+                'headers': {
+                  'Authorization': `Bearer ${my_token}`,
+                  'encoded_regions': 'H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKrVwSphpKSjVFySWFSiZGVpaamjlJqXomRlaGBgQFi9EVAVVIMRUEdtLAAiqs+mewAAAA=='
+                }
+              }
+            ]
+          }
+        });
+        done();
+      });
+    });
+    if (obj.method === "POST") {
+      req.write(JSON.stringify({"format":"bam","regions" : [
+        { "referenceName" : "chr1" },
+        { "referenceName" : "chr2", "start" : 999, "end" : 1000 },
+        { "referenceName" : "chr2", "start" : 2000, "end" : 2100 }
+      ] }), () => {
+        req.end();
+      });
+    } else {
+      req.end();
+    }
+  });
+
+  obj =  {method: 'POST', socketPath: socket, path: server_path};
+  
+  it('Five regions with overlap merge', function(done) {
+    let my_token = 'XXXYYYXXX';
+    let headers  = {};
+    headers[
+      constants.TOKEN_BEARER_KEY_NAME
+    ] = tokenUtils.formatTokenForHeader(my_token);
+    obj.headers = headers;
+    let req = http.request( obj, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        expect(response.headers['content-type']).toMatch(
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+        );
+        expect(response.statusCode).toEqual(200);
+        expect(response.statusMessage).toEqual(
+          'OK, see redirection instructions in the body of the message');
+        let url = `http://localhost/sample?accession=${id}&format=BAM`;
+        expect(JSON.parse(body)).toEqual({
+          htsget: {
+            format: 'BAM',
+            urls: [
+              {
+                'url': url,
+                'headers': {
+                  'Authorization': `Bearer ${my_token}`,
+                  'encoded_regions': 'H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKrVwSphpKSjVFySWFSiZGVkYqqjlJqXomRlZm5hSli9oZGBiQlUh5GhgYEZDi3GCC2mZsYGtbEAs5Ckf6MAAAA='
+                  //[{"referenceName":"chr1"},{"referenceName":"chr2","start":245,"end":6785},{"referenceName":"chr2","start":12044,"end":21006},{"referenceName":"chr3","start":5630}]
+                }
+              }
+            ]
+          }
+        });
+        done();
+      });
+    });
+    if (obj.method === "POST") {
+      req.write(JSON.stringify({"format":"bam","regions" : [
+        { "referenceName" : "chr1" },
+        { "referenceName" : "chr2", "start" : 245, "end" : 6785 },
+        { "referenceName" : "chr2", "start" : 12044, "end" : 21006 },
+        { "referenceName" : "chr3", "start" : 9200},
+        { "referenceName" : "chr3", "start" : 5630, "end" : 12312}
+      ] }), () => {
+        req.end();
+      });
+    } else {
+      req.end();
+    }
+  });
+  
+});
