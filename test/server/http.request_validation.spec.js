@@ -1,13 +1,10 @@
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect*/
 
 "use strict";
 
 const reqValid = require('../../lib/server/http/request_validation.js');
 
 describe('POST request parameters testing', function() {
-
-  beforeAll( () => {});
-  afterAll( () => {});
 
   it('Pass valid request, no objects', function() {
     let tmp = reqValid.duplicateAttr({"format" : "bam"});

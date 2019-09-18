@@ -496,7 +496,7 @@ describe('Running with ranger server with a', () => {
       // So, test script updates the entries with current directory.
       let cwd = process.cwd();
       let collection = db.collection('fileinfo');
-
+      // for merge: 20818_1#888.bam & 20907_1#888.bam; for multiregion: 30000_1#888.bam
       let updatePromises = ['20818_1#888.bam', '20907_1#888.bam', '30000_1#888.bam']
         .map( (dataObj) => {
           return collection.findOne({'data_object': dataObj})
@@ -766,7 +766,6 @@ describe('Running with ranger server with a', () => {
  it('POST - Error in merge', (done) => {
     let serv = startServer( done, fail );
    serv.stderr.on('data', (data) => {
-     console.log(data.toString());
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [

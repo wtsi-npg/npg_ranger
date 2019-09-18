@@ -1,19 +1,13 @@
-/*globals describe, it, expect, beforeAll, afterAll*/
+/*globals describe, it, expect*/
 
 "use strict";
 
 const headerEncode = require('../../lib/server/header_encoding.js');
 
-describe('Temp Describe Name', function() {
+describe('Header encoding and decoding', function() {
 
-  beforeAll( () => {
-    //let testData = headerEncode.genTestData();
-  });
-  afterAll( () => {});
-
-  let genTestData = async (refCount, rangeSize) => { // generate test data and return it as a buffer.
+  let genTestData = (refCount, rangeSize) => { // generate test data and return it as a buffer.
     return new Promise(( resolve ) => {
-      // let fullRegions = {"regions" : []};
       let tempRegArray = [];
       let makeRegions = ( regArray ) => {
         let temp;

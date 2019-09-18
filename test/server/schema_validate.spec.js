@@ -1,13 +1,10 @@
-/* globals describe, it, expect, beforeAll, afterAll*/
+/* globals describe, it, expect*/
 
 "use strict";
 
 const schemaValid = require('../../lib/server/schema_validate.js');
 
 describe('Valid POST queries', function() {
-
-  beforeAll( () => {});
-  afterAll( () => {});
 
   it('confirm spec example', function() {
     let query = {
@@ -21,7 +18,6 @@ describe('Valid POST queries', function() {
     };
     expect(schemaValid.validate(query)).toBe(query);
   });
-
 
   it('similar valid query', function() {
     let query = {
@@ -44,18 +40,13 @@ describe('Valid POST queries', function() {
 
 describe('Invalid POST parameters - format and accession', function() {
 
-  beforeAll( () => {});
-  afterAll( () => {});
-
-
-  let stringArray = [ // May remove accession later
+  let stringArray = [
     {format : 123, accession : "XYZ123456"},
     {format : "bam", accession : 123456789},
     {format : ["bam"], accession : "XYZ123456"},
     {format : "bam", accession : ["XYZ123456"]},
     {format : null, accession : "XYZ123456"},
     {format : "bam", accession : false}
-    // {format : {"bam"}, accession : {"XYZ123456"}}
   ];
 
   stringArray.forEach( optionsList => {
@@ -103,9 +94,6 @@ describe('Invalid POST parameters - format and accession', function() {
 
 describe('POST parameters - regions array', function() {
 
-  beforeAll( () => {});
-  afterAll( () => {});
-  
   let regionsArray = [ // May remove accession later
     {"regions" : [{"referenceName" : ["ch1"], "start" : 5, "end" : 96}]},
     {"regions" : [{"referenceName" : "ch1", "start" : 96, "end" : 5}]},
@@ -179,7 +167,6 @@ describe('POST parameters - regions array', function() {
     expect(schemaValid.validate(query)).toEqual(expected);
   });
 
-
   it('Query merging - several regions', function() {
     let query = {"regions" : [
       { "referenceName" : "chr1", "start" : 50, "end" : 100 },
@@ -191,7 +178,7 @@ describe('POST parameters - regions array', function() {
                                  { "referenceName" : "chr2", "start" : 20, "end" : 150}]};
     expect(schemaValid.validate(query)).toEqual(expected);
   });
-  
+
   it('Query merging - several mixed regions', function() {
     let query = {"regions" : [
       { "referenceName" : "chr1", "start" : 50, "end" : 100 },
@@ -217,4 +204,25 @@ describe('POST parameters - regions array', function() {
                                  { "referenceName" : "chr2", "start" : 150, "end" : 200}]}; 
     expect(schemaValid.validate(query)).toEqual(expected);
   });
+
+  it('Query merging - start defined but not end', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr1", "start" : 10},
+      { "referenceName" : "chr2", "start" : 50},
+      { "referenceName" : "chr2", "start" : 150}] };
+    let expected = {"regions" : [{ "referenceName" : "chr1", "start" : 10},
+                                 { "referenceName" : "chr2", "start" : 50}]}; 
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
+  it('Query merging - end defined but not start', function() {
+    let query = {"regions" : [
+      { "referenceName" : "chr1", "end" : 10},
+      { "referenceName" : "chr2", "end" : 50},
+      { "referenceName" : "chr2", "end" : 150}] };
+    let expected = {"regions" : [{ "referenceName" : "chr1", "end" : 10},
+                                 { "referenceName" : "chr2", "end" : 150}]}; 
+    expect(schemaValid.validate(query)).toEqual(expected);
+  });
+
 });

@@ -247,11 +247,9 @@ describe('Handling requests - error responses', function() {
 
     let options = { socketPath: socket, path:'/file', method: 'POST' };
     let req = http.request(options);
-    //req.write('{"test":"test"}');
     req.on('response', (response) => {
       checkGenericErrorResponse(expect, response);
       expect(response.statusCode).toEqual(400);
-      // expect(response.statusMessage).toEqual('POST method is not allowed');
       done();
     });
     req.end();
@@ -370,7 +368,11 @@ describe('Handling requests - error responses', function() {
         let c = new RangerController(request, response, {one: "two"});
         expect( () => {c.handleRequest();} ).not.toThrow();
       });
-      obj.path = '/sample?attr1=value1&attr2=value2&attr1=value3';
+      if (obj.method === "POST") {
+        obj.path = '/sample';
+      } else {
+        obj.path = '/sample?attr1=value1&attr2=value2&attr1=value3';
+      }
       let req = http.request( obj, ( response ) => {
         var body = '';
         response.on('data', ( d ) => { body += d;});
@@ -475,7 +477,11 @@ describe('Handling requests - error responses', function() {
         // unset multiref
         config.provide(dummy);
       });
-      obj.path = '/sample?accession=XYZ120923&format=vcf';
+      if (obj.method === "POST") {
+        obj.path = '/sample';
+      } else {
+        obj.path = '/sample?accession=XYZ120923&format=vcf';
+      }
       let req = http.request( obj, (response) => {
         var body = '';
         response.on('data', (d) => { body += d;});
@@ -494,7 +500,7 @@ describe('Handling requests - error responses', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"vcf", "accession":"XYZ120923"}), () => {
+        req.write(JSON.stringify({"format":"vcf"}), () => {
           req.end();
         });
       } else {
@@ -536,7 +542,6 @@ describe('Handling POST requests', function() {
       request.on('data', (chunk) => {
         console.log(JSON.parse(chunk));
       });
-      // console.log(request);
       let c = new RangerController(request, response, {});
       expect( () => {c.handleRequest();} ).not.toThrow();
       // Creates the server
@@ -557,7 +562,7 @@ describe('Handling POST requests', function() {
 
     let req = http.request(options);
     // create client to connect afterwards
-    req.write(JSON.stringify(testVar)); // ?
+    req.write(JSON.stringify(testVar));
     req.on('response', (response) => {
       checkGenericErrorResponse(expect, response);
       expect(response.statusCode).toEqual(400);
@@ -733,7 +738,7 @@ describe('Redirection with token in json response', () => {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -799,7 +804,7 @@ describe('Redirection in json response', function() {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toMatch(
-            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
         );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
@@ -899,7 +904,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -915,7 +920,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id}), () => {
+        req.write(JSON.stringify({"format":"bam"}), () => {
           req.end();
         });
       } else {
@@ -931,7 +936,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -947,7 +952,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"cram", "accession":id}), () => {
+        req.write(JSON.stringify({"format":"cram"}), () => {
           req.end();
         });
       } else {
@@ -967,7 +972,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -983,7 +988,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id,"regions":[{"referenceName":"chr1"}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1"}]}), () => {
           req.end();
         });
       } else {
@@ -1003,7 +1008,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -1019,7 +1024,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":3}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":3}]}), () => {
           req.end();
         });
       } else {
@@ -1039,7 +1044,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -1055,7 +1060,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "end":4}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "end":4}]}), () => {
           req.end();
         });
       } else {
@@ -1075,7 +1080,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -1091,7 +1096,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":4, "end":400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":4, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1112,7 +1117,7 @@ describe('Redirection in json response', function() {
           response.on('data', function(d) { body += d;});
           response.on('end', function() {
             expect(response.headers['content-type']).toMatch(
-                /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
             );
             expect(response.statusCode).toBe(200);
             expect(response.statusMessage).toBe(
@@ -1129,7 +1134,7 @@ describe('Redirection in json response', function() {
           });
         });
         if (obj.method === "POST") {
-          req.write(JSON.stringify({"format":value, "accession":id, "regions":[{"referenceName":"chr1", "start":4, "end":400}]}), () => {
+          req.write(JSON.stringify({"format":value, "regions":[{"referenceName":"chr1", "start":4, "end":400}]}), () => {
             req.end();
           });
         } else {
@@ -1146,7 +1151,7 @@ describe('Redirection in json response', function() {
         response.on('data', function(d) { body += d;});
         response.on('end', function() {
           expect(response.headers['content-type']).toMatch(
-              /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
           );
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
@@ -1162,7 +1167,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id}), () => {
+        req.write(JSON.stringify({"format":"bam"}), () => {
           req.end();
         });
       } else {
@@ -1192,7 +1197,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"start":4, "end":400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"start":4, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1222,7 +1227,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":5.5, "end":400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":5.5, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1251,7 +1256,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":-44, "end":400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":-44, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1280,7 +1285,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":4, "end":"foo"}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":4, "end":"foo"}]}), () => {
           req.end();
         });
       } else {
@@ -1309,7 +1314,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":4, "end":-400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":4, "end":-400}]}), () => {
           req.end();
         });
       } else {
@@ -1339,7 +1344,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr1", "start":400, "end":4}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":400, "end":4}]}), () => {
           req.end();
         });
       } else {
@@ -1369,7 +1374,7 @@ describe('Redirection in json response', function() {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id, "regions":[{"referenceName":"chr@1", "start":4, "end":400}]}), () => {
+        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr@1", "start":4, "end":400}]}), () => {
           req.end();
         });
       } else {
@@ -1526,7 +1531,7 @@ describe('redirection when running behind a proxy', () => {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id}), () => {
+        req.write(JSON.stringify({"format":"bam"}), () => {
           req.end();
         });
       } else {
@@ -1554,7 +1559,7 @@ describe('redirection when running behind a proxy', () => {
         });
       });
       if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "accession":id}), () => {
+        req.write(JSON.stringify({"format":"bam"}), () => {
           req.end();
         });
       } else {
@@ -1983,7 +1988,7 @@ describe('POST regions in header', () => {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toMatch(
-            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
         );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
@@ -1998,6 +2003,7 @@ describe('POST regions in header', () => {
                 'headers': {
                   'Authorization': `Bearer ${my_token}`,
                   'encoded_regions': 'H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKrVwSphpKSjVFySWFSiZGVpaamjlJqXomRlaGBgQFi9EVAVVIMRUEdtLAAiqs+mewAAAA=='
+                  // [{"referenceName":"chr1"},{"referenceName":"chr2","start":999,"end":1000},{"referenceName":"chr2","start":2000,"end":2100}]
                 }
               }
             ]
@@ -2033,7 +2039,7 @@ describe('POST regions in header', () => {
       response.on('data', function(d) { body += d;});
       response.on('end', function() {
         expect(response.headers['content-type']).toMatch(
-            /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
+          /application\/vnd\.ga4gh\.htsget\.\S+\+json/i
         );
         expect(response.statusCode).toEqual(200);
         expect(response.statusMessage).toEqual(
@@ -2048,7 +2054,7 @@ describe('POST regions in header', () => {
                 'headers': {
                   'Authorization': `Bearer ${my_token}`,
                   'encoded_regions': 'H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKrVwSphpKSjVFySWFSiZGVkYqqjlJqXomRlZm5hSli9oZGBiQlUh5GhgYEZDi3GCC2mZsYGtbEAs5Ckf6MAAAA='
-                  //[{"referenceName":"chr1"},{"referenceName":"chr2","start":245,"end":6785},{"referenceName":"chr2","start":12044,"end":21006},{"referenceName":"chr3","start":5630}]
+                  // [{"referenceName":"chr1"},{"referenceName":"chr2","start":245,"end":6785},{"referenceName":"chr2","start":12044,"end":21006},{"referenceName":"chr3","start":5630}]
                 }
               }
             ]

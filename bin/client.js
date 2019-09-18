@@ -7,8 +7,8 @@ const path   = require('path');
 
 const PassThrough = require('stream').PassThrough;
 
-const cline   = require('commander');
-const request = require('request');
+const cline         = require('commander');
+const request       = require('request');
 const asyncModule   = require("async");
 
 const LOGGER        = require('../lib/logsetup.js');
@@ -119,7 +119,7 @@ cline
   .option('-P, --post_request', 'pass through as a POST request, requires an input to be passed through')
   .parse(process.argv);
 
-cline.on('--help', () => { // TODO - fix up the options and help menu instructions
+cline.on('--help', () => {
   console.log('  Examples:');
   console.log('');
   console.log('    $ bin/client.js "http://some_server_url/' +
@@ -152,7 +152,7 @@ cline.on('--help', () => { // TODO - fix up the options and help menu instructio
   console.log('');
   console.log(' If the HTTP request is a POST method, execute with "--post_request"' +
               ' or -P option to enable it. JSON / The body can be piped through as' +
-              ' seen in the example either as a buffer or as a string.');
+              ' seen in the example.');
   console.log('');
   console.log('    $ cat JSON2.json | bin/client.js --post_request' +
               ' "https://198.51.100.0/POST"');
@@ -248,14 +248,14 @@ let _check_for_post = ( is_post, options ) => {
         let parsedBody = _post_parse_body();
         parsedBody.then((body) => {
           options.body = body;
-          LOGGER.debug('First .then');
+          LOGGER.debug('Executing after parsing POST body');
           resolve();
         });
       } catch ( err ) {
         reject( err );
       }
     } else {
-      LOGGER.debug('Directly resolving promise');
+      LOGGER.debug('Request is not POST - resolving promise');
       resolve();
     }
   });
@@ -348,16 +348,13 @@ var requestWorker = ( task, callback ) => {
       options.ca = task.ca;
     }
     options.headers = task.headers ? task.headers : {};
-    // console.error('options is: ');
-    // console.error(options);
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
     if (!(post_request)) { options.method = 'GET'; }
     let checkPOST = _check_for_post( post_request, options );
     checkPOST.then(()=> {
-      LOGGER.debug('second .then');
-      // console.error(options);
+      LOGGER.debug('Executing after checking if request is a POST method');
       let req = request(options);
       req.on('error', ( err ) => {
         LOGGER.error('Error on request ' + err);
