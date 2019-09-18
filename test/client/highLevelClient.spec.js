@@ -497,7 +497,7 @@ describe('Running with ranger server with a', () => {
       let cwd = process.cwd();
       let collection = db.collection('fileinfo');
 
-      let updatePromises = ['20818_1#888.bam', '20907_1#888.bam']
+      let updatePromises = ['20818_1#888.bam', '20907_1#888.bam', '30000_1#888.bam']
         .map( (dataObj) => {
           return collection.findOne({'data_object': dataObj})
           .then( (doc) => {
@@ -684,7 +684,7 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
-  it('POST - GA4GH url and the redirect is followed', (done) => {
+  it('GET - GA4GH url and the redirect is followed with specific region', (done) => {
     let serv = startServer( done, fail );
 
     serv.stderr.on('data', (data) => {
@@ -692,28 +692,9 @@ describe('Running with ranger server with a', () => {
         // Server is listening and ready for connection
         let hash = crypto.createHash('md5');
         let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
-        // let jsonfile = spawn('cat', ['TESTJSON3.json']);
         let client = spawn('bin/client.js', [
-          '--post_request',
-          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456?referenceName=phix&start=2000&end=3000&format=sam`
         ]);
-        client.stdin.write(JSON.stringify({"format":"bam",
-                                           "regions" : [
-        { "referenceName" : "chr1" },
-        { "referenceName" : "chr2", "start" : 999, "end" : 1000 }]
-                                          }));
-        client.stdin.end();
-        /*
-        jsonfile.stdout.on('data', ( data ) => {
-          client.stdin.write(data);
-        });
-        jsonfile.on('close', (code) => {
-          if (code !== 0) {
-            console.log(`json process exited with code ${code}`);
-          }
-          client.stdin.end();
-        });
-        */
         bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
@@ -724,15 +705,86 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              '79cb05e3fe428da52da346e7d4f6324a',
-              '9b123c8f3a3e8a59584c2193976d1226'
+              '3b13732e9ee5fef88046e4ee28dc550e',
+              'f538372d19ec627d88d1ce7f840dfa23'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
         });
-        client.stderr.pipe(process.stderr);
-        bamseqchksum.stderr.pipe(process.stderr);
-        client.stdout.pipe(bamseqchksum.stdin);
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - GA4GH url and the redirect is followed', (done) => {
+    let serv = startServer( done, fail );
+
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC654321`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
+                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '3b13732e9ee5fef88046e4ee28dc550e',
+              'f5b79e8c167b0beace940238bc8bf09c'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+ it('POST - Error in merge', (done) => {
+    let serv = startServer( done, fail );
+   serv.stderr.on('data', (data) => {
+     console.log(data.toString());
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.on('exit', ( code ) => {
+          expect(code).toBe(1);
+          serv.kill();
+          done();
+        });
+
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
+                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
       }
     });
   }, 20000);

@@ -23,6 +23,8 @@
 
 {"filepath_by_host" : { "*" : "test/server/data/20907_1#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" },
 
+{"filepath_by_host" : { "*" : "test/server/data/30000_1#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC654321", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.bam" },
+
 {"filepath_by_host" : { "*" : "test/server/data/20781_1#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "DEF123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20781", "data_object" : "20781_1#888.bam" },
 
 {"filepath_by_host" : { "*" : "test/server/data/20781_2#888.bam" }, "avh" : { "type" : "bam", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "DEF123456", "target" : "0", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20781", "data_object" : "20781_2#888.bam" },

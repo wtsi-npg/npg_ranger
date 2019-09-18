@@ -4,7 +4,7 @@
 
 const assert  = require('assert');
 const fse     = require('fs-extra');
-const RangerModel = require('../../lib/server/model.js');
+const RangerModel = require('../../lib/server/model.js').RangerModel;
 const config = require('../../lib/config.js');
 
 // Create temp dir here so it is available for all tests.

@@ -172,17 +172,13 @@ let _post_parse_body = async () => {
       temp += data;
     });
     process.stdin.on('end', () => {
-      // console.log('test2');
       resolve( temp );
     });
     process.stdin.on('error', ( err ) => {
-      // console.log('test1');
       reject( err );
     });
   });
-  // console.log('test5');
   let parsedBody = await parse_body;
-  // console.log('test6');
   return parsedBody;
 };
 
@@ -250,7 +246,6 @@ let _check_for_post = ( is_post, options ) => {
       try {
         options.headers["Content-type"] = "application/json";
         let parsedBody = _post_parse_body();
-        // console.log('test12345');
         parsedBody.then((body) => {
           options.body = body;
           LOGGER.debug('First .then');
