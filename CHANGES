@@ -5,6 +5,16 @@ LIST OF CHANGES for npg_ranger project
     - update tests code to be compatible with new node versions
   - upgrade package dependencies and developer dependencies
   - modify test checking start up failure to improve test stability
+  - added support for HTTP POST requests in server using header
+    - encodes regions and passes it through headers
+    - updated tests from GET that apply to POST
+    - added new tests unique to POST
+  - add a JSON schema that POST requests query must follow
+  - implement module to validate POST request query
+    - checks if valid JSON first, then if fits the
+      aforementioned JSON schema
+    - checks range starts and ends
+    - collapses any overlapping regions
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4

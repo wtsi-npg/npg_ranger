@@ -7,9 +7,9 @@ const path   = require('path');
 
 const PassThrough = require('stream').PassThrough;
 
-const cline   = require('commander');
-const async   = require("async");
-const request = require('request');
+const cline         = require('commander');
+const request       = require('request');
+const asyncModule   = require("async");
 
 const LOGGER        = require('../lib/logsetup.js');
 const rangerRequest = require('../lib/client/rangerRequest');
@@ -116,6 +116,7 @@ cline
   .option('--loglevel <level>', 'level of logging output', /^(error|warn|info|debug)$/i, 'error')
   .option('--token_config <token_config_file>', 'path to file with token configuration in json format')
   .option('--with_ca <path_to_ca_file>', 'path to CA file')
+  .option('-P, --post_request', 'pass through as a POST request, requires an input to be passed through')
   .parse(process.argv);
 
 cline.on('--help', () => {
@@ -142,19 +143,130 @@ cline.on('--help', () => {
   console.log('    $ bin/client.js --with_ca path/to/your_ca.crt --token_config' +
               ' path/to/file.json "http://some ..."');
   console.log('');
-  console.log('  If you know the server supports trailers, we suggest you execute' +
+  console.log(' If you know the server supports trailers, we suggest you execute' +
               ' with "--accept-trailers" option to improve error control.');
   console.log('');
   console.log('    $ bin/client.js --accept-trailers "http://some_server_url/' +
               'resources/AA0011?referenceName=1&start=167856&end=173507&format=BAM"' +
               ' AA0011.bam');
   console.log('');
+  console.log(' If the HTTP request is a POST method, execute with "--post_request"' +
+              ' or -P option to enable it. JSON / The body can be piped through as' +
+              ' seen in the example.');
+  console.log('');
+  console.log('    $ cat JSON2.json | bin/client.js --post_request' +
+              ' "https://198.51.100.0/POST"');
+  console.log('');
 });
+
+/**
+* Read the input fed into the POST request, and output the
+* collected body.
+* Returns the inputted body as a string.
+* @return {string}- String containing the full body data.
+*/
+let _post_parse_body = async () => {
+  let parse_body = new Promise((resolve, reject) => {
+    let temp = "";
+    process.stdin.on('data', ( data ) => {
+      temp += data;
+    });
+    process.stdin.on('end', () => {
+      resolve( temp );
+    });
+    process.stdin.on('error', ( err ) => {
+      reject( err );
+    });
+  });
+  let parsedBody = await parse_body;
+  return parsedBody;
+};
+
+/**
+* Creates a queue of instances of requestWorker with the given uriData
+* and executes them one by one. Once finished, the task resolves.
+* Returns a promise object for the queue.
+* @param {object} uriData - An array of all the uri and any relevant
+*                           information.
+* @param output           - Passthrough stream instance.
+* @param {object} task    - Contains information about the request made.
+* @param callback         - Callback function to enable error catching. (?)
+* @return {object}        - Promise object to guarantee that the queue finishes fully.
+*/
+let _make_tasks_queue = (uriData, output, task, callback) => {
+  let queuePromise = new Promise((resolve, reject) => {
+    let q = asyncModule.queue( requestWorker, 1 );
+
+    q.drain(() => {
+      LOGGER.debug('All items have been processed in internal queue');
+      output.end();
+      resolve();
+    });
+
+    q.pause(); // To prevent run condition adding tasks vs processing queue
+    /* jshint -W083 */
+    // functions within a loop
+    for ( var i = 0; i < uriData.uris.length; i++ ) {
+      let newTask = {
+        uri:     uriData.uris[i],
+        headers: uriData.headers4uris[i]
+      };
+      if ( task.ca ) {
+        newTask.ca = task.ca;
+      }
+      LOGGER.debug('Pushing to queue: ' + JSON.stringify( newTask ));
+      q.push( newTask, ( err ) => {
+        if ( !err ) {
+          LOGGER.debug('Finished task: ' + JSON.stringify( newTask ));
+        } else {
+          callback( err );
+          reject();
+        }
+      });
+    }
+    /* jshint +W083 */
+    q.resume();
+  });
+  return queuePromise;
+};
+
+/**
+* Checks if the request made is done by the POST method. If so, parse the body
+* of the request and apply it to the options. Finally, resolve for either option.
+* @param {boolean} POST - Boolean that's true if the POST option was enabled.
+*                         Otherwise it's undefined.
+* @param {object} options - The options for the request, with .body being modified
+*                           with the input data is POST is true.
+*/
+let _check_for_post = ( is_post, options ) => {
+  return new Promise((resolve, reject) => {
+    if ( is_post ) {
+      options.method = 'POST';
+      post_request = false;
+      try {
+        options.headers["Content-type"] = "application/json";
+        let parsedBody = _post_parse_body();
+        parsedBody.then((body) => {
+          options.body = body;
+          LOGGER.debug('Executing after parsing POST body');
+          resolve();
+        });
+      } catch ( err ) {
+        reject( err );
+      }
+    } else {
+      LOGGER.debug('Request is not POST - resolving promise');
+      resolve();
+    }
+  });
+};
 
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
 var acceptTrailers = cline.acceptTrailers;
+
+var post_request = cline.post_request;
 
 var token_config = cline.token_config;
 var token;
@@ -230,8 +342,7 @@ var requestWorker = ( task, callback ) => {
     }
   } else {
     let options = {
-      uri:    task.uri,
-      method: 'GET'
+      uri: task.uri
     };
     if ( task.ca ) {
       options.ca = task.ca;
@@ -240,94 +351,73 @@ var requestWorker = ( task, callback ) => {
     if ( acceptTrailers ) {
       options.headers.TE = 'trailers';
     }
-    let req = request(options);
-    req.on('error', ( err ) => {
-      LOGGER.error('Error on request ' + err);
-      callback( err );
-    }).on('response', ( res ) => {
-      res.on('error', ( err ) => {
+    if (!(post_request)) { options.method = 'GET'; }
+    let checkPOST = _check_for_post( post_request, options );
+    checkPOST.then(()=> {
+      LOGGER.debug('Executing after checking if request is a POST method');
+      let req = request(options);
+      req.on('error', ( err ) => {
+        LOGGER.error('Error on request ' + err);
         callback( err );
       });
-      if ( res.statusCode === 200 || res.statusCode === 206 ) {
-        LOGGER.debug('Status code for <' + task.uri + '>: ' + res.statusCode);
-        let contentType = res.headers['content-type'];
-        contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
-                                                          : '';
-        let parsedContentType = rangerRequest.parseContentType(contentType);
-        if ( parsedContentType.json ) {
-          if ( parsedContentType.version && !rangerRequest.supportedVersion(parsedContentType.version) ) {
-            LOGGER.warn(
-              `Unsupported streaming specification version in server response: ${parsedContentType.version}`
-            );
-          }
-          try {
-            let body = '';
-            res.on('data', (data) => {
-              body += data;
-            });
-            res.on('end', () => {
-              let uriData = rangerRequest.procJSON( body );
-              let q = async.queue( requestWorker, 1 );
-
-              q.drain(() => {
-                LOGGER.debug('All items have been processed in internal queue');
-                output.end();
+      req.on('response', ( res ) => {
+        res.on('error', ( err ) => {
+          callback( err );
+        });
+        if ( res.statusCode === 200 || res.statusCode === 206 ) {
+          LOGGER.debug('Status code for <' + task.uri + '>: ' + res.statusCode);
+          let contentType = res.headers['content-type'];
+          contentType = ( typeof contentType === 'string' ) ? contentType.toLowerCase()
+            : '';
+          let parsedContentType = rangerRequest.parseContentType(contentType);
+          if ( parsedContentType.json ) {
+            if ( parsedContentType.version && !rangerRequest.supportedVersion(parsedContentType.version) ) {
+              LOGGER.warn(
+                `Unsupported streaming specification version in server response: ${parsedContentType.version}`
+              );
+            }
+            try {
+              let body = '';
+              res.on('data', (data) => {
+                body += data;
               });
-
-              q.pause(); // To prevent run condition adding tasks vs processing queue
-              /* jshint -W083 */
-              // functions within a loop
-              for ( var i = 0; i < uriData.uris.length; i++ ) {
-                let newTask = {
-                  uri:     uriData.uris[i],
-                  headers: uriData.headers4uris[i]
-                };
-                if ( task.ca ) {
-                  newTask.ca = task.ca;
+              res.on('end', () => {
+                let uriData = rangerRequest.procJSON( body );
+                let queuePromise = _make_tasks_queue(uriData, output, task, callback);
+                queuePromise.then(callback);
+                LOGGER.debug('After calling delegation to queue');
+              });
+            } catch ( e ) {
+              callback( e );
+            }
+          } else {
+            res.on('end', () => {
+              LOGGER.debug('End of stream, all data processed');
+              if ( acceptTrailers ) {
+                LOGGER.debug('Checking trailers');
+                let trailerString = trailer.asString(res);
+                if ( trailerString ) {
+                  LOGGER.info('TRAILERS from ' + task.uri + ': ' + trailerString);
                 }
-                LOGGER.debug('Pushing to queue: ' + JSON.stringify( newTask ));
-                q.push( newTask, ( err ) => {
-                  if ( !err ) {
-                    LOGGER.debug('Finished task: ' + JSON.stringify( newTask ));
-                  } else {
-                    callback( err );
-                  }
-                });
+                let dataOK = !trailer.isDataTruncated(options.headers, res);
+                if (!dataOK) {
+                  LOGGER.error('Trailer marked as truncated data. Exiting...');
+                  callback('Incomplete or truncated data');
+                }
               }
-              /* jshint +W083 */
-              q.resume();
+              callback();
             });
-          } catch ( e ) {
-            callback( e );
+            // Processing individual data uris should not try to close the output
+            // stream. We expect the stream to be closed at the end of the whole
+            // process.
+            res.pipe(output, { end: false });
           }
         } else {
-          res.on('end', () => {
-            LOGGER.debug('End of stream, all data processed');
-            if ( acceptTrailers ) {
-              LOGGER.debug('Checking trailers');
-              let trailerString = trailer.asString(res);
-              if ( trailerString ) {
-                LOGGER.info('TRAILERS from ' + task.uri + ': ' + trailerString);
-              }
-              let dataOK = !trailer.isDataTruncated(options.headers, res);
-              if (!dataOK) {
-                LOGGER.error('Trailer marked as truncated data. Exiting...');
-                callback('Incomplete or truncated data');
-              }
-            }
-            callback();
-          });
-
-          // Processing individual data uris should not try to close the output
-          // stream. We expect the stream to be closed at the end of the whole
-          // process.
-          res.pipe(output, { end: false });
+          let code = res.statusCode;
+          let msg  = res.statusMessage || '';
+          callback(`Non 200 status - ${code} ${msg}`);
         }
-      } else {
-        let code = res.statusCode;
-        let msg  = res.statusMessage || '';
-        callback(`Non 200 status - ${code} ${msg}`);
-      }
+      });
     });
   }
 };
@@ -342,7 +432,7 @@ process.nextTick(() => {
     task.ca = ca_content;
   }
   if ( token ) {
-    let headers = {};
+    let headers = task.headers || {};
     headers[TOKEN_BEARER_KEY_NAME] = tokenUtils.formatTokenForHeader(token);
     task.headers = headers;
   }

@@ -274,7 +274,7 @@ describe('token bearer', () => {
       server.close();
     });
 
-    it('does not send header when no configuration', (done) => {
+    it('GET - does not send header when no configuration', (done) => {
       server.on('request', (req) => {
         let headers = req.headers;
         expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
@@ -287,7 +287,25 @@ describe('token bearer', () => {
       });
     });
 
-    it('sends header when configuration available', ( done ) => {
+
+    it('POST - does not send header when no configuration', (done) => {
+      server.on('request', (req) => {
+        let headers = req.headers;
+        expect(headers.hasOwnProperty(TOKEN_BEARER_KEY_NAME)).toBe(false);
+        done();
+      });
+
+      process.nextTick(() => {
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/something`]);
+
+        client.stdin.write('{"format": "bam"}');
+        client.stdin.end();
+      });
+    });
+
+    it('GET - sends header when configuration available', ( done ) => {
       let configFile = `${tmpDir}/clientconf1.json`;
 
       let conf = {};
@@ -315,7 +333,38 @@ describe('token bearer', () => {
       });
     });
 
-    it('sends header for all requests', ( done ) => {
+    it('POST - sends header when configuration available', ( done ) => {
+      let configFile = `${tmpDir}/clientconf1.json`;
+
+      let conf = {};
+      conf[TOKEN_CONFIG_KEY_NAME] = 'expectedtoken';
+
+      fse.writeFileSync(
+        configFile,
+        JSON.stringify(conf)
+      );
+
+      server.on('request', (req, res) => {
+        let headers = req.headers;
+        let myHeader = {};
+        // Needs lowercase because header names are provided lowercase from req
+        myHeader[TOKEN_BEARER_KEY_NAME.toLowerCase()] = 'Bearer expectedtoken';
+        expect(headers).toEqual(jasmine.objectContaining(myHeader));
+        res.end();
+        done();
+      });
+
+      process.nextTick(() => {
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/something`,
+          `--token_config=${configFile}`]);
+        client.stdin.write('{"format": "bam"}');
+        client.stdin.end();
+      });
+    });
+
+    it('sends header for all requests', ( done ) => { 
 
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
@@ -447,8 +496,8 @@ describe('Running with ranger server with a', () => {
       // So, test script updates the entries with current directory.
       let cwd = process.cwd();
       let collection = db.collection('fileinfo');
-
-      let updatePromises = ['20818_1#888.bam', '20907_1#888.bam']
+      // for merge: 20818_1#888.bam & 20907_1#888.bam; for multiregion: 30000_1#888.bam
+      let updatePromises = ['20818_1#888.bam', '20907_1#888.bam', '30000_1#888.bam']
         .map( (dataObj) => {
           return collection.findOne({'data_object': dataObj})
           .then( (doc) => {
@@ -506,6 +555,9 @@ describe('Running with ranger server with a', () => {
       '-n0',
       `-p${SERV_PORT}`,
       `-m${mongourl}`]);
+    serv.stdout.on('data', (data) => { 
+      console.log(data.toString());
+    });
     serv.on('close', (code, signal) => {
       if (code || signal) {
         myFail('Server failed with error: ' + (code || signal));
@@ -596,7 +648,7 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
-  it('GA4GH url and the redirect is followed', (done) => {
+  it('GET - GA4GH url and the redirect is followed', (done) => {
     let serv = startServer( done, fail );
 
     serv.stderr.on('data', (data) => {
@@ -631,4 +683,109 @@ describe('Running with ranger server with a', () => {
       }
     });
   }, 20000);
+
+  it('GET - GA4GH url and the redirect is followed with specific region', (done) => {
+    let serv = startServer( done, fail );
+
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456?referenceName=phix&start=2000&end=3000&format=sam`
+        ]);
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '3b13732e9ee5fef88046e4ee28dc550e',
+              'f538372d19ec627d88d1ce7f840dfa23'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - GA4GH url and the redirect is followed', (done) => {
+    let serv = startServer( done, fail );
+
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC654321`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
+                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '3b13732e9ee5fef88046e4ee28dc550e',
+              'f5b79e8c167b0beace940238bc8bf09c'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+ it('POST - Error in merge', (done) => {
+    let serv = startServer( done, fail );
+   serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.on('exit', ( code ) => {
+          expect(code).toBe(1);
+          serv.kill();
+          done();
+        });
+
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
+                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+      }
+    });
+  }, 20000);
+
 });
