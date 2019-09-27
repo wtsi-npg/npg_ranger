@@ -9,6 +9,9 @@ ENV NODE_VERSION=10.16.3 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
     FREEBAYES_VERSION=1.1.0 \
     NPG_RANGER_VERSION=2.0.0 \
+    CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
+    MINICONDA_VERSION='4.6.14' \
+    MINICONDA_HOME='/miniconda' \
     APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
 
 RUN apt-get update -qq \
@@ -27,15 +30,16 @@ RUN apt-get update -qq \
   && tar xzf "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" -C /usr/local --strip-components=1 \
   && rm "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
 
-# Get HTSlib
-  && git clone --branch $HTSLIB_VERSION "https://github.com/samtools/htslib.git" htslib \
-  && cd ./htslib \
-  # && git checkout c8475e824906a914f3aeeacef89f555009af9f2b \
-  && autoreconf -fi \
-  && git reset --hard \
-  && ./configure --enable-libcurl \
-  && make && make install \
-  && cd .. \
+# Install conda
+  && mkdir -p /software \
+  && wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
+  && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
+  && export PATH="${MINICONDA_HOME}/bin:$PATH" \
+  && rm "miniconda-${MINICONDA_VERSION}.sh" \
+
+# Install htslib from conda channel
+  && conda create -p /software/htslib/1.9+353_gefa7aa6 \
+  && conda install -p /software/htslib/1.9+353_gefa7aa6 -c "${CONDA_GENERIC_CHANNEL}" htslib=1.9+353_gefa7aa6 \
 
 # Get SAMtools
   && git clone --branch $SAMTOOLS_VERSION --depth 1 "https://github.com/samtools/samtools.git" samtools \
@@ -64,7 +68,7 @@ RUN apt-get update -qq \
   && cd .. \
 
 # Get Ranger
-  && npm install -g npg_ranger@${NPG_RANGER_VERSION}
+  && npm install git+https://github.com/wtsi-npg/npg_ranger.git#devel
 
 COPY ./certs/ /usr/share/ca-certificates/ranger/
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
