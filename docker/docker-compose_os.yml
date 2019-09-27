@@ -2,7 +2,7 @@ version: "2"
 
 services:
   rangerdb:
-    image: mongo:3.2.10
+    image: mongo:3.6.14
     volumes:
       - ../../../../data/mongo:/data/db
     networks:

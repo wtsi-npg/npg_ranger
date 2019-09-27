@@ -1,9 +1,9 @@
-FROM ubuntu:14.04
+FROM ubuntu:18.04
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=6.11.4 \
-    MONGODB_VERSION=3.2.4 \
+ENV NODE_VERSION=10.16.3 \
+    MONGODB_VERSION=3.6.14 \
     HTSLIB_VERSION=1.5 \
     SAMTOOLS_VERSION=1.5 \
     BIOBAMBAM_VERSION=2.0.50-release-20160705161609 \
