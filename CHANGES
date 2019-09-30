@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
-  
+
+release 3.0.0
   - upgrade node version to support node 10 and 12
     - remove support for node 6 and 8
     - update tests code to be compatible with new node versions
@@ -10,11 +11,19 @@ LIST OF CHANGES for npg_ranger project
     - updated tests from GET that apply to POST
     - added new tests unique to POST
   - add a JSON schema that POST requests query must follow
-  - implement module to validate POST request query
+  - implement new module to differentiate between valid multiregion
+    queries and invalid duplicate values in queries
+    - checks array of objects (valid multiregions) versus array of values (invalid)
+    - created test spec to check functionality
+  - implement new module to encode and decode the multiregions headers
+    - gzips header and then converts to base64
+    - created test spec to check functionality
+  - implement new module to validate POST request query
     - checks if valid JSON first, then if fits the
       aforementioned JSON schema
     - checks range starts and ends
     - collapses any overlapping regions
+    - created test spec to test functionality
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4
