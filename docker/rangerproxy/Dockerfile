@@ -1,16 +1,16 @@
-FROM httpd:2.4.27
+FROM httpd:2.4.41
 MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 
-ENV NODE_VERSION=6.11.4 \
-    APT_DEPENDENCIES="wget build-essential git autoconf pkg-config cmake"
+ENV NODE_VERSION=10.16.3 \
+    APT_DEPENDENCIES="wget git xz-utils"
 
 RUN apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
 
 # Get Node.js
-  && wget -q "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
-  && tar xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
-  && rm "node-v$NODE_VERSION-linux-x64.tar.xz" \
+  && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+  && tar xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+  && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
   && npm update -g npm
 
 RUN git clone --branch npg_ranger_master --depth 1 https://github.com/wtsi-npg/dalliance.git dalliance \
