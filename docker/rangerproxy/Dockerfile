@@ -6,7 +6,7 @@ ENV NODE_VERSION=10.16.3 \
 
 RUN apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
-
+\
 # Get Node.js
   && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
   && tar xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
@@ -26,7 +26,7 @@ COPY ./httpd.conf /usr/local/apache2/httpd.conf
 
 RUN perl docker_conf.pl \
   && mv /usr/local/apache2/httpd.conf /usr/local/apache2/conf/httpd.conf
-
+\
 RUN apt-get remove -qq $APT_DEPENDENCIES \
 #  && apt-get autoremove --purge -qq \
   && apt-get clean \

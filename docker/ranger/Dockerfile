@@ -18,48 +18,43 @@ RUN apt-get update -qq \
   && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
-
+\
 # Get Node.js
   && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
   && tar xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
   && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
-
+\
 # Get Mongodb - only needed for running grunt tests
 # Use a dedicated mongodb container to host db in production
   && wget -q "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
   && tar xzf "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" -C /usr/local --strip-components=1 \
   && rm "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
-
+\
 # Install conda
   && mkdir -p /software \
   && wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
   && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
-
+\
 # Install HTSlib from conda channel
   && conda create -p "/software/htslib/${HTSLIB_VERSION}" \
   && conda install -p "/software/htslib/${HTSLIB_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" htslib="${HTSLIB_VERSION}" \
-  && export PATH="/software/htslib/${HTSLIB_VERSION}/bin:$PATH" \
-
+\
 # Install SAMtools from conda channel
   && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
   && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
-  && export PATH="/software/samtools/${SAMTOOLS_VERSION}/bin:$PATH" \
-
+\
 # Install Biobambam from conda channel
   && conda create -p "/software/biobambam2/${BIOBAMBAM_VERSION}" \
   && conda install -p "/software/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}" \
-  && export PATH="/software/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH" \
-
+\
 # Install Freebayes from conda channel
   && conda create -p "/software/freebayes/${FREEBAYES_VERSION}" \
   && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
-  && export PATH="/software/freebayes/${FREEBAYES_VERSION}/bin:$PATH" \
-
+\
 # Get Ranger
-  && npm install git+https://github.com/GrishaH/npg_ranger.git#doc_updates \
-  && export PATH=/node_modules/.bin:$PATH
+  && npm install npg_ranger@beta
 
 COPY ./certs/ /usr/share/ca-certificates/ranger/
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
@@ -79,10 +74,10 @@ COPY ./s3cfg /home/apprunner/.s3cfg
 RUN chown -R apprunner:apprunner /npg_ranger /home/apprunner
 
 # Remove build-time dependencies
-#RUN apt-get remove -qq $APT_DEPENDENCIES \
-#  && apt-get autoremove --purge -qq \
-#  && apt-get clean \
-#  && rm -rf /var/lib/apt/lists/*
+RUN apt-get remove -qq $APT_DEPENDENCIES \
+  && apt-get autoremove --purge -qq \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
 
