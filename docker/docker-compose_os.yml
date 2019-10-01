@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 
 services:
   rangerdb:
@@ -50,4 +50,4 @@ networks:
       driver: default
       config:
       - subnet: 172.99.238.0/24
-        gateway: 172.99.238.1
+       # gateway: 172.99.238.1
