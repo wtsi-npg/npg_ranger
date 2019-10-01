@@ -35,5 +35,11 @@
 
 {"filepath_by_host" : { "*" : "targetu mqc1 align1" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "alignment" : "1", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} },
 
-{"filepath_by_host" : { "*" : "target0 mqc1 align1 afphix" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "0", "alignment" : "1", "alignment_filter" : "phix", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} }
+{"filepath_by_host" : { "*" : "target0 mqc1 align1 afphix" }, "access_control_group_id" : "2136", "avh" : { "study_id" : "2136", "target" : "0", "alignment" : "1", "alignment_filter" : "phix", "sample_accession_number" : "JKL987654", "manual_qc" : "1", "type" : "bam", "reference" : "/test/reference/path.fa"} },
+
+{"collection" : "CH", "data_object" : "NA30000.cram", "avh" : { "target" : "1", "alignment" : "1", "reference" : "references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa", "sample_accession_number" : "NA30000", "manual_qc" : "1", "type" : "cram" }, "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" } },
+
+{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.cram" },
+
+{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI654321", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.bam" }
 ]

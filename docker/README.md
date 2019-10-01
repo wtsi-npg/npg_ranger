@@ -189,6 +189,13 @@ curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&regi
 curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=sam&region=chr22:16100000-16105000" -o temp.sam
 
 md5sum -c test_data.md5 && rm temp.bam temp.cram temp.sam test_data.md5
+
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000&format=sam&region=phix:200-300" -o NA30000.sam
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000&format=sam&region=phix:200-3000" -o NA30000.sam
+
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000M&format=sam" -o NA30000M.sam
+
+curl "http://localhost:9090/npg_ranger/ga4gh/sample/NA30000M?format=sam" -o NA30000M.sam # This returns a htsget JSON
 ```
 
 These dockerfiles are a proof of concept only; no security has been enabled on
