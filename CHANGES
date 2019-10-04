@@ -24,6 +24,16 @@ release 3.0.0
     - checks range starts and ends
     - collapses any overlapping regions
     - created test spec to test functionality
+  - update Docker for openstack
+    - update ubuntu image to 18.04 from 14.04
+    - update node version to 10.16.3 from 6.11.4
+    - update mongo to 3.6.14 from 3.2.4
+    - update apache httpd image to 2.4.41 from 2.4.27
+    - update docker-compose version to 3 from 2
+    - deploy bioinformatic tools using Conda
+    - switch to newest versions of samtools,
+      htslib, freebayes, biobambam
+    - improve documentation
   - change installation method for dependencies in travis to use conda
     - add check for biobambam to also use cache
 
