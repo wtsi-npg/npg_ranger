@@ -12,25 +12,24 @@ mkdir -p "${SOFTWARE_HOME}"
 wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
 /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}"
 export PATH="${MINICONDA_HOME}/bin:$PATH"
-export CONDA_ALWAYS_YES="true"
+conda config --set auto_update_conda False
+conda config --set always_yes True
+conda config --set show_channel_urls True
 
 # samtools w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/samtools)" ]; then
 conda create -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}"
 conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
-export PATH="${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}/bin:$PATH"
 fi
 
 # biobambam w/ conda
 conda create -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}"
 conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}"
-export PATH="${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH"
 
 # freebayes w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/freebayes)" ]; then
 conda create -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}"
 conda install -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}"
-export PATH="${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}/bin:$PATH"
 fi
 
 # symlink to path
