@@ -12,7 +12,9 @@ mkdir -p "${SOFTWARE_HOME}"
 wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
 /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}"
 export PATH="${MINICONDA_HOME}/bin:$PATH"
-export CONDA_ALWAYS_YES="true"
+conda config --set auto_update_conda False
+conda config --set always_yes True
+conda config --set show_channel_urls True
 
 # samtools w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/samtools)" ]; then
