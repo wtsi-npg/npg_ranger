@@ -15,7 +15,7 @@ export PATH="${MINICONDA_HOME}/bin:$PATH"
 export CONDA_ALWAYS_YES="true"
 
 # samtools w/ conda
-if [ ! "$(ls -A samtools)" ]; then
+if [ ! "$(ls -A ${SOFTWARE_HOME}/samtools)" ]; then
 conda create -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}"
 conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
 export PATH="${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}/bin:$PATH"
@@ -27,20 +27,11 @@ conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_
 export PATH="${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH"
 
 # freebayes w/ conda
-if [ ! "$(ls -A freebayes)" ]; then
+if [ ! "$(ls -A ${SOFTWARE_HOME}/freebayes)" ]; then
 conda create -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}"
 conda install -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}"
 export PATH="${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}/bin:$PATH"
 fi
-
-# freebayes
-#if [ ! "$(ls -A freebayes)" ]; then
-#git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/ekg/freebayes.git freebayes
-#pushd freebayes
-#git submodule update --init --recursive
-#make
-#popd
-#fi
 
 # symlink to path
 mkdir -p /tmp/usr/bin
