@@ -9,22 +9,16 @@ addons:
     packages:
       - libssl-dev
       - liblzma-dev
-cache:
-  directories:
-  - /tmp/htslib
-  - /tmp/samtools
-  - /tmp/freebayes
-  - /tmp/software
 env:
   global:
     - MONGODB_VERSION=3.4.3
     - MINICONDA_VERSION="4.6.14"
     - CONDA_GENERIC_CHANNEL="https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/"
-    - MINICONDA_HOME="miniconda"
+    - MINICONDA_HOME="/tmp/miniconda"
+    - SOFTWARE_HOME="/tmp/software"
     - FREEBAYES_VERSION="v1.1.0"
     - BIOBAMBAM_VERSION="2.0.72-release-20170316102450"
-    - HTSLIB_VERSION="1.5"
-    - SAMTOOLS1_VERSION="1.5"
+    - SAMTOOLS1_VERSION="1.9+128_g7eb338f"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"

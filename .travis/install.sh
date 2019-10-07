@@ -8,37 +8,17 @@ wget "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tg
 tar xfz "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
 
 # conda
-mkdir -p software
+mkdir -p "${SOFTWARE_HOME}"
 wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
 /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}"
+export PATH="${MINICONDA_HOME}/bin:$PATH"
+export CONDA_ALWAYS_YES="true"
 
-
-# htslib & samtools
-if [ ! "$(ls -A htslib)" ]; then
-git clone --branch "${HTSLIB_VERSION}" --depth 1 https://github.com/samtools/htslib.git htslib
-pushd htslib
-autoreconf -fi
-git reset --hard
-./configure --prefix=/tmp/local --enable-libcurl
-make
-make install
-popd
-fi
-
+# samtools w/ conda
 if [ ! "$(ls -A samtools)" ]; then
-git clone --branch "${SAMTOOLS1_VERSION}" --depth 1 https://github.com/samtools/samtools.git samtools
-pushd samtools
-mkdir -p acinclude.m4
-pushd acinclude.m4
-curl -L https://github.com/samtools/samtools/files/62424/ax_with_htslib.m4.txt > ax_with_htslib.m4
-curl -L 'http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_with_curses.m4;hb=0351b066631215b4fdc3c672a8ef90b233687655' > ax_with_curses.m4
-popd
-aclocal -I acinclude.m4
-autoreconf -i
-git reset --hard
-LIBS='-lcurl -lcrypto -lssl' ./configure --prefix=/tmp/local --with-htslib=/tmp/htslib --without-curses
-make
-popd
+conda create -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}"
+conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
+export PATH="${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}/bin:$PATH"
 fi
 
 # biobambam
@@ -62,7 +42,8 @@ ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongo" /tmp/usr/bin/mong
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod" /tmp/usr/bin/mongod
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongoimport" /tmp/usr/bin/mongoimport
 ln -s "/tmp/miniconda/bin/conda" /tmp/usr/bin/conda # ? Surely since it was installed into software folder before this all might change too?
-ln -s /tmp/samtools/samtools /tmp/usr/bin/samtools
+ln -s "${SOFTWARE_HOME}"/samtools/"${SAMTOOLS1_VERSION}"/bin/samtools /tmp/usr/bin/samtools
+#ln -s /tmp/samtools/samtools /tmp/usr/bin/samtools
 ln -s /tmp/biobambam2/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
 ln -s /tmp/biobambam2/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
 ln -s /tmp/freebayes/bin/freebayes /tmp/usr/bin/freebayes
