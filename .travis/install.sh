@@ -26,14 +26,21 @@ conda create -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}"
 conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}"
 export PATH="${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH"
 
-# freebayes
+# freebayes w/ conda
 if [ ! "$(ls -A freebayes)" ]; then
-git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/ekg/freebayes.git freebayes
-pushd freebayes
-git submodule update --init --recursive
-make
-popd
+conda create -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}"
+conda install -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}"
+export PATH="${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}/bin:$PATH"
 fi
+
+# freebayes
+#if [ ! "$(ls -A freebayes)" ]; then
+#git clone --branch "${FREEBAYES_VERSION}" --depth 1 https://github.com/ekg/freebayes.git freebayes
+#pushd freebayes
+#git submodule update --init --recursive
+#make
+#popd
+#fi
 
 # symlink to path
 mkdir -p /tmp/usr/bin
@@ -45,6 +52,6 @@ ln -s "/tmp/miniconda/bin/conda" /tmp/usr/bin/conda
 ln -s "${SOFTWARE_HOME}"/samtools/"${SAMTOOLS1_VERSION}"/bin/samtools /tmp/usr/bin/samtools
 ln -s "${SOFTWARE_HOME}"/biobambam2/"${BIOBAMBAM_VERSION}"/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
 ln -s "${SOFTWARE_HOME}"/biobambam2/"${BIOBAMBAM_VERSION}"/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
-ln -s /tmp/freebayes/bin/freebayes /tmp/usr/bin/freebayes
+ln -s "${SOFTWARE_HOME}"/freebayes/"${FREEBAYES_VERSION}"/bin/freebayes /tmp/usr/bin/freebayes
 
 popd

@@ -16,7 +16,7 @@ env:
     - CONDA_GENERIC_CHANNEL="https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/"
     - MINICONDA_HOME="/tmp/miniconda"
     - SOFTWARE_HOME="/tmp/software"
-    - FREEBAYES_VERSION="v1.1.0"
+    - FREEBAYES_VERSION="1.2.0"
     - BIOBAMBAM_VERSION="2.0.79"
     - SAMTOOLS1_VERSION="1.9+128_g7eb338f"
 before_install:
