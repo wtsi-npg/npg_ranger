@@ -21,10 +21,10 @@ conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GE
 export PATH="${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}/bin:$PATH"
 fi
 
-# biobambam
-wget "https://github.com/gt1/biobambam2/releases/download/${BIOBAMBAM_VERSION}/biobambam2-${BIOBAMBAM_VERSION}-x86_64-etch-linux-gnu.tar.gz" -O biobambam2.tar.gz
-mkdir biobambam2
-tar xzf biobambam2.tar.gz -C biobambam2 --strip-components 1
+# biobambam w/ conda
+conda create -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}"
+conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}"
+export PATH="${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH"
 
 # freebayes
 if [ ! "$(ls -A freebayes)" ]; then
@@ -41,11 +41,10 @@ mkdir -p /tmp/usr/bin
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongo" /tmp/usr/bin/mongo
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod" /tmp/usr/bin/mongod
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongoimport" /tmp/usr/bin/mongoimport
-ln -s "/tmp/miniconda/bin/conda" /tmp/usr/bin/conda # ? Surely since it was installed into software folder before this all might change too?
+ln -s "/tmp/miniconda/bin/conda" /tmp/usr/bin/conda
 ln -s "${SOFTWARE_HOME}"/samtools/"${SAMTOOLS1_VERSION}"/bin/samtools /tmp/usr/bin/samtools
-#ln -s /tmp/samtools/samtools /tmp/usr/bin/samtools
-ln -s /tmp/biobambam2/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
-ln -s /tmp/biobambam2/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
+ln -s "${SOFTWARE_HOME}"/biobambam2/"${BIOBAMBAM_VERSION}"/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
+ln -s "${SOFTWARE_HOME}"/biobambam2/"${BIOBAMBAM_VERSION}"/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
 ln -s /tmp/freebayes/bin/freebayes /tmp/usr/bin/freebayes
 
 popd

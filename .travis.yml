@@ -17,7 +17,7 @@ env:
     - MINICONDA_HOME="/tmp/miniconda"
     - SOFTWARE_HOME="/tmp/software"
     - FREEBAYES_VERSION="v1.1.0"
-    - BIOBAMBAM_VERSION="2.0.72-release-20170316102450"
+    - BIOBAMBAM_VERSION="2.0.79"
     - SAMTOOLS1_VERSION="1.9+128_g7eb338f"
 before_install:
   - ./.travis/install.sh
