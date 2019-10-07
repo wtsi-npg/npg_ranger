@@ -7,6 +7,12 @@ pushd /tmp
 wget "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
 tar xfz "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
 
+# conda
+mkdir -p software
+wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
+/bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}"
+
+
 # htslib & samtools
 if [ ! "$(ls -A htslib)" ]; then
 git clone --branch "${HTSLIB_VERSION}" --depth 1 https://github.com/samtools/htslib.git htslib
@@ -55,6 +61,7 @@ mkdir -p /tmp/usr/bin
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongo" /tmp/usr/bin/mongo
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod" /tmp/usr/bin/mongod
 ln -s "/tmp/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongoimport" /tmp/usr/bin/mongoimport
+ln -s "/tmp/miniconda/bin/conda" /tmp/usr/bin/conda # ? Surely since it was installed into software folder before this all might change too?
 ln -s /tmp/samtools/samtools /tmp/usr/bin/samtools
 ln -s /tmp/biobambam2/bin/bamstreamingmarkduplicates /tmp/usr/bin/bamstreamingmarkduplicates
 ln -s /tmp/biobambam2/bin/bamseqchksum /tmp/usr/bin/bamseqchksum
