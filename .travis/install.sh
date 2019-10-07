@@ -20,19 +20,16 @@ conda config --set show_channel_urls True
 if [ ! "$(ls -A ${SOFTWARE_HOME}/samtools)" ]; then
 conda create -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}"
 conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
-export PATH="${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}/bin:$PATH"
 fi
 
 # biobambam w/ conda
 conda create -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}"
 conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}"
-export PATH="${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}/bin:$PATH"
 
 # freebayes w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/freebayes)" ]; then
 conda create -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}"
 conda install -p "${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}"
-export PATH="${SOFTWARE_HOME}/freebayes/${FREEBAYES_VERSION}/bin:$PATH"
 fi
 
 # symlink to path
