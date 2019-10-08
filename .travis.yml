@@ -3,30 +3,29 @@ language: node_js
 node_js :
   - "10.16.2"
   - "10.16.3"
-  - "12.11.0"
+  - "12.11.1"
 addons:
   apt:
     packages:
       - libssl-dev
       - liblzma-dev
-cache:
-  directories:
-  - /tmp/htslib
-  - /tmp/samtools
-  - /tmp/freebayes
 env:
   global:
-    - MONGODB_VERSION=3.4.3
-    - FREEBAYES_VERSION="v1.1.0"
-    - BIOBAMBAM_VERSION="2.0.72-release-20170316102450"
-    - HTSLIB_VERSION="1.5"
-    - SAMTOOLS1_VERSION="1.5"
+    - MONGODB_VERSION=3.6.14
+    - MINICONDA_VERSION="4.6.14"
+    - CONDA_GENERIC_CHANNEL="https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/"
+    - MINICONDA_HOME="/tmp/miniconda"
+    - SOFTWARE_HOME="/tmp/software"
+    - FREEBAYES_VERSION="1.2.0"
+    - BIOBAMBAM_VERSION="2.0.79"
+    - SAMTOOLS1_VERSION="1.9+128_g7eb338f"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"
   - npm install -g grunt-cli
   - npm --version
   - mongo --version
+  - conda --version
   - freebayes --version
   - bamstreamingmarkduplicates --version
   - samtools --version
