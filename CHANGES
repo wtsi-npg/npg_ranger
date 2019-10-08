@@ -24,6 +24,8 @@ release 3.0.0
     - checks range starts and ends
     - collapses any overlapping regions
     - created test spec to test functionality
+  - change installation method for dependencies in travis to use conda
+    - add check for biobambam to also use cache
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4
