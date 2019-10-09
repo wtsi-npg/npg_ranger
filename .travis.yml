@@ -9,6 +9,9 @@ addons:
     packages:
       - libssl-dev
       - liblzma-dev
+cache:
+  directories:
+  - /tmp/software
 env:
   global:
     - MONGODB_VERSION=3.6.14

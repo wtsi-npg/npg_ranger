@@ -23,8 +23,10 @@ conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GE
 fi
 
 # biobambam w/ conda
+if [ ! "$(ls -A ${SOFTWARE_HOME}/biobambam2)" ]; then
 conda create -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}"
 conda install -p "${SOFTWARE_HOME}/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}"
+fi
 
 # freebayes w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/freebayes)" ]; then
