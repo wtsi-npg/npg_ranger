@@ -105,7 +105,10 @@ let create_https_server = (cert, key, ca) => {
       let ca_prefix    = 'ca';
       let cert1_prefix = 'serv';
       let cert2_prefix = 'client';
-      test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, () => {
+      test_utils.create_certificates(tmpDir, ca_prefix, cert1_prefix, cert2_prefix, (err) => {
+        if (err) {
+          done.fail('Error creating certificate: ' + err.toString());
+        }
         ca          = `${tmpDir}/${ca_prefix}.cert`;
         serv_key    = `${tmpDir}/${cert1_prefix}.key`;
         serv_cert   = `${tmpDir}/${cert1_prefix}.cert`;
