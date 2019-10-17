@@ -85,7 +85,7 @@
     "grunt-jsdoc": "2.4.0",
     "grunt-jsonlint": "2.0.0",
     "load-grunt-tasks": "5.1.0",
-    "pem": "1.14.2",
+    "pem": "1.14.3",
     "tmp": "0.1.0"
   }
 }
