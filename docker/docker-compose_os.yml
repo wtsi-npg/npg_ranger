@@ -1,8 +1,8 @@
-version: "2"
+version: "3"
 
 services:
   rangerdb:
-    image: mongo:3.2.10
+    image: mongo:3.6.14
     volumes:
       - ../../../../data/mongo:/data/db
     networks:
@@ -50,4 +50,4 @@ networks:
       driver: default
       config:
       - subnet: 172.99.238.0/24
-        gateway: 172.99.238.1
+       # gateway: 172.99.238.1

@@ -88,7 +88,6 @@ For **AWS** use s3cmd interactive configruation
 ```
 # interactive configuration to save s3cmd configuration at home
 s3cmd --configure
-
 ```
 
 For **OpenStack** use specific configuration file with internal entry points
@@ -117,6 +116,18 @@ Place the httpd.conf in path where docker can see it.
 cp ../docs/apache/httpd.conf rangerproxy/httpd.conf
 ```
 
+### Deploying configuration for Ranger
+
+#### AWS
+```
+cp ranger/config_aws.json ranger/config.json # Get original configuration file
+```
+
+#### Openstack
+```
+cp ranger/config_os.json ranger/config.json # Get original configuration file
+```
+
 ### Working with temporary DNS hostname/IP
 If the instance gets a new IP/DNS hostname regularly set environment variables for containers
 to be aware if the current IP/hostname.
@@ -125,8 +136,6 @@ to be aware if the current IP/hostname.
 Every time the intance is restarted and/or DNS/IP configuration changes
 
 ```
-cp ranger/config_aws.json ranger/config.json # Get original configuration file
-
 export PUBLIC_DNS_HOSTNAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname) # To get public DNS hostname
 export PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) # To get public IP
 
@@ -136,8 +145,6 @@ sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in conf
 
 #### Openstack
 ```
-cp ranger/config_os.json ranger/config.json # Get original configuration file
-
 export PUBLIC_IP=<floating IP> # The floating IP of the machine
 sed -i "s/<%PUBLIC_IP%>/$PUBLIC_IP/g" ranger/config.json # Set public ip in configuration file
 ```
@@ -189,6 +196,13 @@ curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&regi
 curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=sam&region=chr22:16100000-16105000" -o temp.sam
 
 md5sum -c test_data.md5 && rm temp.bam temp.cram temp.sam test_data.md5
+
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000&format=sam&region=phix:200-300" -o NA30000.sam
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000&format=sam&region=phix:200-3000" -o NA30000.sam
+
+curl "http://localhost:9090/npg_ranger/sample?accession=NA30000M&format=sam" -o NA30000M.sam
+
+curl "http://localhost:9090/npg_ranger/ga4gh/sample/NA30000M?format=sam" -o NA30000M.sam # This returns a htsget JSON
 ```
 
 These dockerfiles are a proof of concept only; no security has been enabled on
