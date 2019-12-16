@@ -779,7 +779,7 @@ describe('Running with ranger server with a', () => {
         });
 
         client.stdin.write(JSON.stringify({"format":"sam",
-                                           "regions" : [
+                                           "multiregions_key" : [
                                              { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
                                              { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
                                           }));
