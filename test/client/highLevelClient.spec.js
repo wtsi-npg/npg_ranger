@@ -763,7 +763,35 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
- it('POST - Error in merge', (done) => {
+  it('POST - MERGE', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 200, "end" : 500 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        client.stdout.on('data', (data) => {
+          console.log('client data: ');
+          console.log(data.toString());
+        });
+        client.on('exit', ( code ) => {
+          expect(code).toBe(0);
+          serv.kill();
+          done();
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - no error in merge', (done) => {
     let serv = startServer( done, fail );
    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
@@ -773,13 +801,13 @@ describe('Running with ranger server with a', () => {
           `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
         ]);
         client.on('exit', ( code ) => {
-          expect(code).toBe(1);
+          expect(code).toBe(0);
           serv.kill();
           done();
         });
 
         client.stdin.write(JSON.stringify({"format":"sam",
-                                           "multiregions_key" : [
+                                           "regions" : [
                                              { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
                                              { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
                                           }));
