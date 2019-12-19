@@ -768,6 +768,8 @@ describe('Running with ranger server with a', () => {
     serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
         let client = spawn('bin/client.js', [
           '--post_request',
           `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
@@ -778,42 +780,31 @@ describe('Running with ranger server with a', () => {
                                              { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
                                           }));
         client.stdin.end();
-        client.stdout.on('data', (data) => {
-          console.log('client data: ');
-          console.log(data.toString());
+        // client.stdout.on('data', data => {
+        //   console.log(data.toString());
+        // });
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
         });
-        client.on('exit', ( code ) => {
-          expect(code).toBe(0);
+        bamseqchksum.on('exit', ( code ) => {
           serv.kill();
-          done();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              'c032559fdc914aa3894d6597c0031ba8',
+              '83a02a9434c507db8e07d9ca754e1b91'
+            ]; // TODO check these later and make sure they're right
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
         });
       }
     });
   }, 20000);
-
-  it('POST - no error in merge', (done) => {
-    let serv = startServer( done, fail );
-   serv.stderr.on('data', (data) => {
-      if (data.toString().match(/Server listening on /)) {
-        // Server is listening and ready for connection
-        let client = spawn('bin/client.js', [
-          '--post_request',
-          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
-        ]);
-        client.on('exit', ( code ) => {
-          expect(code).toBe(0);
-          serv.kill();
-          done();
-        });
-
-        client.stdin.write(JSON.stringify({"format":"sam",
-                                           "regions" : [
-                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
-                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
-                                          }));
-        client.stdin.end();
-      }
-    });
-  }, 20000);
-
 });
