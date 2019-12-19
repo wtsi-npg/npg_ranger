@@ -780,9 +780,6 @@ describe('Running with ranger server with a', () => {
                                              { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
                                           }));
         client.stdin.end();
-        // client.stdout.on('data', data => {
-        //   console.log(data.toString());
-        // });
         bamseqchksum.stdout.on('data', data => {
           hash.update(data.toString());
         });
@@ -795,7 +792,7 @@ describe('Running with ranger server with a', () => {
             let chksums = [
               'c032559fdc914aa3894d6597c0031ba8',
               '83a02a9434c507db8e07d9ca754e1b91'
-            ]; // TODO check these later and make sure they're right
+            ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
         });
