@@ -23,7 +23,15 @@ describe('Test the string constructor for .bed files', function() {
     expect(builtStr).toBe("test\t200\t600\nabc\t1500\t3200\nphix\t50\t400\n");
   });
 
-  // Maybe the StrConstructor should put the inputted array/string through a linter/ validator?
+  it('Check if able to handle large number of regions', function() {
+    let region = [];
+    for (let i = 0; i < 999; i++) {
+      region.push({"referenceName": "phix" + i, "start":100, "end":200});
+    }
+    let builtStr = bedStrConstructor(region);
+    // Check there are 1000 (technically 999) lines in the generated str
+    expect(builtStr.split(/\r\n|\r|\n/).length).toBe(1000);
+  });
 
   it('Invalid empty input', function() {
     let region;
