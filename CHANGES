@@ -36,6 +36,8 @@ release 3.0.0
     - improve documentation
   - change installation method for dependencies in travis to use conda
     - add check for biobambam to also use cache
+  - replace biobambam's "bamstreamingmarkduplicates" with samtools' "markdup"
+    - still present in dev tests
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4
