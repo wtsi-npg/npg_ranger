@@ -188,12 +188,12 @@ docker exec docker_rangerdb_1 mongoimport --db imetacache --collection fileinfo 
 
 ```
 echo "03555f613ce1c9cba69a862137f13b76  temp.bam" >> test_data.md5
-echo "70b8f5f160e27210169ff50b013a75bb  temp.cram" >> test_data.md5
-echo "f03053c6a581f18f1eb41a259e31a9b0  temp.sam" >> test_data.md5
+echo "4fbb8ecf1f426ad3cdc5165d7f4ca662  temp.cram" >> test_data.md5
+echo "2297e5198764b0017c5479739551f8d9  temp.sam" >> test_data.md5
 
 curl "http://localhost:9090/npg_ranger/file?name=20818_1%23888.bam" -o temp.bam
-curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&region=chr22:16100000-16105000" -o temp.cram
-curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=sam&region=chr22:16100000-16105000" -o temp.sam
+curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&region=22:16100000-16105000" -o temp.cram
+curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=sam&region=22:16100000-16105000" -o temp.sam
 
 md5sum -c test_data.md5 && rm temp.bam temp.cram temp.sam test_data.md5
 
@@ -203,6 +203,30 @@ curl "http://localhost:9090/npg_ranger/sample?accession=NA30000&format=sam&regio
 curl "http://localhost:9090/npg_ranger/sample?accession=NA30000M&format=sam" -o NA30000M.sam
 
 curl "http://localhost:9090/npg_ranger/ga4gh/sample/NA30000M?format=sam" -o NA30000M.sam # This returns a htsget JSON
+```
+
+## If the .cram md5 file test failed
+Note that the md5sum test for the temp.cram file above may fail.
+If it does, while the .sam and .bam file tests do not, it may be due to an
+old version of Samtools being used.
+This issue was spotted while testing the validity of the same file being
+downloaded and compared from two different sources, using different
+a new and an old version of Samtools, resulting in differences in the data
+beyond the headers being different.
+One way to get around this and to make sure that they are the same is to use 
+bamseqchksum, but this requires a REF_PATH to cram_cache to be set, done
+locally on the farm.
+
+To do this:
+```
+# Make sure the files are downloaded locally.
+curl "http://localhost:9090/npg_ranger/sample?accession=NA12878&format=cram&region=22:16100000-16105000" -o testingCram.cram
+
+# Allows for bamseqchksum to work on this example.
+export REF_PATH=[path to cram_cache]
+
+# Check that this is the same as e9411b620538bcb92a0a7749682ea326
+cat testingCram.cram | bamseqchksum inputformat=cram | md5sum
 ```
 
 These dockerfiles are a proof of concept only; no security has been enabled on
