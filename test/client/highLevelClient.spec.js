@@ -468,6 +468,7 @@ describe('Running with ranger server with a', () => {
   let SERV_PORT  = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
   let MONGO_PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
   const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
+  const REFFIXTURES = 'test/server/data/fixtures/referenceinfo.json';
 
   let dbName        = 'imetacache';
   let mongourl      = `mongodb://localhost:${MONGO_PORT}/${dbName}`;
@@ -484,6 +485,11 @@ describe('Running with ranger server with a', () => {
 
     // Import data set from fixtures.json
     command = `mongoimport --port ${MONGO_PORT} --db ${dbName} --collection fileinfo --jsonArray --file ${FIXTURES}`;
+    out = execSync(command);
+    console.log(`Loaded data to MONGO DB: ${out}`);
+
+    // TODO - Attempt to Import data set for referenceInfo (end region lookup)
+    command = `mongoimport --port ${MONGO_PORT} --db ${dbName} --collection referenceinfo --jsonArray --file ${REFFIXTURES}`;
     out = execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
@@ -820,6 +826,93 @@ describe('Running with ranger server with a', () => {
                                            "regions" : [
                                              { "referenceName" : "phix", "end" : 500 },
                                              { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              'c032559fdc914aa3894d6597c0031ba8',
+              '83a02a9434c507db8e07d9ca754e1b91'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Successfully merge two regions with an end being undefined', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              'c032559fdc914aa3894d6597c0031ba8',
+              '83a02a9434c507db8e07d9ca754e1b91'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Successfully merge several different regions with ends undefined', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 },
+                                             { "referenceName" : "chr1", "start" : 100, "end" : 200 },
+                                             { "referenceName" : "chr1", "start" : 400},
+                                             { "referenceName" : "chr2", "start" : 0}]
                                           }));
         client.stdin.end();
         bamseqchksum.stdout.on('data', data => {
