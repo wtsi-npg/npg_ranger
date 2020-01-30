@@ -1,5 +1,8 @@
 LIST OF CHANGES for npg_ranger project
 
+  - use devel conda channel for travis tests
+  - use samtools 1.10.0+24_g383a31b for travis tests (multiregion merge support)
+
 release 3.0.0
   - upgrade node version to support node 10 and 12
     - remove support for node 6 and 8

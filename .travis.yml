@@ -17,11 +17,12 @@ env:
     - MONGODB_VERSION=3.6.14
     - MINICONDA_VERSION="4.6.14"
     - CONDA_GENERIC_CHANNEL="https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/"
+    - CONDA_GENERIC_DEVEL_CHANNEL="https://dnap.cog.sanger.ac.uk/npg/conda/devel/generic/linux-64/"
     - MINICONDA_HOME="/tmp/miniconda"
     - SOFTWARE_HOME="/tmp/software"
     - FREEBAYES_VERSION="1.2.0"
     - BIOBAMBAM_VERSION="2.0.79"
-    - SAMTOOLS1_VERSION="1.9+128_g7eb338f"
+    - SAMTOOLS1_VERSION="1.10.0+24_g383a31b"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"

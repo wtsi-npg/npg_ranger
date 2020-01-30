@@ -826,6 +826,25 @@ describe('Redirection in json response', function() {
     {method: 'GET', socketPath: socket},
     {method: 'POST', socketPath: socket}
   ];
+
+  it('redirection error, invalid character in reference name for GET', function(done) {
+    let obj = {method: 'GET', socketPath: socket, path: server_path + '?referenceName=chr@1&start=4&end=400'};
+    let req = http.request ( obj, function(response) {
+      var body = '';
+      response.on('data', function(d) { body += d;});
+      response.on('end', function() {
+        checkGenericErrorResponse(expect, response);
+        expect(response.statusCode).toEqual(400);
+        let errorPayload = JSON.parse(body);
+        expect(errorPayload.htsget).toBeDefined();
+        expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
+        expect(response.statusMessage).toEqual(
+          'Invalid character in reference name chr@1');
+        done();
+      });
+    });
+    req.end();
+  });
   
   requestOptions.forEach( optionsList => {
     it(`invalid url - no id - error response for ${optionsList.method}`, function(done) {
@@ -977,13 +996,23 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1`;
-          expect(JSON.parse(body)).toEqual({
-            htsget: {
-              format: 'BAM',
-              urls: [{'url': url}]
-            }
-          });
+          if (obj.method === "GET") {
+            let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1`;
+            expect(JSON.parse(body)).toEqual({
+              htsget: {
+                format: 'BAM',
+                urls: [{'url': url}]
+              }
+            });
+          } else {
+            let url = `http://localhost/sample?accession=${id}&format=BAM`;
+            let values = JSON.parse(body);
+            expect(values.htsget).toBeDefined();
+            expect(values.htsget.urls).toBeDefined();
+            expect(values.htsget.format).toEqual("BAM");
+            expect(values.htsget.urls[0].url).toEqual(url);
+            expect(values.htsget.urls[0].headers).toEqual({"encoded_regions": "H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVKqNBQDCypWAGgAAAA=="});
+          }
           done();
         });
       });
@@ -1013,13 +1042,23 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A4`;
-          expect(JSON.parse(body)).toEqual({
-            htsget: {
-              format: 'BAM',
-              urls: [{'url': url}]
-            }
-          });
+          if (obj.method === "GET") {
+            let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A4`;
+            expect(JSON.parse(body)).toEqual({
+              htsget: {
+                format: 'BAM',
+                urls: [{'url': url}]
+              }
+            });
+          } else {
+            let url = `http://localhost/sample?accession=${id}&format=BAM`;
+            let values = JSON.parse(body);
+            expect(values.htsget).toBeDefined();
+            expect(values.htsget.urls).toBeDefined();
+            expect(values.htsget.format).toEqual("BAM");
+            expect(values.htsget.urls[0].url).toEqual(url);
+            expect(values.htsget.urls[0].headers).toEqual({"encoded_regions": "H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVNJRKi5JLCpRsjKujQUAJUieXSQAAAA="});
+          }
           done();
         });
       });
@@ -1049,13 +1088,23 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-4`;
-          expect(JSON.parse(body)).toEqual({
-            htsget: {
-              format: 'BAM',
-              urls: [{'url': url}]
-            }
-          });
+          if (obj.method === "GET") {
+            let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A1-4`;
+            expect(JSON.parse(body)).toEqual({
+              htsget: {
+                format: 'BAM',
+                urls: [{'url': url}]
+              }
+            });
+          } else {
+            let url = `http://localhost/sample?accession=${id}&format=BAM`;
+            let values = JSON.parse(body);
+            expect(values.htsget).toBeDefined();
+            expect(values.htsget.urls).toBeDefined();
+            expect(values.htsget.format).toEqual("BAM");
+            expect(values.htsget.urls[0].url).toEqual(url);
+            expect(values.htsget.urls[0].headers).toEqual({"encoded_regions": "H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVNJRSs1LUbIyqY0FAMJeFOgiAAAA"});
+          }
           done();
         });
       });
@@ -1085,13 +1134,23 @@ describe('Redirection in json response', function() {
           expect(response.statusCode).toEqual(200);
           expect(response.statusMessage).toEqual(
             'OK, see redirection instructions in the body of the message');
-          let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
-          expect(JSON.parse(body)).toEqual({
-            htsget: {
-              format: 'BAM',
-              urls: [{'url': url}]
-            }
-          });
+          if (obj.method === "GET") {
+            let url = `http://localhost/sample?accession=${id}&format=BAM&region=chr1%3A5-400`;
+            expect(JSON.parse(body)).toEqual({
+              htsget: {
+                format: 'BAM',
+                urls: [{'url': url}]
+              }
+            });
+          } else {
+            let url = `http://localhost/sample?accession=${id}&format=BAM`;
+            let values = JSON.parse(body);
+            expect(values.htsget).toBeDefined();
+            expect(values.htsget.urls).toBeDefined();
+            expect(values.htsget.format).toEqual("BAM");
+            expect(values.htsget.urls[0].url).toEqual(url);
+            expect(values.htsget.urls[0].headers).toEqual({"encoded_regions": "H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVNJRKi5JLCpRsjLRUUrNSwHSBga1sQD/h2zlLgAAAA=="});
+          }
           done();
         });
       });
@@ -1123,13 +1182,23 @@ describe('Redirection in json response', function() {
             expect(response.statusMessage).toBe(
               'OK, see redirection instructions in the body of the message');
             let formatUpperCase = value.toUpperCase();
-            let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-400`;
-            expect(JSON.parse(body)).toEqual({
-              htsget: {
-                format: `${formatUpperCase}`,
-                urls: [{'url': url}]
-              }
-            });
+            if (obj.method === "GET") {
+              let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}&region=chr1%3A5-400`;
+              expect(JSON.parse(body)).toEqual({
+                htsget: {
+                  format: `${formatUpperCase}`,
+                  urls: [{'url': url}]
+                }
+              });
+            } else {
+              let url = `http://localhost/sample?accession=${id}&format=${formatUpperCase}`;
+              let values = JSON.parse(body);
+              expect(values.htsget).toBeDefined();
+              expect(values.htsget.urls).toBeDefined();
+              expect(values.htsget.format).toEqual(`${formatUpperCase}`);
+              expect(values.htsget.urls[0].url).toEqual(url);
+              expect(values.htsget.urls[0].headers).toEqual({"encoded_regions": "H4sIAAAAAAAAA4uuVipKTUstSs1LTvVLzE1VslJKzigyVNJRKi5JLCpRsjLRUUrNSwHSBga1sQD/h2zlLgAAAA=="});
+            }
             done();
           });
         });
@@ -1345,36 +1414,6 @@ describe('Redirection in json response', function() {
       });
       if (obj.method === "POST") {
         req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr1", "start":400, "end":4}]}), () => {
-          req.end();
-        });
-      } else {
-        req.end();
-      }
-    });
-
-    it(`redirection error, invalid characted in reference name for ${optionsList.method}`, function(done) {
-      let obj = JSON.parse(JSON.stringify(optionsList));
-      if (obj.method === "GET") {
-        obj.path = server_path + '?referenceName=chr@1&start=4&end=400';
-      } else {
-        obj.path = server_path;
-      }
-      let req = http.request ( obj, function(response) {
-        var body = '';
-        response.on('data', function(d) { body += d;});
-        response.on('end', function() {
-          checkGenericErrorResponse(expect, response);
-          expect(response.statusCode).toEqual(400);
-          let errorPayload = JSON.parse(body);
-          expect(errorPayload.htsget).toBeDefined();
-          expect(errorPayload.htsget.error).toBe(ServerHttpError.INVALID_INPUT);
-          expect(response.statusMessage).toEqual(
-            'Invalid character in reference name chr@1');
-          done();
-        });
-      });
-      if (obj.method === "POST") {
-        req.write(JSON.stringify({"format":"bam", "regions":[{"referenceName":"chr@1", "start":4, "end":400}]}), () => {
           req.end();
         });
       } else {
