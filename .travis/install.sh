@@ -19,7 +19,7 @@ conda config --set show_channel_urls True
 # samtools w/ conda
 if [ ! "$(ls -A ${SOFTWARE_HOME}/samtools)" ]; then
 conda create -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}"
-conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
+conda install -p "${SOFTWARE_HOME}/samtools/${SAMTOOLS1_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" samtools="${SAMTOOLS1_VERSION}"
 fi
 
 # biobambam w/ conda
