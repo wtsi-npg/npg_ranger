@@ -4,12 +4,13 @@ MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
     MONGODB_VERSION=3.6.14 \
-    HTSLIB_VERSION=1.9+353_gefa7aa6 \
-    SAMTOOLS_VERSION=1.9+128_g7eb338f \
+    SAMTOOLS_VERSION=1.10.0+24_g383a31b \
+    LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
     NPG_RANGER_VERSION=2.0.0 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
+    CONDA_GENERIC_DEVEL_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/devel/generic/linux-64/' \
     MINICONDA_VERSION='4.6.14' \
     MINICONDA_HOME='/miniconda' \
     APT_DEPENDENCIES="wget git"
@@ -37,13 +38,10 @@ RUN apt-get update -qq \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
 \
-# Install HTSlib from conda channel
-  && conda create -p "/software/htslib/${HTSLIB_VERSION}" \
-  && conda install -p "/software/htslib/${HTSLIB_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" htslib="${HTSLIB_VERSION}" \
-\
 # Install SAMtools from conda channel
   && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
-  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
 \
 # Install Biobambam from conda channel
   && conda create -p "/software/biobambam2/${BIOBAMBAM_VERSION}" \
