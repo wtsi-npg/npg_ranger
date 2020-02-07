@@ -616,8 +616,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              '79cb05e3fe428da52da346e7d4f6324a',
-              '9b123c8f3a3e8a59584c2193976d1226'
+              '5512f394d66af35b1ca4a4b4969919f1',
+              'f2f34ebfe5266c40278ed2d3f3521754'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -675,8 +675,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              '79cb05e3fe428da52da346e7d4f6324a',
-              '9b123c8f3a3e8a59584c2193976d1226'
+              '5512f394d66af35b1ca4a4b4969919f1',
+              'f2f34ebfe5266c40278ed2d3f3521754'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -796,8 +796,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              'c032559fdc914aa3894d6597c0031ba8',
-              '83a02a9434c507db8e07d9ca754e1b91'
+              'd34bd6752f41fc93f208f2558805ea97',
+              '39a5efa117269e0f6bfc4f0bfc0004f8'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -838,8 +838,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              'c032559fdc914aa3894d6597c0031ba8',
-              '83a02a9434c507db8e07d9ca754e1b91'
+              'd34bd6752f41fc93f208f2558805ea97',
+              '39a5efa117269e0f6bfc4f0bfc0004f8'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
