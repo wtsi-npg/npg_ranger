@@ -2,8 +2,6 @@
 { "referenceName" : "phix", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 445566 },
 { "referenceName" : "chr1", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 78999 },
 { "referenceName" : "chr2", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 12123 },
-{ "referenceName" : "phix", "reference" : "test/server/data/references/Human/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 50000 },
-{ "referenceName" : "chr1", "reference" : "test/server/data/references/Human/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 600000 },
 { "referenceName" : "chr3", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 30000 },
 { "referenceName" : "chr4", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0, "end" : 70 },
 { "referenceName" : "chr5", "reference" : "test/server/data/references/PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "start" : 0 }

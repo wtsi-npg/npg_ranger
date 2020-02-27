@@ -880,8 +880,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              'c032559fdc914aa3894d6597c0031ba8',
-              '83a02a9434c507db8e07d9ca754e1b91'
+              '960f0fbf1a051c8416af4db96739db3c',
+              '97ace431a6212edcf025c3ce2f36c53c'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -925,8 +925,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              'c032559fdc914aa3894d6597c0031ba8',
-              '83a02a9434c507db8e07d9ca754e1b91'
+              '960f0fbf1a051c8416af4db96739db3c',
+              '97ace431a6212edcf025c3ce2f36c53c'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
