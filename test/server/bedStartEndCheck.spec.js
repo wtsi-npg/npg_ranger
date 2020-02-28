@@ -25,16 +25,18 @@ describe('Test the .bed file start and end regions', function() {
     expect(region).toEqual([{"referenceName": "test", "start": 1250, "end": 5000}]);
   });
 
-  it('No end given, TEMP: ASSUME LARGE NUMBER, FIND VALID END REGION IN FUTURE', function() { // TODO modify test to be correct for end values
+  it('No end given, do not modify', function() {
     let region = [{"referenceName": "test", "start": 100}];
     startEndConstructor(region);
-    expect(region).toEqual([{"referenceName": "test", "start": 100, "end": 30000}]);
+    expect(region).toEqual([{"referenceName": "test", "start": 100}]);
+    expect("end" in region).toBe(false);
   });
 
-  it('Neither start or end given, assume for both', function() { // TODO modify test to be correct for end values
+  it('Neither start or end given, assume for start, do not modify end', function() {
     let region = [{"referenceName": "test"}];
     startEndConstructor(region);
-    expect(region).toEqual([{"referenceName": "test", "start": 0, "end": 30000}]);
+    expect(region).toEqual([{"referenceName": "test", "start": 0}]);
+    expect("end" in region).toBe(false);
   });
 
   it('Invalid empty input', function() {
