@@ -27,16 +27,12 @@ describe('Test the .bed file start and end regions', function() {
 
   it('No end given, do not modify', function() {
     let region = [{"referenceName": "test", "start": 100}];
-    startEndConstructor(region);
-    expect(region).toEqual([{"referenceName": "test", "start": 100}]);
-    expect("end" in region).toBe(false);
+    expect( () => { startEndConstructor(region); }).toThrowError();
   });
 
   it('Neither start or end given, assume for start, do not modify end', function() {
     let region = [{"referenceName": "test"}];
-    startEndConstructor(region);
-    expect(region).toEqual([{"referenceName": "test", "start": 0}]);
-    expect("end" in region).toBe(false);
+    expect( () => { startEndConstructor(region); }).toThrowError();
   });
 
   it('Invalid empty input', function() {
