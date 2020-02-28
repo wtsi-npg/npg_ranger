@@ -488,7 +488,7 @@ describe('Running with ranger server with a', () => {
     out = execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
-    // Import dummy data set for referenceInfo (end region lookup). TODO: replace with real data
+    // Import dummy data set for referenceInfo (end region lookup). 
     command = `mongoimport --port ${MONGO_PORT} --db ${dbName} --collection referenceinfo --jsonArray --file ${REFFIXTURES}`;
     out = execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
@@ -976,9 +976,10 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
-  it('POST - Unsuccessfully look up an incomplete reference in DB that did not have an end region', (done) => {
+  it('POST - Unsuccessfully look up an incomplete reference in DB that did not have an end region, mixed with valid regions', (done) => {
     let serv = startServer( done, fail );
     serv.stderr.on('data', (data) => {
+      console.log(data.toString());
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [
@@ -1014,6 +1015,45 @@ describe('Running with ranger server with a', () => {
       }
     });
   }, 20000);
+
+  it('POST - Unsuccessfully look up an incomplete reference in DB that did not have an end region', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      console.log(data.toString());
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "chr5", "start" : 500 }]
+                                          }));
+        client.stdin.end();
+        client.on('close', (code) => {
+          expect(stdout).toEqual('');
+          expect(stderr).toContain('Non 200 status - 500 Error calculating region for query');
+          expect(code).not.toBe(0);
+          serv.kill();
+          console.log(stderr);
+          done();
+        });
+      }
+    });
+  }, 20000);
+
+
+
+
 
   it('POST - Unsuccessfully look up a reference not in DB, by itself', (done) => {
     let serv = startServer( done, fail );
