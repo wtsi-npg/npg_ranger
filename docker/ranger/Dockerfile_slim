@@ -8,7 +8,6 @@ ENV NODE_VERSION=10.16.3 \
     LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
-    IRODS_ICOMMANDS_VERSION=4.1.12 \
     NPG_RANGER_VERSION=2.0.0 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
     CONDA_GENERIC_DEVEL_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/devel/generic/linux-64/' \
@@ -18,7 +17,7 @@ ENV NODE_VERSION=10.16.3 \
     PYTHONDONTWRITEBYTECODE=true
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl expect \
+  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
 \
@@ -53,10 +52,6 @@ RUN apt-get update -qq \
 # Install Freebayes from conda channel
   && conda create -p "/software/freebayes/${FREEBAYES_VERSION}" \
   && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
-\
-# Install iRODS
-  && conda create -p "/software/irods/${IRODS_ICOMMANDS_VERSION}"  \
-  && conda install -p "/software/irods/${IRODS_ICOMMANDS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" irods-icommands=${IRODS_ICOMMANDS_VERSION} \
 \
 # Get Ranger
   && npm install @grishah/npg_ranger@beta \
@@ -95,15 +90,9 @@ RUN apt-get remove -qq $APT_DEPENDENCIES \
 
 ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
 
-COPY expect_script_test.sh /expect_script_test.sh
-COPY joint_process_test.sh /joint_process_test.sh
-
-RUN mkdir -p /home/apprunner/.irods
-RUN chown -R apprunner:apprunner /home/apprunner/.irods
-
 RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/irods/${IRODS_ICOMMANDS_VERSION}/bin:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
 CMD [ "/bin/bash" ]
