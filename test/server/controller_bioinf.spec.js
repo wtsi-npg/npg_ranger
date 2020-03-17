@@ -30,9 +30,9 @@ let expectedMd5s = {
     'BAM' : ['16b3d79daec1da26d98a4e1b63e800b0']
   },
   'multiple (merged) files': {
-    'SAM' : ['5512f394d66af35b1ca4a4b4969919f1', 'f2f34ebfe5266c40278ed2d3f3521754'],
-    'BAM' : ['5512f394d66af35b1ca4a4b4969919f1', 'f2f34ebfe5266c40278ed2d3f3521754'],
-    'CRAM': ['5512f394d66af35b1ca4a4b4969919f1', 'f2f34ebfe5266c40278ed2d3f3521754'],
+    'SAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
+    'BAM' : ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
+    'CRAM': ['79cb05e3fe428da52da346e7d4f6324a', '9b123c8f3a3e8a59584c2193976d1226'],
     'VCF' : ['78efac4e7b81a714d2930f8febd3a4d5']
   }
 };
