@@ -468,6 +468,7 @@ describe('Running with ranger server with a', () => {
   let SERV_PORT  = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
   let MONGO_PORT = Math.floor(Math.random() * PORT_RANGE) + BASE_PORT;
   const FIXTURES = 'test/server/data/fixtures/fileinfo.json';
+  const REFFIXTURES = 'test/server/data/fixtures/referenceinfo.json';
 
   let dbName        = 'imetacache';
   let mongourl      = `mongodb://localhost:${MONGO_PORT}/${dbName}`;
@@ -484,6 +485,11 @@ describe('Running with ranger server with a', () => {
 
     // Import data set from fixtures.json
     command = `mongoimport --port ${MONGO_PORT} --db ${dbName} --collection fileinfo --jsonArray --file ${FIXTURES}`;
+    out = execSync(command);
+    console.log(`Loaded data to MONGO DB: ${out}`);
+
+    // Import dummy data set for referenceInfo (end region lookup). 
+    command = `mongoimport --port ${MONGO_PORT} --db ${dbName} --collection referenceinfo --jsonArray --file ${REFFIXTURES}`;
     out = execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
@@ -610,8 +616,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              '79cb05e3fe428da52da346e7d4f6324a',
-              '9b123c8f3a3e8a59584c2193976d1226'
+              '5512f394d66af35b1ca4a4b4969919f1',
+              'f2f34ebfe5266c40278ed2d3f3521754'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -669,8 +675,8 @@ describe('Running with ranger server with a', () => {
             fail();
           } else {
             let chksums = [
-              '79cb05e3fe428da52da346e7d4f6324a',
-              '9b123c8f3a3e8a59584c2193976d1226'
+              '5512f394d66af35b1ca4a4b4969919f1',
+              'f2f34ebfe5266c40278ed2d3f3521754'
             ];
             expect(hash.digest('hex')).toBeOneOf(chksums);
           }
@@ -763,27 +769,321 @@ describe('Running with ranger server with a', () => {
     });
   }, 20000);
 
- it('POST - Error in merge', (done) => {
+  it('POST - Successfully merge two regions', (done) => {
     let serv = startServer( done, fail );
-   serv.stderr.on('data', (data) => {
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start" : 200, "end" : 500 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              'd34bd6752f41fc93f208f2558805ea97',
+              '39a5efa117269e0f6bfc4f0bfc0004f8'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Successfully merge two regions with a start being undefined', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "end" : 500 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              'd34bd6752f41fc93f208f2558805ea97',
+              '39a5efa117269e0f6bfc4f0bfc0004f8'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Successfully merge two regions with an end being undefined', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 }]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '960f0fbf1a051c8416af4db96739db3c',
+              '97ace431a6212edcf025c3ce2f36c53c'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Successfully look up different references with end region look ups ', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let hash = crypto.createHash('md5');
+        let bamseqchksum = spawn('bamseqchksum', ['inputformat=sam']);
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 },
+                                             { "referenceName" : "chr1", "start" : 100, "end" : 200 },
+                                             { "referenceName" : "chr1", "start" : 400},
+                                             { "referenceName" : "chr2", "start" : 0}]
+                                          }));
+        client.stdin.end();
+        bamseqchksum.stdout.on('data', data => {
+          hash.update(data.toString());
+        });
+        bamseqchksum.on('exit', ( code ) => {
+          serv.kill();
+          if ( code !== 0 ) {
+            console.log(`bamseqchksum failed with code: ${code}`);
+            fail();
+          } else {
+            let chksums = [
+              '960f0fbf1a051c8416af4db96739db3c',
+              '97ace431a6212edcf025c3ce2f36c53c'
+            ];
+            expect(hash.digest('hex')).toBeOneOf(chksums);
+          }
+        });
+        process.nextTick( () => {
+          client.stderr.pipe(process.stderr);
+          bamseqchksum.stderr.pipe(process.stderr);
+          client.stdout.pipe(bamseqchksum.stdin);
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Unsuccessfully look up a reference not in DB, mixed with valid regions ', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
       if (data.toString().match(/Server listening on /)) {
         // Server is listening and ready for connection
         let client = spawn('bin/client.js', [
           '--post_request',
           `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
         ]);
-        client.on('exit', ( code ) => {
-          expect(code).toBe(1);
-          serv.kill();
-          done();
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
         });
 
         client.stdin.write(JSON.stringify({"format":"sam",
                                            "regions" : [
-                                             { "referenceName" : "phix", "start" : 2000, "end" : 2400 },
-                                             { "referenceName" : "phix", "start" : 2500, "end" : 3000 }]
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "chr6", "start": 20 }]
                                           }));
         client.stdin.end();
+        client.on('close', (code) => {
+          expect(stdout).toEqual('');
+          expect(stderr).toContain('Non 200 status - 500 Error calculating region for query');
+          expect(code).not.toBe(0);
+          serv.kill();
+          console.log(stderr);
+          done();
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Unsuccessfully look up an incomplete reference in DB that did not have an end region, mixed with valid regions', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      console.log(data.toString());
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "phix", "start": 700 },
+                                             { "referenceName" : "phix", "start" : 600, "end" : 3000 },
+                                             { "referenceName" : "chr1", "start" : 100, "end" : 200 },
+                                             { "referenceName" : "chr1", "start" : 400 },
+                                             { "referenceName" : "chr2", "start" : 0},
+                                             { "referenceName" : "chr5", "start" : 500 }]
+                                          }));
+        client.stdin.end();
+        client.on('close', (code) => {
+          expect(stdout).toEqual('');
+          expect(stderr).toContain('Non 200 status - 500 Error calculating region for query');
+          expect(code).not.toBe(0);
+          serv.kill();
+          console.log(stderr);
+          done();
+        });
+      }
+    });
+  }, 20000);
+
+  it('POST - Unsuccessfully look up an incomplete reference in DB that did not have an end region', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      console.log(data.toString());
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [
+                                             { "referenceName" : "chr5", "start" : 500 }]
+                                          }));
+        client.stdin.end();
+        client.on('close', (code) => {
+          expect(stdout).toEqual('');
+          expect(stderr).toContain('Non 200 status - 500 Error calculating region for query');
+          expect(code).not.toBe(0);
+          serv.kill();
+          console.log(stderr);
+          done();
+        });
+      }
+    });
+  }, 20000);
+
+
+
+
+
+  it('POST - Unsuccessfully look up a reference not in DB, by itself', (done) => {
+    let serv = startServer( done, fail );
+    serv.stderr.on('data', (data) => {
+      if (data.toString().match(/Server listening on /)) {
+        // Server is listening and ready for connection
+        let client = spawn('bin/client.js', [
+          '--post_request',
+          `http://localhost:${SERV_PORT}/ga4gh/sample/ABC123456`
+        ]);
+        let stdout = '';
+        let stderr = '';
+        client.stdout.on('data', function(data) {
+          stdout += data;
+        });
+        client.stderr.on('data', function(data) {
+          stderr += data;
+        });
+        client.stdin.write(JSON.stringify({"format":"sam",
+                                           "regions" : [ { "referenceName" : "chr6", "start" : 200 }]
+                                          }));
+        client.stdin.end();
+        client.on('close', (code) => {
+          expect(stdout).toEqual('');
+          expect(stderr).toContain('Non 200 status - 500 Error calculating region for query');
+          expect(code).not.toBe(0);
+          serv.kill();
+          console.log(stderr);
+          done();
+        });
       }
     });
   }, 20000);
