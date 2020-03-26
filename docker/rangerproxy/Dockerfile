@@ -1,35 +1,28 @@
 FROM httpd:2.4.41
-MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
+MAINTAINER Grisha Hushchyn <gh13@sanger.ac.uk>
 
-ENV NODE_VERSION=10.16.3 \
-    APT_DEPENDENCIES="wget git xz-utils"
+ENV APT_DEPENDENCIES="wget git xz-utils autoconf pkg-config libcurl4-openssl-dev libssl-dev libjansson-dev build-essential libcjose-dev libpcre++-dev" \
+    APT_DEPENDENCIES_KEEP="ca-certificates"
 
 RUN apt-get update -qq \
   && apt-get install -qq $APT_DEPENDENCIES \
+  && apt-get install -qq $APT_DEPENDENCIES_KEEP \
 \
-# Get Node.js
-  && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
-  && tar xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
-  && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
-  && npm update -g npm
-
-RUN git clone --branch npg_ranger_master --depth 1 https://github.com/wtsi-npg/dalliance.git dalliance \
-  && cd dalliance \
-  && npm install \
-  && ./node_modules/.bin/gulp \
-  && ln -s node_modules/npg_ranger/lib/uiclient/index.html . \
-  && cd ../htdocs \
-  && ln -s ../dalliance .
-
-COPY ./docker_conf.pl /usr/local/apache2/docker_conf.pl
-COPY ./httpd.conf /usr/local/apache2/httpd.conf
-
-RUN perl docker_conf.pl \
-  && mv /usr/local/apache2/httpd.conf /usr/local/apache2/conf/httpd.conf
+# Get mod-auth-openidc
+  && git clone https://github.com/zmartzone/mod_auth_openidc.git --branch master auth_openidc \
 \
+# Build mod-auth-openidc
+  && cd auth_openidc \
+  && ./autogen.sh \
+  && ./configure --with-apxs2=/usr/local/apache2/bin/apxs \
+  && make \
+  && make install \
+  && cd ..
+
 RUN apt-get remove -qq $APT_DEPENDENCIES \
 #  && apt-get autoremove --purge -qq \
   && apt-get clean \
+  && rm -rf ./auth_openidc/* \
   && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 9090
