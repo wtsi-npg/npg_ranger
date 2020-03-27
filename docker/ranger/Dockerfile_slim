@@ -1,0 +1,98 @@
+FROM ubuntu:18.04
+MAINTAINER Grisha Hushchyn <gh13@sanger.ac.uk>
+
+# Hold versions in environment variables.
+ENV NODE_VERSION=10.16.3 \
+#   MONGODB_VERSION=3.6.14 \
+    SAMTOOLS_VERSION=1.10.0+24_g383a31b \
+    LIBHTS_PLUGINS_VERSION=201712 \
+    BIOBAMBAM_VERSION=2.0.79 \
+    FREEBAYES_VERSION=1.2.0 \
+    NPG_RANGER_VERSION=2.0.0 \
+    CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
+    CONDA_GENERIC_DEVEL_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/devel/generic/linux-64/' \
+    MINICONDA_VERSION='4.6.14' \
+    MINICONDA_HOME='/miniconda' \
+    APT_DEPENDENCIES="wget git" \
+    PYTHONDONTWRITEBYTECODE=true
+
+RUN apt-get update -qq \
+  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get update -qq \
+  && apt-get install -qq $APT_DEPENDENCIES \
+\
+# Get Node.js
+  && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+  && tar xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+  && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
+\
+# Mongodb below commented out to save space, as it is not necessary
+# Get Mongodb - only needed for running grunt tests
+# Use a dedicated mongodb container to host db in production
+#  && wget -q "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
+#  && tar xzf "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" -C /usr/local --strip-components=1 \
+#  && rm "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz" \
+# \
+# Install conda
+  && mkdir -p /software \
+  && wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
+  && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
+  && export PATH="${MINICONDA_HOME}/bin:$PATH" \
+  && rm "miniconda-${MINICONDA_VERSION}.sh" \
+\
+# Install SAMtools from conda channel
+  && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
+\
+# Install Biobambam from conda channel
+  && conda create -p "/software/biobambam2/${BIOBAMBAM_VERSION}" \
+  && conda install -p "/software/biobambam2/${BIOBAMBAM_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" biobambam2="${BIOBAMBAM_VERSION}" \
+\
+# Install Freebayes from conda channel
+  && conda create -p "/software/freebayes/${FREEBAYES_VERSION}" \
+  && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
+\
+# Get Ranger
+  && npm install @grishah/npg_ranger@beta \
+\
+# Clean up conda files
+  && conda clean -afy \
+  && rm -rf ${MINICONDA_HOME} \
+\
+# Clean npm cache
+  && npm prune --production \
+  && npm cache clean --force
+
+COPY ./certs/ /usr/share/ca-certificates/ranger/
+RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
+  then \
+    for i in /usr/share/ca-certificates/ranger/*.pem; \
+    do \
+      echo "$i"; \
+      echo "ranger/$(basename $i)" | tee -a /etc/ca-certificates.conf; \
+    done; \
+    update-ca-certificates -v; \
+  fi
+
+WORKDIR /npg_ranger
+
+RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
+COPY ./s3cfg /home/apprunner/.s3cfg
+RUN chown -R apprunner:apprunner /npg_ranger /home/apprunner
+
+# Remove build-time dependencies
+RUN apt-get remove -qq $APT_DEPENDENCIES \
+  && apt-get autoremove --purge -qq \
+  && apt-get clean autoclean \
+  && rm -rf /var/lib/apt/lists/*
+# && rm -rf /usr/local/bin/mongo*
+
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
+
+RUN chmod 0555 /wait-for-it.sh
+EXPOSE 5050
+
+USER apprunner
+ENV PATH=$PATH:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+CMD [ "/bin/bash" ]
