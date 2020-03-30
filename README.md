@@ -22,6 +22,11 @@ a server and a compatible command-line http client; both conform to [GA4GH API](
  Gruntfile.js - grunt runner specification
 ```
 
+## File merging pipeline
+
+We are using a light version of our samtools pipeline for merging by default, but the heavy version is available in the code, located inside `lib/server/model.js`.
+This is because most of our data can work with the light pipeline, and the heavy version may be considerably more computationally taxing due to collating, fixmate, and sorting.
+
 # Related projects
 
  - OAuth2 authorization server https://github.com/wtsi-npg/npg_sentry
