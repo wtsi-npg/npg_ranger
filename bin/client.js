@@ -297,12 +297,21 @@ if ( cline.args.length === 2 ) {
       process.exit(0);
     }
   });
-  process.stdout.once('end', () => {
-    LOGGER.debug('exiting');
+  output.on('end', () => {
+    LOGGER.debug('piping output on end');
     process.nextTick(() => {
+      // Assuming writes to stdout will be blocking sync,
+      // stdout should be flushed by now.
       process.exit(0);
     });
   });
+  output.on('unpipe', () => {
+    LOGGER.debug('piping output on unpipe');
+  });
+  output.on('finish', () => {
+    LOGGER.debug('piping output on finish');
+  });
+
   output.pipe(process.stdout);
 }
 
