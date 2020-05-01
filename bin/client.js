@@ -340,11 +340,6 @@ output.on('error', ( err ) => {
   exitWithError( err );
 });
 
-output.on('close', () => {
-  LOGGER.debug('Output stream has been closed. Exiting...');
-  process.exit();
-});
-
 const RE_DATA_URI = /^data:/i;
 
 var requestWorker = ( task, callback ) => {
