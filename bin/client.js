@@ -277,10 +277,17 @@ var ca_file = cline.with_ca;
 
 var url = cline.args[0];
 var output = new PassThrough();
+
 if ( cline.args.length === 2 ) {
   var fileoutput = fs.createWriteStream(cline.args[1], {
     flags:     'w',
     autoClose: true
+  });
+  fileoutput.once('finish', () => {
+    LOGGER.debug('fileoutput finish, now exiting');
+    process.nextTick(() => {
+      process.exit(0);
+    });
   });
   output.pipe(fileoutput);
 } else {
@@ -289,6 +296,12 @@ if ( cline.args.length === 2 ) {
       // next process in the pipe closed e.g. samtools printing only headers
       process.exit(0);
     }
+  });
+  process.stdout.once('end', () => {
+    LOGGER.debug('exiting');
+    process.nextTick(() => {
+      process.exit(0);
+    });
   });
   output.pipe(process.stdout);
 }
@@ -392,7 +405,7 @@ var requestWorker = ( task, callback ) => {
             }
           } else {
             res.on('end', () => {
-              LOGGER.debug('End of stream, all data processed');
+              LOGGER.debug('End of response stream');
               if ( acceptTrailers ) {
                 LOGGER.debug('Checking trailers');
                 let trailerString = trailer.asString(res);
@@ -440,8 +453,8 @@ process.nextTick(() => {
     if ( err ) {
       exitWithError( err );
     } else {
-      LOGGER.debug('Success');
-      process.exit(0);
+      LOGGER.debug('calling end on passthrough');
+      output.end();
     }
   });
 });
