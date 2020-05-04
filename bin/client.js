@@ -277,10 +277,17 @@ var ca_file = cline.with_ca;
 
 var url = cline.args[0];
 var output = new PassThrough();
+
 if ( cline.args.length === 2 ) {
   var fileoutput = fs.createWriteStream(cline.args[1], {
     flags:     'w',
     autoClose: true
+  });
+  fileoutput.once('finish', () => {
+    LOGGER.debug('fileoutput finish, now exiting');
+    process.nextTick(() => {
+      process.exit(0);
+    });
   });
   output.pipe(fileoutput);
 } else {
@@ -290,6 +297,21 @@ if ( cline.args.length === 2 ) {
       process.exit(0);
     }
   });
+  output.on('end', () => {
+    LOGGER.debug('piping output on end');
+    process.nextTick(() => {
+      // Assuming writes to stdout will be blocking sync,
+      // stdout should be flushed by now.
+      process.exit(0);
+    });
+  });
+  output.on('unpipe', () => {
+    LOGGER.debug('piping output on unpipe');
+  });
+  output.on('finish', () => {
+    LOGGER.debug('piping output on finish');
+  });
+
   output.pipe(process.stdout);
 }
 
@@ -316,11 +338,6 @@ if ( token_config ) {
 
 output.on('error', ( err ) => {
   exitWithError( err );
-});
-
-output.on('close', () => {
-  LOGGER.debug('Output stream has been closed. Exiting...');
-  process.exit();
 });
 
 const RE_DATA_URI = /^data:/i;
@@ -392,7 +409,7 @@ var requestWorker = ( task, callback ) => {
             }
           } else {
             res.on('end', () => {
-              LOGGER.debug('End of stream, all data processed');
+              LOGGER.debug('End of response stream');
               if ( acceptTrailers ) {
                 LOGGER.debug('Checking trailers');
                 let trailerString = trailer.asString(res);
@@ -440,8 +457,8 @@ process.nextTick(() => {
     if ( err ) {
       exitWithError( err );
     } else {
-      LOGGER.debug('Success');
-      process.exit(0);
+      LOGGER.debug('calling end on passthrough');
+      output.end();
     }
   });
 });
