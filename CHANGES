@@ -38,6 +38,8 @@ release 3.0.0
     - add check for biobambam to also use cache
   - replace biobambam's "bamstreamingmarkduplicates" with samtools' "markdup"
     - still present in dev tests
+  - fix existing bug in ranger client for outputting and piping into file
+    - used to cause samtools errors in file and cause loggers to not display
 
 release 2.0.0
   - upgrade async to 2.4.1 from 2.1.4
