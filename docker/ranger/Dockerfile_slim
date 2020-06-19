@@ -4,7 +4,7 @@ MAINTAINER Grisha Hushchyn <gh13@sanger.ac.uk>
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
 #   MONGODB_VERSION=3.6.14 \
-    SAMTOOLS_VERSION=1.10.0+24_g383a31b \
+    SAMTOOLS_VERSION=1.10+42_g3c4b380 \
     LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
