@@ -5,7 +5,7 @@ MAINTAINER Grisha Hushchyn <gh13@sanger.ac.uk>
 ENV NODE_VERSION=10.16.3 \
 #   MONGODB_VERSION=3.6.14 \
     SAMTOOLS_VERSION=1.10+42_g3c4b380 \
-    LIBHTS_PLUGINS_VERSION=201712 \
+    LIBHTS_PLUGINS_VERSION=201712+irods_4.2.7 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
     IRODS_RUNTIME_VERSION=4.2.7 \
@@ -41,10 +41,14 @@ RUN apt-get update -qq \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
 \
+# Install iRODS
+  && conda create -p "/software/irods/${IRODS_RUNTIME_VERSION}"  \
+  && conda install -p "/software/irods/${IRODS_RUNTIME_VERSION}" -c conda-forge -c "${CONDA_GENERIC_CHANNEL}" irods-runtime=${IRODS_RUNTIME_VERSION} \
+\
 # Install SAMtools from conda channel
   && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
-  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
-  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c conda-forge -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
 \
 # Install Biobambam from conda channel
   && conda create -p "/software/biobambam2/${BIOBAMBAM_VERSION}" \
@@ -53,10 +57,6 @@ RUN apt-get update -qq \
 # Install Freebayes from conda channel
   && conda create -p "/software/freebayes/${FREEBAYES_VERSION}" \
   && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
-\
-# Install iRODS
-  && conda create -p "/software/irods/${IRODS_ICOMMANDS_VERSION}"  \
-  && conda install -p "/software/irods/${IRODS_ICOMMANDS_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" irods-icommands=${IRODS_ICOMMANDS_VERSION} \
 \
 # Get Ranger
   && npm install @grishah/npg_ranger@beta \
@@ -105,5 +105,5 @@ RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/irods/${IRODS_ICOMMANDS_VERSION}/bin:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/irods/${IRODS_RUNTIME_VERSION}/bin:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
 CMD [ "/bin/bash" ]
