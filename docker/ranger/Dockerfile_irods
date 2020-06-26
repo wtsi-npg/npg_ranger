@@ -105,5 +105,5 @@ RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/irods/${IRODS_RUNTIME_VERSION}/bin:/software/htslib/${HTSLIB_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/irods/${IRODS_RUNTIME_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
 CMD [ "/bin/bash" ]
