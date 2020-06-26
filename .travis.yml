@@ -22,7 +22,7 @@ env:
     - SOFTWARE_HOME="/tmp/software"
     - FREEBAYES_VERSION="1.2.0"
     - BIOBAMBAM_VERSION="2.0.79"
-    - SAMTOOLS1_VERSION="1.10.0+24_g383a31b"
+    - SAMTOOLS1_VERSION="1.10+42_g3c4b380"
 before_install:
   - ./.travis/install.sh
   - export PATH="/tmp/usr/bin:${PATH}"

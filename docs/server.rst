@@ -21,12 +21,12 @@ Running
 
 2. Ensure you have bioinformatics tools in path
 
-   2.1 samtools v1.5 or higher
+   2.1 samtools v1.10+42_g3c4b380 or higher
 
-   2.2 biobambam v2.0.50
+   2.2 biobambam v2.0.79
 
-   2.3 freebayes `v1.1.0
-   <https://github.com/ekg/freebayes/tree/v1.1.0>`_
+   2.3 freebayes `v1.2.0
+   <https://github.com/ekg/freebayes/tree/v1.2.0>`_
 
 3. Create `configuration file
    <https://github.com/wtsi-npg/npg_ranger/blob/master/docs/config.json>`_
