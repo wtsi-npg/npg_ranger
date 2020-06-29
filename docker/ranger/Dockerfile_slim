@@ -10,7 +10,6 @@ ENV NODE_VERSION=10.16.3 \
     FREEBAYES_VERSION=1.2.0 \
     NPG_RANGER_VERSION=2.0.0 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
-    CONDA_GENERIC_DEVEL_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/devel/generic/linux-64/' \
     MINICONDA_VERSION='4.6.14' \
     MINICONDA_HOME='/miniconda' \
     APT_DEPENDENCIES="wget git" \
