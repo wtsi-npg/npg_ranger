@@ -42,8 +42,8 @@ RUN apt-get update -qq \
 \
 # Install SAMtools from conda channel
   && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
-  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_DEVEL_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
-  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" samtools="${SAMTOOLS_VERSION}" \
+  && conda install -p "/software/samtools/${SAMTOOLS_VERSION}" -c conda-forge -c "${CONDA_GENERIC_CHANNEL}" libhts-plugins="${LIBHTS_PLUGINS_VERSION}" \
 \
 # Install Biobambam from conda channel
   && conda create -p "/software/biobambam2/${BIOBAMBAM_VERSION}" \
