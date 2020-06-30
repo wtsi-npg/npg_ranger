@@ -1,8 +1,8 @@
 [
 
-{"filepath_by_host" : { "*" : "/seqdata/20818_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20818", "data_object" : "20818_1#888.bam" },
+{"filepath_by_host" : { "*" : "/seqdata/20818_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1", "type" : "bam" }, "collection" : "/seq/20818", "data_object" : "20818_1#888.bam" },
 
-{"filepath_by_host" : { "*" : "/seqdata/20907_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" },
+{"filepath_by_host" : { "*" : "/seqdata/20907_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "ABC123456", "target" : "1", "manual_qc" : "1", "alignment" : "1", "type" : "bam" }, "collection" : "/seq/20907", "data_object" : "20907_1#888.bam" },
 
 {"collection" : "CH", "data_object" : "NA12878.bam", "avh" : {"target" : "1","alignment" : "1", "reference" : "references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa", "sample_accession_number" : "NA12878", "manual_qc": "1", "type": "bam"}, "filepath_by_host" : { "*" : "s3://ga4gh/grch37/NA12878.bam"}},
 {"collection" : "CH", "data_object" : "NA12891.bam", "avh" : {"target" : "1","alignment" : "1", "reference" : "references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa", "sample_accession_number" : "NA12891", "manual_qc": "1", "type": "bam"}, "filepath_by_host" : { "*" : "s3://ga4gh/grch37/NA12891.bam"}},
@@ -18,9 +18,9 @@
 
 {"collection" : "CH", "data_object" : "NA30000.cram", "avh" : { "target" : "1", "alignment" : "1", "reference" : "references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa", "sample_accession_number" : "NA30000", "manual_qc" : "1", "type" : "cram" }, "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" } },
 
-{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI123456", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.cram" },
+{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI123456", "target" : "1", "manual_qc" : "1", "alignment" : "1", "type" : "cram" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.cram" },
 
-{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI654321", "target" : "1", "manual_qc" : "1", "alignment" : "1" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.bam" },
+{ "filepath_by_host" : { "*" : "/seqdata/30000_1#888.bam" }, "avh" : { "reference" : "PhiX/all/fasta/phix_unsnipped_short_no_N.fa", "sample_accession_number" : "GHI654321", "target" : "1", "manual_qc" : "1", "alignment" : "1", "type" : "bam" }, "collection" : "/seq/30000", "data_object" : "30000_1#888.bam" },
 
 {"collection" : "CH", "data_object" : "NA30000M.cram", "avh" : { "target" : "1", "alignment" : "1", "reference" : "references/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa", "sample_accession_number" : "NA30000M", "manual_qc" : "1", "type" : "cram" }, "filepath_by_host" : { "*" : "/seqdata/30000_1#888.cram" }},
 
