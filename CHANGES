@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
 
+  - add GitHub Action and upgraded to minconda 4.10.3
   - add support for iRODS 4.2 clients in containers
 
 release 3.0.0

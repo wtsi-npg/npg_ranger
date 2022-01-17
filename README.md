@@ -1,6 +1,7 @@
 # npg_ranger project
 
 [![Build Status](https://travis-ci.org/wtsi-npg/npg_ranger.svg?branch=master)](https://travis-ci.org/wtsi-npg/npg_ranger)
+[![CI checks](https://github.com/wtsi-npg/npg_ranger/actions/workflows/ci.yml/badge.svg)](https://github.com/wtsi-npg/npg_ranger/actions/workflows/ci.yml)
 [![NPM dependencies](https://david-dm.org/wtsi-npg/npg_ranger.svg)](https://david-dm.org/wtsi-npg/npg_ranger)
 
 ## Introduction

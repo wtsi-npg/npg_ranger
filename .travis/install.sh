@@ -9,7 +9,7 @@ tar xfz "mongodb-linux-x86_64-${MONGODB_VERSION}.tgz"
 
 # conda
 mkdir -p "${SOFTWARE_HOME}"
-wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
+wget -q "https://repo.anaconda.com/miniconda/Miniconda3-py39_${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh"
 /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}"
 export PATH="${MINICONDA_HOME}/bin:$PATH"
 conda config --set auto_update_conda False
