@@ -459,7 +459,7 @@ describe('token bearer', () => {
   });
 });
 
-describe('Running with ranger server with a', () => {
+xdescribe('Running with ranger server with a', () => {
   let spawn    = child.spawn;
   let execSync = child.execSync;
 

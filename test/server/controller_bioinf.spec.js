@@ -1,4 +1,4 @@
-/* globals describe, it, expect, beforeAll, afterAll */
+/* globals xdescribe, describe, it, expect, beforeAll, afterAll */
 
 'use strict';
 
@@ -37,7 +37,7 @@ let expectedMd5s = {
   }
 };
 
-describe('server fetching', () => {
+xdescribe('server fetching', () => {
   const server = http.createServer();
   let socket = tmp.tmpNameSync();
   let testRuns = {
