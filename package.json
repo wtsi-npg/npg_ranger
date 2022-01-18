@@ -69,7 +69,7 @@
     "request": "2.88.0",
     "semver": "7.3.5",
     "send": "0.17.2",
-    "winston": "2.4.4"
+    "winston": "3.4.0"
   },
   "devDependencies": {
     "browserify": "17.0.0",
