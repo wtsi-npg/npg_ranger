@@ -64,7 +64,7 @@
     "http-shutdown": "1.2.2",
     "js-md5": "0.7.3",
     "moment": "2.29.1",
-    "mongodb": "2.2.36",
+    "mongodb": "3.7.3",
     "node-getopt": "0.3.2",
     "request": "2.88.0",
     "semver": "7.3.5",
