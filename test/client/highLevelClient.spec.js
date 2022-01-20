@@ -1,4 +1,4 @@
-/* globals describe, xdescribe, expect, it, fail, beforeAll, beforeEach, afterAll, jasmine */
+/* globals describe, xdescribe, expect, it, xit, fail, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -364,7 +364,7 @@ describe('token bearer', () => {
       });
     });
 
-    it('sends header for all requests', ( done ) => { 
+    xit('sends header for all requests', ( done ) => { 
 
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
@@ -459,7 +459,7 @@ describe('token bearer', () => {
   });
 });
 
-describe('Running with ranger server with a', () => {
+xdescribe('Running with ranger server with a', () => {
   let spawn    = child.spawn;
   let execSync = child.execSync;
 
