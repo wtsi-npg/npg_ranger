@@ -1,5 +1,20 @@
 LIST OF CHANGES for npg_ranger project
-
+  - upgrade @prantlf/jsonlint from 8.0.2 to 10.2.0
+  - upgrade async from 3.1.0 to 3.2.3
+  - upgrade config-chain from 1.1.12 to 1.1.13
+  - upgrade fs-extra from 8.1.0 to 10.0.0
+  - upgrade http-shutdown from 1.2.1 to 1.2.2
+  - upgrade moment from 2.24.0 to 2.29.1
+  - upgrade semver from 6.3.0 to 7.3.5
+  - upgrade send from 0.17.1 to 0.17.2
+  - upgrade browserify from 16.5.0 to 17.0.0
+  - upgrade decache from 4.5.1 to 4.6.1
+  - upgrade grunt from 1.0.4 to 1.4.1
+  - upgrade grunt-browserify from 5.3.0 to 6.0.0
+  - upgrade grunt-jsdoc from 2.4.0 to 2.4.1
+  - upgrade grunt-jsonlint from 2.0.0 to 2.1.3
+  - upgrade pem from 1.14.3 to 1.14.4
+  - upgrade tmp from 0.1.0 to 0.2.1
   - add GitHub Action and upgraded to minconda 4.10.3
   - add support for iRODS 4.2 clients in containers
 
