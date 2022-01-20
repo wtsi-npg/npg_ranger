@@ -7,8 +7,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "private": false,
   "engines": {
-    "node": ">=10.16.2",
-    "npm": ">=6.9.0"
+    "node": ">=12.14.1",
+    "npm": ">=6.13.6"
   },
   "repository": {
     "type": "git",
@@ -23,7 +23,8 @@
     "David Jackson",
     "Andrew Nowak",
     "Jaime Tovar Corona",
-    "Grisha Hushchyn"
+    "Grisha Hushchyn",
+    "Adam Blanchet"
   ],
   "keywords": [
     "data streaming",
