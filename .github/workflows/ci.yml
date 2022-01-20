@@ -4,11 +4,12 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
-        node-version: ["10.16.3", "10.18.1", "12.14.1", "14", "16"]
+        os: [ubuntu-18.04, ubuntu-latest]
+        node-version: ["10.16.3", "10.18.1", "12.14.1", "14", "16"]   
+    runs-on: ${{ matrix.os }}
 
     steps:
 
@@ -51,7 +52,7 @@ jobs:
         BIOBAMBAM_VERSION: "2.0.79"
         SAMTOOLS1_VERSION: "1.10+42_g3c4b380"
       run: |
-        ./.travis/install.sh
+        ./scripts/CI-install.sh
         export PATH="/tmp/usr/bin:${PATH}"
         npm install
         npm install -g grunt-cli
