@@ -58,7 +58,7 @@
   "dependencies": {
     "@prantlf/jsonlint": "10.2.0",
     "async": "3.2.3",
-    "commander": "2.20.0",
+    "commander": "8.3.0",
     "config-chain": "1.1.13",
     "fs-extra": "10.0.0",
     "http-shutdown": "1.2.2",

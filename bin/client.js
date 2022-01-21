@@ -264,16 +264,18 @@ let _check_for_post = ( is_post, options ) => {
 if ( !cline.args.length ||
      ( cline.args.length != 1 && cline.args.length != 2 ) ) { cline.help(); }
 
-var acceptTrailers = cline.acceptTrailers;
+const opts = cline.opts();
 
-var post_request = cline.post_request;
+var acceptTrailers = opts.acceptTrailers;
 
-var token_config = cline.token_config;
+var post_request = opts.post_request;
+
+var token_config = opts.token_config;
 var token;
 
-LOGGER.level = cline.loglevel;
+LOGGER.level = opts.loglevel;
 
-var ca_file = cline.with_ca;
+var ca_file = opts.with_ca;
 
 var url = cline.args[0];
 var output = new PassThrough();
