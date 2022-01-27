@@ -1,0 +1,25 @@
+name: Lint Dockerfiles
+
+on: [push, pull_request]
+
+jobs:
+  lint_dockerfiles:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Hadolint
+        run: |
+          cd "${HOME}";
+          mkdir bin;
+          wget https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 ;
+          chmod u+x hadolint-Linux-x86_64;
+          mv hadolint-Linux-x86_64 bin/hadolint;
+          ${HOME}/bin/hadolint -h
+      - name: Lint files
+        run: |
+          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint
