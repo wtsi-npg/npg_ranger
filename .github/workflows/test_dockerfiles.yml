@@ -1,4 +1,4 @@
-name: Lint Dockerfiles
+name: Test Dockerfiles
 
 on: [push, pull_request]
 
@@ -35,5 +35,4 @@ jobs:
 
       - name: Build docker images
         run: |
-          cd docker/ranger;
-          docker build .
+          ./scripts/build-all-docker.sh

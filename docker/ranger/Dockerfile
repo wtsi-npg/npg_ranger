@@ -5,12 +5,12 @@ LABEL org.opencontainers.image.authors="Andrew Nowak <an8@sanger.ac.uk>"
 ENV NODE_VERSION=10.16.3 \
     MONGODB_VERSION=3.6.14 \
     SAMTOOLS_VERSION=1.10+42_g3c4b380 \
-    LIBHTS_PLUGINS_VERSION=201712+irods_4.2.7 \
+    LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
     NPG_RANGER_VERSION=2.0.0 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
-    MINICONDA_VERSION='4.6.14' \
+    MINICONDA_VERSION='4.10.3' \
     MINICONDA_HOME='/miniconda' \
     APT_DEPENDENCIES="wget git xz-utils"
 
@@ -33,7 +33,7 @@ RUN apt-get update -qq \
 \
 # Install conda
   && mkdir -p /software \
-  && wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
+  && wget -q "https://repo.anaconda.com/miniconda/Miniconda3-py39_${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
   && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
