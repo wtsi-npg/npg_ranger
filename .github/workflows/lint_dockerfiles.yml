@@ -22,4 +22,18 @@ jobs:
           ${HOME}/bin/hadolint -h
       - name: Lint files
         run: |
-          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint
+          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint --ignore DL3008
+
+  build_docker_images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build docker images
+        run: |
+          cd docker/ranger;
+          docker build .

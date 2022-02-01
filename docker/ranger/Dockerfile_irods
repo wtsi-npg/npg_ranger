@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-MAINTAINER Grisha Hushchyn <gh13@sanger.ac.uk>
+LABEL org.opencontainers.image.authors="Grisha Hushchyn <gh13@sanger.ac.uk>"
 
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
@@ -17,9 +17,9 @@ ENV NODE_VERSION=10.16.3 \
     PYTHONDONTWRITEBYTECODE=true
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl expect \
+  && apt-get install --no-install-recommends -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl expect \
   && apt-get update -qq \
-  && apt-get install -qq $APT_DEPENDENCIES \
+  && apt-get install --no-install-recommends -qq $APT_DEPENDENCIES \
 \
 # Get Node.js
   && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
@@ -69,6 +69,7 @@ RUN apt-get update -qq \
   && npm cache clean --force
 
 COPY ./certs/ /usr/share/ca-certificates/ranger/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
   then \
     for i in /usr/share/ca-certificates/ranger/*.pem; \
@@ -97,10 +98,9 @@ ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.s
 COPY expect_script_test.sh /expect_script_test.sh
 COPY joint_process_test.sh /joint_process_test.sh
 
-RUN mkdir -p /home/apprunner/.irods
-RUN chown -R apprunner:apprunner /home/apprunner/.irods
-
-RUN chmod 0555 /wait-for-it.sh
+RUN mkdir -p /home/apprunner/.irods \
+  && chown -R apprunner:apprunner /home/apprunner/.irods \
+  && chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner

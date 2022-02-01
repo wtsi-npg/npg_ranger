@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
+LABEL org.opencontainers.image.authors="Andrew Nowak <an8@sanger.ac.uk>"
 
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
@@ -15,9 +15,10 @@ ENV NODE_VERSION=10.16.3 \
     APT_DEPENDENCIES="wget git"
 
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get install --no-install-recommends -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
-  && apt-get install -qq $APT_DEPENDENCIES \
+  && apt-get install --no-install-recommends -qq $APT_DEPENDENCIES \
+  && rm -rf /var/lib/apt/lists/* \
 \
 # Get Node.js
   && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
@@ -54,6 +55,7 @@ RUN apt-get update -qq \
   && npm install npg_ranger@beta
 
 COPY ./certs/ /usr/share/ca-certificates/ranger/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
   then \
     for i in /usr/share/ca-certificates/ranger/*.pem; \
