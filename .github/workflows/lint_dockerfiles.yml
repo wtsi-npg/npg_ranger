@@ -22,7 +22,7 @@ jobs:
           ${HOME}/bin/hadolint -h
       - name: Lint files
         run: |
-          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint --ignore DL3008
+          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint --ignore DL3008 --ignore SC2086
 
   build_docker_images:
     name: Build Docker Images

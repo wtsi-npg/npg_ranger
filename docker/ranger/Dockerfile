@@ -12,10 +12,10 @@ ENV NODE_VERSION=10.16.3 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
     MINICONDA_VERSION='4.6.14' \
     MINICONDA_HOME='/miniconda' \
-    APT_DEPENDENCIES="wget git"
+    APT_DEPENDENCIES="wget git xz-utils"
 
 RUN apt-get update -qq \
-  && apt-get install --no-install-recommends -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get install --no-install-recommends -qq ca-certificates zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
   && apt-get install --no-install-recommends -qq $APT_DEPENDENCIES \
   && rm -rf /var/lib/apt/lists/* \
