@@ -11,8 +11,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      
+      - name: Get Hadolint from cache
+        uses: actions/cache@v2
+        with:
+          path: ${HOME}/bin/hadolint
+          key: hadolint
 
       - name: Setup Hadolint
+        if: steps.cache.outputs.cache-hit != true
         run: |
           cd "${HOME}";
           mkdir bin;
