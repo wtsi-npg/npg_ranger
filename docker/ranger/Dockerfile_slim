@@ -4,7 +4,7 @@ LABEL org.opencontainers.image.authors="Grisha Hushchyn <gh13@sanger.ac.uk>"
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
 #   MONGODB_VERSION=3.6.14 \
-    SAMTOOLS_VERSION=1.10+42_g3c4b380 \
+    SAMTOOLS_VERSION=1.14 \
     LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
@@ -38,6 +38,10 @@ RUN apt-get update -qq \
   && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
+\
+# Install iRODS runtime from conda channel
+  && conda create -p "/software/irods-runtime/${IRODS_RUNTIME_VERSION}" \
+  && conda install -p "/software/irods-runtime/${IRODS_RUNTIME_VERSION}" -c conda-forge -c "${CONDA_GENERIC_CHANNEL}" irods-runtime=${IRODS_ICOMMANDS_VERSION} \
 \
 # Install SAMtools from conda channel
   && conda create -p "/software/samtools/${SAMTOOLS_VERSION}" \
@@ -94,5 +98,5 @@ RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/irods-runtime/${IRODS_RUNTIME_VERSION}/bin:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
 CMD [ "/bin/bash" ]

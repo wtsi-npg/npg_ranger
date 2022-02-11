@@ -50,7 +50,7 @@ jobs:
         SOFTWARE_HOME: "/tmp/software"
         FREEBAYES_VERSION: "1.2.0"
         BIOBAMBAM_VERSION: "2.0.79"
-        SAMTOOLS1_VERSION: "1.10+42_g3c4b380"
+        SAMTOOLS1_VERSION: "1.14"
       run: |
         ./scripts/CI-install.sh
         export PATH="/tmp/usr/bin:${PATH}"
