@@ -1,4 +1,4 @@
-/* globals describe, expect, it, xit, beforeAll, afterAll, jasmine */
+/* globals describe, expect, it, beforeAll, afterAll, jasmine */
 
 "use strict";
 
@@ -114,7 +114,7 @@ describe('Testing ranger client script', () => {
 
   }, 3000);
 
-  xit('Error if the client cannot write to the output file', ( done ) => {
+  it('Error if the client cannot write to the output file', ( done ) => {
     srv.removeAllListeners('request');
     srv.on('request', (request, response) => {
       response.writeHead(200, {"Content-Type": "text/html"});

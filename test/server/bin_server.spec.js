@@ -1,4 +1,4 @@
-/* globals xdescribe, describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jasmine, spyOn, fail */
+/* globals describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, jasmine, spyOn, fail */
 
 "use strict";
 
@@ -334,7 +334,7 @@ describe('Sockets are cleaned', () => {
   }, 10000);
 });
 
-xdescribe('Cluster limit consecutive forks', () => {
+describe('Cluster limit consecutive forks', () => {
   let spawn    = require('child_process').spawn;
   let exec     = require('child_process').exec;
   let execSync = require('child_process').execSync;

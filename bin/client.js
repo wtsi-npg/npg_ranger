@@ -285,6 +285,9 @@ if ( cline.args.length === 2 ) {
     flags:     'w',
     autoClose: true
   });
+  fileoutput.on('error', (err) => {
+    throw(err);
+  });
   fileoutput.once('finish', () => {
     LOGGER.debug('fileoutput finish, now exiting');
     process.nextTick(() => {

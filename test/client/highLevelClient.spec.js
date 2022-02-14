@@ -1,4 +1,4 @@
-/* globals describe, xdescribe, expect, it, xit, fail, beforeAll, beforeEach, afterAll, jasmine */
+/* globals describe, xdescribe, expect, it, fail, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -222,7 +222,7 @@ describe('token bearer', () => {
       });
     });
 
-    xdescribe('Error reported with invalid characters in token', () => {
+    describe('Error reported with invalid characters in token', () => {
       // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
       let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
       let bin = Buffer.from(enc, 'base64');
@@ -247,7 +247,7 @@ describe('token bearer', () => {
         });
         client.on('close', function(code) {
           expect(stdout).toEqual('');
-          expect(stderr).toMatch(/The header content contains invalid characters/i);
+          expect(stderr).toMatch(/Invalid character in header content/i);
           expect(code).toBe(1);
           done();
         });
@@ -364,7 +364,7 @@ describe('token bearer', () => {
       });
     });
 
-    xit('sends header for all requests', ( done ) => { 
+    it('sends header for all requests', ( done ) => { 
 
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
