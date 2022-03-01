@@ -68,9 +68,9 @@ xdescribe('server fetching', () => {
     //let LOGGER = require('../../lib/logsetup.js');
     //LOGGER.level = 'debug';
 
-    MongoClient.connect(mongourl, (err, db) => {
+    MongoClient.connect(mongourl, (err, client) => {
       assert.equal(err, null, `failed to connect to ${mongourl}: ${err}`);
-
+      let db = client.db();
       // The model runs samtools merge in a temporary directory,
       // so mongo needs to return an absolute path to the data.
       // Difficult because tests need to be portable.

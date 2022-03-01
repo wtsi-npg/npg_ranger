@@ -1,5 +1,6 @@
 LIST OF CHANGES for npg_ranger project
   - upgrade winston from 2.4.4 to 3.4.0
+  - upgrade mongodb from 2.2.36 to 4.3.1
   - upgrade commander from 2.20.0 to 8.3.0
   - upgrade @prantlf/jsonlint from 8.0.2 to 10.2.0
   - upgrade async from 3.1.0 to 3.2.3

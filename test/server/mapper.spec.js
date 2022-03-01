@@ -88,15 +88,17 @@ describe('Data info retrieval', function() {
     });
 
     it('Do not allow mismatching references when multiref falsy', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        var dm = new DataMapper(db);
+        var dm = new DataMapper(client.db());
         dm.once('data', () => {
           fail();
+          client.close();
           done();
         });
         dm.once('nodata', (reason) => {
           expect(reason).toBe('Not all references match for sample accession XYZ238967');
+          client.close();
           done();
         });
         dm.getFileInfo({accession: "XYZ238967"}, 'localhost');
@@ -104,15 +106,17 @@ describe('Data info retrieval', function() {
     });
 
     it('Fail if no reference found', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        var dm = new DataMapper(db);
+        var dm = new DataMapper(client.db());
         dm.once('data', () => {
+          client.close();
           fail();
           done();
         });
         dm.once('nodata', (reason) => {
           expect(reason).toBe('No reference for 10000_1#58_phix.bam');
+          client.close();
           done();
         });
         dm.getFileInfo({name: "10000_1#58_phix.bam"}, 'localhost');
@@ -122,16 +126,18 @@ describe('Data info retrieval', function() {
 
   describe('Test filters', function() {
     it('invalid combination', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
           // Expect failure because both target and target_not are specified,
           // which is not allowed
           expect(reason).toBe('Invalid query');
+          client.close();
           done();
         });
         dm.on('data', (data) => {
+          client.close();
           fail('Should have received no data, but instead received ' + data.toString());
           done();
         });
@@ -140,10 +146,11 @@ describe('Data info retrieval', function() {
     });
 
     it('all defaults', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -152,6 +159,7 @@ describe('Data info retrieval', function() {
             [{file: 'target1 mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}]
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654'}, 'localhost');
@@ -159,10 +167,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target=0', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -176,6 +185,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: '0'}, 'localhost');
@@ -183,10 +193,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target=', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -208,6 +219,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: ''}, 'localhost');
@@ -215,11 +227,12 @@ describe('Data info retrieval', function() {
     });
 
     it('target=undef', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
           fail(reason);
+          client.close();
           done();
         });
         dm.once('data', (data) => {
@@ -228,6 +241,7 @@ describe('Data info retrieval', function() {
             {file: 'targetu mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: 'undef'}, 'localhost');
@@ -235,10 +249,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target_not=1', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -256,6 +271,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target_not: '1'}, 'localhost');
@@ -263,10 +279,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target_not=undef', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -284,6 +301,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target_not: 'undef'}, 'localhost');
@@ -291,10 +309,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target_not=', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -316,6 +335,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target_not: ''}, 'localhost');
@@ -323,16 +343,18 @@ describe('Data info retrieval', function() {
     });
 
     it('alignment_filter=1', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
           // Expect no data because nothing has alignment_filter=1
           expect(reason).toBe('No files for sample accession JKL987654');
+          client.close();
           done();
         });
         dm.once('data', (data) => {
           fail('should return no data but returned ' + data.toString());
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', alignment_filter: '1'}, 'localhost');
@@ -340,16 +362,18 @@ describe('Data info retrieval', function() {
     });
 
     it('alignment_filter=phix', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
           // Expect no data because only file with alignment_filter=phix
           // also has target=1, which must be explicitly defined
           expect(reason).toBe('No files for sample accession JKL987654');
+          client.close();
           done();
         });
         dm.once('data', (data) => {
+          client.close();
           fail('should return no data but returned ' + data.toString());
           done();
         });
@@ -358,10 +382,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target=0, alignment_filter=phix', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -378,10 +403,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target=0, alignment_filter_not=phix', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -391,6 +417,7 @@ describe('Data info retrieval', function() {
             [{file: 'target0 mqc1 align1', accessGroup : '2136',
               reference : '/test/reference/path.fa'}]
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter_not: 'phix'}, 'localhost');
@@ -398,10 +425,11 @@ describe('Data info retrieval', function() {
     });
 
     it('target=0, alignment_filter=', function(done) {
-      MongoClient.connect(url, function(err, db) {
+      MongoClient.connect(url, function(err, client) {
         assert.equal(err, null);
-        let dm = new DataMapper(db);
+        let dm = new DataMapper(client.db());
         dm.once('nodata', (reason) => {
+          client.close();
           fail(reason);
           done();
         });
@@ -415,6 +443,7 @@ describe('Data info retrieval', function() {
             {file: 'target0 mqc1 align1 afphix', accessGroup : '2136',
               reference : '/test/reference/path.fa'}
           );
+          client.close();
           done();
         });
         dm.getFileInfo({accession: 'JKL987654', target: '0', alignment_filter: ''}, 'localhost');
@@ -444,12 +473,13 @@ describe('Data info retrieval', function() {
   });
 
   it('No data received - unknown accession number given', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('nodata', (reason) => {
         expect(reason).toBe('No files for sample accession KRT1234');
         dm.removeAllListeners();
+        client.close();
         done();
       });
       dm.getFileInfo({accession: "KRT1234"}, 'localhost');
@@ -457,11 +487,12 @@ describe('Data info retrieval', function() {
   });
 
   it('No data received - unknown file name', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('nodata', (reason) => {
         expect(reason).toBe('No files for 1234_2.bam');
+        client.close();
         done();
       });
       dm.getFileInfo({name: "1234_2.bam"}, 'localhost');
@@ -469,13 +500,14 @@ describe('Data info retrieval', function() {
   });
 
   it('Filtering on flags - some data left', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         expect(data).toEqual(
           [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
             reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
+        client.close();
         done();
       });
       dm.getFileInfo({accession: "XYZ120923"}, 'localhost');
@@ -483,13 +515,14 @@ describe('Data info retrieval', function() {
   });
 
   it('No Filtering on flags when querying by name', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         expect(data).toEqual(
           [{file: 'irods:/seq/10000/10000_1#63.bam', accessGroup: '2136',
             reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_1#63.bam"}, 'localhost');
@@ -497,13 +530,14 @@ describe('Data info retrieval', function() {
   });
 
   it('Query by name', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         expect(data).toEqual(
           [{file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
             reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'localhost');
@@ -511,11 +545,12 @@ describe('Data info retrieval', function() {
   });
 
   it('No data received - unknown directory', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('nodata', (reason) => {
         expect(reason).toBe('No files for 10000_2#22.bam in /tmp/files');
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam", directory: "/tmp/files"}, 'localhost');
@@ -523,14 +558,15 @@ describe('Data info retrieval', function() {
   });
 
   it('Query by name and directory', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         expect(data).toEqual([{
           file: 'irods:/seq/10000/10000_2#22.bam', accessGroup: '2574',
           reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'
         }]);
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam", directory: "/seq/10000"}, 'localhost');
@@ -538,13 +574,14 @@ describe('Data info retrieval', function() {
   });
 
   it('Query by name, localisation by host', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         expect(data).toEqual(
           [{ file: '/irods-seq-i10-bc/seq/10000/10000_2#22.bam', accessGroup: '2574',
              reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'}]);
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_2#22.bam"}, 'irods-seq-i10');
@@ -552,9 +589,9 @@ describe('Data info retrieval', function() {
   });
 
   it('Query by accession number, multiple results', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         let d = [
           {
@@ -572,6 +609,7 @@ describe('Data info retrieval', function() {
         ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
+        client.close();
         done();
       });
       dm.getFileInfo({accession: "XYZ238967"}, 'localhost');
@@ -579,9 +617,9 @@ describe('Data info retrieval', function() {
   });
 
   it('Query by accession number, multiple results, localisation by host', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         let d = [
           {file: '/irods-seq-sr04-ddn-gc10-30-31-32/seq/10000/10000_4#43.bam', accessGroup: '2586', reference: '/Homo_sapiens/1000Genomes_hs37d5/all/fasta/hs37d5.fa'},
@@ -591,6 +629,7 @@ describe('Data info retrieval', function() {
         ];
         data.sort(compareFiles);
         expect(data).toEqual(d);
+        client.close();
         done();
       });
       dm.getFileInfo({accession: "XYZ238967"}, 'irods-seq-sr04');
@@ -598,9 +637,9 @@ describe('Data info retrieval', function() {
   });
 
   it('Some files are local, some not', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('data', (data) => {
         let d = [
           {file: 'irods:/seq/10000/10000_4#43.bam', accessGroup: '2586',
@@ -613,6 +652,7 @@ describe('Data info retrieval', function() {
         d.sort(compareFiles);
         data.sort(compareFiles);
         expect(data).toEqual(d);
+        client.close();
         done();
       });
       dm.getFileInfo({accession: "XYZ238967"}, 'irods-seq-i10');
@@ -620,11 +660,12 @@ describe('Data info retrieval', function() {
   });
 
   it('Filtering out empty paths, no results remaining', function(done) {
-    MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, client) {
       assert.equal(err, null);
-      var dm = new DataMapper(db);
+      var dm = new DataMapper(client.db());
       dm.on('nodata', (reason) => {
         expect(reason).toBe('No files for 10000_8#97.bam');
+        client.close();
         done();
       });
       dm.getFileInfo({name: "10000_8#97.bam"}, 'irods-seq-i10');
