@@ -1,0 +1,33 @@
+name: Publish
+
+on: 
+  push:
+    tags:
+      - '*'
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish latest if on main
+        if: github.ref == 'refs/heads/main'
+        run: npm publish --access public --tag latest
+        env: 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Publish devel if on devel
+        if: github.ref == 'refs/head/devel'
+        run: npm publish --access public --tag devel
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
