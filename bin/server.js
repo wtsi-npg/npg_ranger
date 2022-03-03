@@ -4,7 +4,7 @@
 
 const EventEmitter = require('events');
 const assert       = require('assert');
-const LOGGER       = require('../lib/logsetup.js');
+const LOGGER       = require('../lib/logsetup.js').BINLOGGER;
 
 const config       = require('../lib/config.js');
 const RangerServer = require('../lib/server.js');
