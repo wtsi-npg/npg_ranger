@@ -1,4 +1,4 @@
-/* globals describe, it, xit, expect, beforeAll, beforeEach, afterAll, jasmine */
+/* globals describe, it, expect, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -238,7 +238,7 @@ describe('Handling requests - error responses', function() {
   ];
 
 
-  xit('Method not allowed error', function(done) {
+  it('Method not allowed error', function(done) {
     server.removeAllListeners('request');
     server.on('request', (request, response) => {
       let c = new RangerController(request, response, {one: "two"});

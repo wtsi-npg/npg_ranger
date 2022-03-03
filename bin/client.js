@@ -11,7 +11,7 @@ const cline         = require('commander');
 const request       = require('request');
 const asyncModule   = require("async");
 
-const LOGGER        = require('../lib/logsetup.js');
+const LOGGER        = require('../lib/logsetup.js').BINLOGGER;
 const rangerRequest = require('../lib/client/rangerRequest');
 const trailer       = require('../lib/server/http/trailer.js');
 const tokenUtils    = require('../lib/token_utils');
@@ -284,6 +284,9 @@ if ( cline.args.length === 2 ) {
   var fileoutput = fs.createWriteStream(cline.args[1], {
     flags:     'w',
     autoClose: true
+  });
+  fileoutput.on('error', (err) => {
+    throw(err);
   });
   fileoutput.once('finish', () => {
     LOGGER.debug('fileoutput finish, now exiting');

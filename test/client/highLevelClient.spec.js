@@ -1,4 +1,4 @@
-/* globals describe, xdescribe, expect, it, xit, fail, beforeAll, beforeEach, afterAll, jasmine */
+/* globals describe, expect, it, xit, fail, beforeAll, beforeEach, afterAll, jasmine */
 
 "use strict";
 
@@ -19,8 +19,8 @@ const constants     = require('../../lib/constants');
 const TOKEN_BEARER_KEY_NAME = constants.TOKEN_BEARER_KEY_NAME;
 const TOKEN_CONFIG_KEY_NAME = constants.TOKEN_CONFIG_KEY_NAME;
 
-xdescribe('Testing external servers', () => {
-  it('Success with Google', ( done ) => {
+describe('Testing external servers', () => {
+  xit('Success with Google', ( done ) => {
     var req = new RangerRequest();
     // Google
     var url = 'http://104.196.18.135/readgroupsets/CMvnhpKTFhD04eLE-q2yxnU?referenceName=1&start=167856&end=173507&format=BAM';
@@ -44,7 +44,7 @@ xdescribe('Testing external servers', () => {
     req.send('');
   }, 5000);
 
-  it('Success with Google, but with different data', ( done ) => {
+  xit('Success with Google, but with different data', ( done ) => {
     var req = new RangerRequest();
     // Google
     var url = 'http://104.196.18.135/readgroupsets/CMvnhpKTFhD04eLE-q2yxnU?referenceName=1&start=160000&end=165000&format=BAM';
@@ -116,7 +116,7 @@ xdescribe('Testing external servers', () => {
     req.send('');
   }, 20000);
 
-  it('Not success with wrong path', ( done ) => {
+  xit('Not success with wrong path', ( done ) => {
     var req = new RangerRequest();
     // Google
     var url = 'http://104.196.18.135/readgroupset/CMvnhpKTFhD04eLE-q2yxnU?referenceName=1&start=167856&end=173507&format=BAM';
@@ -222,7 +222,7 @@ describe('token bearer', () => {
       });
     });
 
-    xdescribe('Error reported with invalid characters in token', () => {
+    describe('Error reported with invalid characters in token', () => {
       // Some utf-8 characters which are not ISO/IEC- 8859-1 valid
       let enc = 'xZzhu6HQvMSZIMWbx7vhg53RgMS84buDIM6GxZ7EjMSs0IctxaPRkcOXxac=';
       let bin = Buffer.from(enc, 'base64');
@@ -247,7 +247,7 @@ describe('token bearer', () => {
         });
         client.on('close', function(code) {
           expect(stdout).toEqual('');
-          expect(stderr).toMatch(/The header content contains invalid characters/i);
+          expect(stderr).toMatch(/Invalid character in header content/i);
           expect(code).toBe(1);
           done();
         });
@@ -364,7 +364,7 @@ describe('token bearer', () => {
       });
     });
 
-    xit('sends header for all requests', ( done ) => { 
+    it('sends header for all requests', ( done ) => { 
 
       let configFile = `${tmpDir}/clientconf2.json`;
       let totalReqs = 0;
@@ -459,7 +459,7 @@ describe('token bearer', () => {
   });
 });
 
-xdescribe('Running with ranger server with a', () => {
+describe('Running with ranger server with a', () => {
   let spawn    = child.spawn;
   let execSync = child.execSync;
 

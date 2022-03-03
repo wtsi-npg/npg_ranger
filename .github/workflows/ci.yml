@@ -63,4 +63,7 @@ jobs:
         samtools --version
 
     - name: Run tests
-      run: grunt -v
+      run: |
+        export PATH="/tmp/usr/bin:${PATH}"
+        echo $PATH
+        grunt -v
