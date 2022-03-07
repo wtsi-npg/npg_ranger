@@ -1,6 +1,10 @@
 FROM ubuntu:18.04
 LABEL org.opencontainers.image.authors="Grisha Hushchyn <gh13@sanger.ac.uk>"
 
+# Get branch to build from
+ARG BUILD_BRANCH=devel
+ARG BUILD_REPO=wtsi-npg/npg_ranger
+
 # Hold versions in environment variables.
 ENV NODE_VERSION=10.16.3 \
 #   MONGODB_VERSION=3.6.14 \
@@ -15,6 +19,9 @@ ENV NODE_VERSION=10.16.3 \
     APT_DEPENDENCIES="wget git xz-utils" \
     PYTHONDONTWRITEBYTECODE=true
 
+
+# ignore DL3016 since we only install npg_ranger via npm
+# hadolint ignore=DL3016
 RUN apt-get update -qq \
   && apt-get install --no-install-recommends -qq ca-certificates zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
@@ -57,7 +64,7 @@ RUN apt-get update -qq \
   && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
 \
 # Get Ranger
-  && npm install @grishah/npg_ranger@beta \
+  && npm install https://github.com/${BUILD_REPO}/tarball/${BUILD_BRANCH} \
 \
 # Clean up conda files
   && conda clean -afy \
