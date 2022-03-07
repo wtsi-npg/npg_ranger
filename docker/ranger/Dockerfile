@@ -6,7 +6,7 @@ ARG BUILD_BRANCH=devel
 ARG BUILD_REPO=wtsi-npg/npg_ranger
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=10.16.3 \
+ENV NODE_VERSION=16.14.0 \
     MONGODB_VERSION=3.6.14 \
     SAMTOOLS_VERSION=1.14 \
     LIBHTS_PLUGINS_VERSION=201712 \
@@ -18,6 +18,7 @@ ENV NODE_VERSION=10.16.3 \
     MINICONDA_HOME='/miniconda' \
     APT_DEPENDENCIES="wget git xz-utils"
 
+WORKDIR /npg_ranger
 
 # ignore DL3016 since we only install npg_ranger via npm
 # hadolint ignore=DL3016
@@ -73,7 +74,6 @@ RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
     update-ca-certificates -v; \
   fi
 
-WORKDIR /npg_ranger
 
 RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
 COPY ./s3cfg /home/apprunner/.s3cfg
@@ -91,5 +91,5 @@ RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/npg_ranger/node_modules/.bin
 CMD [ "/bin/bash" ]
