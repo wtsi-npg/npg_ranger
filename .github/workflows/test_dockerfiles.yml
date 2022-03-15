@@ -1,0 +1,45 @@
+name: Test Dockerfiles
+
+on: [push, pull_request]
+
+jobs:
+  lint_dockerfiles:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Get Hadolint from cache
+        uses: actions/cache@v2
+        with:
+          path: ${HOME}/bin/hadolint
+          key: hadolint
+
+      - name: Setup Hadolint
+        if: steps.cache.outputs.cache-hit != true
+        run: |
+          cd "${HOME}";
+          mkdir bin;
+          wget https://github.com/hadolint/hadolint/releases/download/v2.8.0/hadolint-Linux-x86_64 ;
+          chmod u+x hadolint-Linux-x86_64;
+          mv hadolint-Linux-x86_64 bin/hadolint;
+          ${HOME}/bin/hadolint -h
+      - name: Lint files
+        run: |
+          find . -type f -name Dockerfile* | xargs ${HOME}/bin/hadolint --ignore DL3008 --ignore SC2086
+
+  build_docker_images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build docker images
+        run: |
+          ./scripts/build-all-docker.sh

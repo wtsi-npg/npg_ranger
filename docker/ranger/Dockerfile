@@ -1,23 +1,32 @@
 FROM ubuntu:18.04
-MAINTAINER Andrew Nowak <an8@sanger.ac.uk>
+LABEL org.opencontainers.image.authors="Andrew Nowak <an8@sanger.ac.uk>"
+
+# Get branch to build from
+ARG BUILD_BRANCH=devel
+ARG BUILD_REPO=wtsi-npg/npg_ranger
 
 # Hold versions in environment variables.
-ENV NODE_VERSION=10.16.3 \
+ENV NODE_VERSION=16.14.0 \
     MONGODB_VERSION=3.6.14 \
-    SAMTOOLS_VERSION=1.10+42_g3c4b380 \
-    LIBHTS_PLUGINS_VERSION=201712+irods_4.2.7 \
+    SAMTOOLS_VERSION=1.14.0 \
+    LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \
     NPG_RANGER_VERSION=2.0.0 \
     CONDA_GENERIC_CHANNEL='https://dnap.cog.sanger.ac.uk/npg/conda/prod/generic/linux-64/' \
-    MINICONDA_VERSION='4.6.14' \
+    MINICONDA_VERSION='4.10.3' \
     MINICONDA_HOME='/miniconda' \
-    APT_DEPENDENCIES="wget git"
+    APT_DEPENDENCIES="wget git xz-utils"
 
+WORKDIR /npg_ranger
+
+# ignore DL3016 since we only install npg_ranger via npm
+# hadolint ignore=DL3016
 RUN apt-get update -qq \
-  && apt-get install -qq zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
+  && apt-get install --no-install-recommends -qq ca-certificates zlib1g-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev s3cmd curl \
   && apt-get update -qq \
-  && apt-get install -qq $APT_DEPENDENCIES \
+  && apt-get install --no-install-recommends -qq $APT_DEPENDENCIES \
+  && rm -rf /var/lib/apt/lists/* \
 \
 # Get Node.js
   && wget -q "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
@@ -32,7 +41,7 @@ RUN apt-get update -qq \
 \
 # Install conda
   && mkdir -p /software \
-  && wget -q "https://repo.continuum.io/miniconda/Miniconda2-${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
+  && wget -q "https://repo.anaconda.com/miniconda/Miniconda3-py39_${MINICONDA_VERSION}-Linux-x86_64.sh" -O "miniconda-${MINICONDA_VERSION}.sh" \
   && /bin/sh "miniconda-${MINICONDA_VERSION}.sh" -b -p "${MINICONDA_HOME}" \
   && export PATH="${MINICONDA_HOME}/bin:$PATH" \
   && rm "miniconda-${MINICONDA_VERSION}.sh" \
@@ -51,9 +60,10 @@ RUN apt-get update -qq \
   && conda install -p "/software/freebayes/${FREEBAYES_VERSION}" -c "${CONDA_GENERIC_CHANNEL}" freebayes="${FREEBAYES_VERSION}" \
 \
 # Get Ranger
-  && npm install npg_ranger@beta
+  && npm install https://github.com/${BUILD_REPO}/tarball/${BUILD_BRANCH}
 
 COPY ./certs/ /usr/share/ca-certificates/ranger/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
   then \
     for i in /usr/share/ca-certificates/ranger/*.pem; \
@@ -64,7 +74,6 @@ RUN  if [ -d "/usr/share/ca-certificates/ranger" ]; \
     update-ca-certificates -v; \
   fi
 
-WORKDIR /npg_ranger
 
 RUN adduser --home /home/apprunner --disabled-password --gecos "" apprunner
 COPY ./s3cfg /home/apprunner/.s3cfg
@@ -82,5 +91,5 @@ RUN chmod 0555 /wait-for-it.sh
 EXPOSE 5050
 
 USER apprunner
-ENV PATH=$PATH:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/node_modules/.bin
+ENV PATH=$PATH:/software/samtools/${SAMTOOLS_VERSION}/bin:/software/biobambam2/${BIOBAMBAM_VERSION}/bin:/software/freebayes/${FREEBAYES_VERSION}/bin:/npg_ranger/node_modules/.bin
 CMD [ "/bin/bash" ]
