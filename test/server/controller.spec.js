@@ -611,7 +611,8 @@ describe('Sample reference', () => {
     out = child.execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
-    MongoClient.connect(url, (err, db) => {
+    MongoClient.connect(url, (err, client) => {
+      var db = client.db();
       assert.equal(err, null);
       server.on('request', (request, response) => {
         let c = new RangerController(request, response, db);

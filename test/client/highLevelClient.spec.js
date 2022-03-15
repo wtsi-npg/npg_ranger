@@ -493,9 +493,9 @@ xdescribe('Running with ranger server with a', () => {
     out = execSync(command);
     console.log(`Loaded data to MONGO DB: ${out}`);
 
-    MongoClient.connect(mongourl, (err, db) => {
+    MongoClient.connect(mongourl, (err, client) => {
       assert.equal(err, null, `failed to connect to ${mongourl}: ${err}`);
-
+      let db = client.db();
       // The model runs samtools merge in a temporary directory,
       // so mongo needs to return an absolute path to the data.
       // Difficult because tests need to be portable.
