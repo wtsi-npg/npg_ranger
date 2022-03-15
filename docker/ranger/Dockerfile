@@ -8,7 +8,7 @@ ARG BUILD_REPO=wtsi-npg/npg_ranger
 # Hold versions in environment variables.
 ENV NODE_VERSION=16.14.0 \
     MONGODB_VERSION=3.6.14 \
-    SAMTOOLS_VERSION=1.14 \
+    SAMTOOLS_VERSION=1.14.0 \
     LIBHTS_PLUGINS_VERSION=201712 \
     BIOBAMBAM_VERSION=2.0.79 \
     FREEBAYES_VERSION=1.2.0 \

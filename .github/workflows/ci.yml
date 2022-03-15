@@ -11,7 +11,7 @@ env:
   SOFTWARE_HOME: "/tmp/software"
   FREEBAYES_VERSION: "1.2.0"
   BIOBAMBAM_VERSION: "2.0.79"
-  SAMTOOLS1_VERSION: "1.14"
+  SAMTOOLS1_VERSION: "1.14.0"
 
 jobs:
   test:
