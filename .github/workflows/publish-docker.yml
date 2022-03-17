@@ -1,0 +1,46 @@
+name: Publish Docker images to ghcr.io
+
+on:
+  push:
+    branches:
+      - "master"
+      - "devel"
+
+jobs:
+
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build docker images
+        run: |
+          pushd docker/ranger
+          docker build --label $REPOLABEL -t docker_ranger -f Dockerfile .
+          docker build --label $REPOLABEL -t docker_ranger_slim -f Dockerfile_slim .
+          docker build --label $REPOLABEL -t docker_ranger_irods -f Dockerfile_irods .
+          popd
+          pushd docker/rangerproxy
+          docker build -t docker_rangerproxy -f Dockerfile .
+          popd
+        env:
+          REPOLABEL: "org.opencontainers.image.source=${{ github.repository_url }}"
+
+      - name: Tag and push docker images
+        run: |
+          # Set BRANCH to latest if BRANCH is master
+          [ $BRANCH = "master" ] && BRANCH=latest
+          # Tag images based on the git branch
+          for im in "docker_ranger" "docker_ranger_slim" "docker_ranger_irods" "docker_rangerproxy"
+          do
+            docker image tag $im ghcr.io/${{ github.repository_owner }}/${im}:${BRANCH}
+            docker image push ghcr.io/${{ github.repository_owner }}/${im}:${BRANCH}
+          done
+        env:
+          BRANCH: ${{ github.ref_name }}
