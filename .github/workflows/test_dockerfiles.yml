@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       
       - name: Get Hadolint from cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${HOME}/bin/hadolint
           key: hadolint
